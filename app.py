@@ -1,0 +1,163 @@
+import os
+import logging
+from flask import Flask, send_from_directory, request, jsonify
+from flask_cors import CORS
+from routes import register_routes
+import create_projects_table  # Import the create_projects_table module
+import create_bearing_lookup  # Import create_bearing_lookup module
+import update_central_database  # Import the update_central_database module
+from datetime import timedelta
+from db_admin import register_db_admin_routes  # Import the new db_admin module
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("app.log"),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+def create_app():
+    """Create and configure the Flask application."""
+    # Configure static files properly for production
+    static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+    
+    app = Flask(__name__, 
+                static_folder=static_folder)
+    
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(message)s'
+    )
+    logger = logging.getLogger(__name__)
+    logger.info("Starting Flask application...")
+    logger.info(f"Static folder: {static_folder}")
+    
+    # Configure session
+    app.config['SECRET_KEY'] = 'TCF_Pricing_Tool_Secret_Key_2024'  # Fixed secret key
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)  # Sessions last 24 hours
+    app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookie over HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to session cookie
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
+    
+    # Enable CORS with more options for production
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+    
+    # Custom static route with proper MIME types
+    @app.route('/static/<path:filename>')
+    def custom_static(filename):
+        mime_type = None
+        if filename.endswith('.css'):
+            mime_type = 'text/css'
+        elif filename.endswith('.js'):
+            mime_type = 'application/javascript'
+        return send_from_directory(static_folder, filename, mimetype=mime_type)
+    
+    # Create database tables if they don't exist
+    logger.info("Creating database tables if needed...")
+    if create_projects_table.create_projects_tables():
+        logger.info("Project tables created or already exist")
+    else:
+        logger.error("Failed to create project tables")
+    
+    # Also apply schema.sql if it exists
+    if os.path.exists('schema.sql'):
+        logger.info("Found schema.sql - applying to database...")
+        try:
+            from database import get_db_connection
+            conn = get_db_connection()
+            with open('schema.sql', 'r') as f:
+                conn.executescript(f.read())
+            conn.close()
+            logger.info("Successfully applied schema.sql to database")
+        except Exception as e:
+            logger.error(f"Error applying schema.sql: {str(e)}")
+    
+    # Create or update BearingLookup table
+    logger.info("Creating BearingLookup table if needed...")
+    if create_bearing_lookup.create_bearing_lookup_table():
+        logger.info("BearingLookup table created or already exists")
+    else:
+        logger.error("Failed to create BearingLookup table")
+    
+    # Update central database if needed
+    logger.info("Updating central database if needed...")
+    if update_central_database.update_central_database():
+        logger.info("Central database updated or already up-to-date")
+    else:
+        logger.error("Failed to update central database")
+    
+    # Register routes
+    register_routes(app)
+    
+    # Register database admin routes
+    register_db_admin_routes(app)
+    
+    @app.route('/add_custom_accessory', methods=['POST'])
+    def add_custom_accessory():
+        try:
+            data = request.get_json()
+            required_fields = ['fan_model', 'fan_size', 'name', 'weight']
+            
+            if not all(field in data for field in required_fields):
+                return jsonify({'error': 'Missing required fields'}), 400
+            
+            cursor = get_db().cursor()
+            cursor.execute(
+                'INSERT INTO AccessoryWeights (fan_model, fan_size, accessory, weight, is_custom) VALUES (?, ?, ?, ?, 1)',
+                (data['fan_model'], data['fan_size'], data['name'], data['weight'])
+            )
+            get_db().commit()
+            
+            return jsonify({'message': 'Custom accessory added successfully', 'id': cursor.lastrowid})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/get_accessories', methods=['POST'])
+    def get_accessories():
+        try:
+            data = request.get_json()
+            if not data or 'fan_model' not in data or 'fan_size' not in data:
+                return jsonify({'error': 'Fan model and size are required'}), 400
+            
+            cursor = get_db().cursor()
+            cursor.execute(
+                'SELECT id, accessory, weight, is_custom FROM AccessoryWeights WHERE fan_model = ? AND fan_size = ?',
+                (data['fan_model'], data['fan_size'])
+            )
+            accessories = [{'id': row[0], 'name': row[1], 'weight': row[2], 'is_custom': bool(row[3])} for row in cursor.fetchall()]
+            return jsonify({'accessories': accessories})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/remove_custom_accessory', methods=['POST'])
+    def remove_custom_accessory():
+        try:
+            data = request.get_json()
+            if not data or 'id' not in data:
+                return jsonify({'error': 'Accessory ID is required'}), 400
+            
+            cursor = get_db().cursor()
+            cursor.execute(
+                'DELETE FROM AccessoryWeights WHERE id = ? AND is_custom = 1',
+                (data['id'],)
+            )
+            get_db().commit()
+            
+            if cursor.rowcount == 0:
+                return jsonify({'error': 'Custom accessory not found or cannot be deleted'}), 404
+            
+            return jsonify({'message': 'Custom accessory removed successfully'})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    return app
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(debug=True)

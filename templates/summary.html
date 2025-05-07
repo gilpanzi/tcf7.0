@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Summary | TCF Fan Pricing Tool</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/fixes.js') }}"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="summary-header">Project Summary</h1>
+        
+        <!-- Project Details -->
+        <div class="section">
+            <h2>Project Information</h2>
+            <div class="info-grid form-grid">
+                <div class="info-item">
+                    <label>Enquiry Number:</label>
+                    <span class="info-value">{{ enquiry_number }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Customer Name:</label>
+                    <span class="info-value">{{ customer_name }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Sales Engineer:</label>
+                    <span class="info-value">{{ sales_engineer }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Total Fans:</label>
+                    <span class="info-value">{{ total_fans }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fan Details -->
+        <div class="section">
+            <h2>Fan Details</h2>
+            <div class="fans-container">
+                {% for fan in fans %}
+                <div class="fan-card">
+                    <h3>Fan {{ loop.index }}</h3>
+                    <div class="fan-specs">
+                        <div class="data-row">
+                            <div class="spec-label">Model:</div>
+                            <div class="spec-value">{{ fan.specifications.fan_model|default('--') }}</div>
+                        </div>
+                        <div class="data-row">
+                            <div class="spec-label">Size:</div>
+                            <div class="spec-value">{{ fan.specifications.size|default('--') }}</div>
+                        </div>
+                        <div class="data-row">
+                            <div class="spec-label">Class:</div>
+                            <div class="spec-value">{{ fan.specifications.class|default('--') }}</div>
+                        </div>
+                        <div class="data-row">
+                            <div class="spec-label">Arrangement:</div>
+                            <div class="spec-value">{{ fan.specifications.arrangement|default('--') }}</div>
+                        </div>
+                        <!-- Add Vibration Isolator details -->
+                        <div class="data-row">
+                            <div class="spec-label">Vibration Isolator:</div>
+                            <div class="spec-value">
+                                {% if fan.specifications.vibration_isolators and fan.specifications.vibration_isolators != 'not_required' %}
+                                    {{ fan.specifications.vibration_isolators }}
+                                {% else %}
+                                    Not Required
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Add Bearing details if arrangement is not 4 -->
+                        {% if fan.specifications.arrangement != '4' and fan.specifications.bearing_brand %}
+                        <div class="data-row">
+                            <div class="spec-label">Bearing:</div>
+                            <div class="spec-value">{{ fan.specifications.bearing_brand|default('--') }}</div>
+                        </div>
+                        {% endif %}
+                        <div class="data-row">
+                            <div class="spec-label">Total Weight:</div>
+                            <div class="spec-value">{{ "%.2f"|format(fan.weights.total_weight|default(0)) }} kg</div>
+                        </div>
+                        <div class="data-row total">
+                            <div class="spec-label">Total Cost:</div>
+                            <div class="spec-value">₹{{ "%.2f"|format(fan.costs.total_cost|default(0)) }}</div>
+                        </div>
+                    </div>
+                    <!-- Bought Out Items Breakdown Table -->
+                    <table class="bought-out-breakdown" style="width:100%; margin-top:10px; border-collapse:collapse;">
+                        <tr><th style="text-align:left; border-bottom:1px solid #ccc;">Bought Out Item</th><th style="text-align:right; border-bottom:1px solid #ccc;">Cost</th></tr>
+                        <tr><td>Motor</td><td style="text-align:right;">₹{{ "%.2f"|format(fan.costs.motor_cost|default(0)) }}</td></tr>
+                        <tr><td>Bearing</td><td style="text-align:right;">₹{{ "%.2f"|format(fan.costs.bearing_cost|default(0)) }}</td></tr>
+                        <tr><td>Drive Pack</td><td style="text-align:right;">₹{{ "%.2f"|format(fan.costs.drive_pack_cost|default(0)) }}</td></tr>
+                        <tr><td>Vibration Isolators</td><td style="text-align:right;">₹{{ "%.2f"|format(fan.costs.vibration_isolators_cost|default(0)) }}</td></tr>
+                        <tr><td>Optional Items</td><td style="text-align:right;">₹{{ "%.2f"|format(fan.costs.optional_items_cost|default(0)) }}</td></tr>
+                    </table>
+                    <!-- Add Edit Button -->
+                    <div class="fan-actions">
+                        <button type="button" class="action-button edit-btn fan-edit-btn" 
+                                data-fan-index="{{ loop.index0 }}">
+                            Edit Fan {{ loop.index }}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Totals -->
+        <div class="section project-total-section">
+            <h2>Project Totals</h2>
+            <div class="project-totals-content">
+                <div class="result-row">
+                    <div class="total-label">Total Weight:</div>
+                    <div class="total-value">{{ "%.2f"|format(total_weight|default(0)) }} kg</div>
+                </div>
+                <div class="result-row">
+                    <div class="total-label">Total Fabrication Cost:</div>
+                    <div class="total-value">₹{{ "%.2f"|format(total_fabrication_cost|default(0)) }}</div>
+                </div>
+                <div class="result-row">
+                    <div class="total-label">Total Bought Out Cost:</div>
+                    <div class="total-value">₹{{ "%.2f"|format(total_bought_out_cost|default(0)) }}</div>
+                </div>
+                <div class="result-row total">
+                    <div class="total-label">Total Cost:</div>
+                    <div class="total-value">₹{{ "%.2f"|format(total_cost|default(0)) }}</div>
+                </div>
+            </div>
+            
+            <div class="project-total-card">
+                <h3>Grand Total</h3>
+                <p>₹{{ "%.2f"|format(total_cost|default(0)) }}</p>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="summary-actions">
+            <button type="button" onclick="window.location.href='/'" class="action-button">New Enquiry</button>
+            <button type="button" onclick="window.print()" class="action-button print-btn">Print Summary</button>
+            <button type="button" onclick="saveProjectToDatabase('{{ enquiry_number }}')" class="action-button save-btn">Add to Database</button>
+        </div>
+    </div>
+
+    <!-- JavaScript for fan editing functionality -->
+    <script>
+        // Add event listeners to all fan edit buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const editButtons = document.querySelectorAll('.fan-edit-btn');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const fanIndex = this.getAttribute('data-fan-index');
+                    editFan(fanIndex);
+                });
+            });
+        });
+
+        function editFan(fanIndex) {
+            // Store current fan index in sessionStorage before redirecting
+            sessionStorage.setItem('currentEditingFanIndex', fanIndex);
+            console.log(`Editing fan ${fanIndex}, stored in sessionStorage`);
+            window.location.href = `/edit_fan/${fanIndex}`;
+        }
+        
+        // Preserve existing function
+        function saveProjectToDatabase(enquiryNumber) {
+            // Existing functionality
+        }
+    </script>
+</body>
+</html> 

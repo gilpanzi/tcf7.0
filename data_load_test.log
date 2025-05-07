@@ -1,0 +1,14 @@
+2025-03-23 17:29:38,204 - __main__ - INFO - Using central database at: data/central_database/all_projects.db
+2025-03-23 17:29:38,204 - __main__ - INFO - Testing project with enquiry number: AA
+2025-03-23 17:29:38,204 - __main__ - INFO - Project details: {'enquiry_number': 'AA', 'customer_name': 'A', 'total_fans': 1, 'sales_engineer': 'SAB', 'created_at': '2025-03-23 08:36:58'}
+2025-03-23 17:29:38,204 - __main__ - INFO - Found 1 fans for project AA
+2025-03-23 17:29:38,209 - __main__ - INFO - Database columns: ['id', 'enquiry_number', 'fan_number', 'fan_model', 'size', 'class', 'arrangement', 'vendor', 'material', 'accessories', 'bare_fan_weight', 'accessory_weight', 'total_weight', 'fabrication_weight', 'bought_out_weight', 'fabrication_cost', 'bought_out_cost', 'total_cost', 'total_job_margin', 'fabrication_selling_price', 'bought_out_selling_price', 'total_selling_price', 'vibration_isolators', 'drive_pack_kw', 'custom_accessories', 'optional_items', 'custom_option_items', 'motor_kw', 'motor_brand', 'motor_pole', 'motor_efficiency', 'motor_discount_rate', 'bearing_brand']
+2025-03-23 17:29:38,209 - __main__ - INFO - Raw fan data from database: {'id': 17, 'enquiry_number': 'AA', 'fan_number': 1, 'fan_model': 'BCN', 'size': '330W', 'class': '1', 'arrangement': '8', 'vendor': 'TCF Factory', 'material': 'ms', 'accessories': 'Unitary Base Frame', 'bare_fan_weight': 800.0, 'accessory_weight': 100.0, 'total_weight': 900.0, 'fabrication_weight': 0.0, 'bought_out_weight': 0.0, 'fabrication_cost': 175500.0, 'bought_out_cost': 54706.4, 'total_cost': 287758.0, 'total_job_margin': 25.0, 'fabrication_selling_price': 219375.0, 'bought_out_selling_price': 68383.0, 'total_selling_price': 287758.0, 'vibration_isolators': None, 'drive_pack_kw': None, 'custom_accessories': None, 'optional_items': None, 'custom_option_items': None, 'motor_kw': None, 'motor_brand': None, 'motor_pole': None, 'motor_efficiency': None, 'motor_discount_rate': None, 'bearing_brand': None}
+2025-03-23 17:29:38,209 - __main__ - WARNING - Failed to parse JSON for accessories: Unitary Base Frame
+2025-03-23 17:29:38,209 - __main__ - INFO - Fan #1 Model: BCN
+2025-03-23 17:29:38,209 - __main__ - INFO - Fan #1 Size: 330W
+2025-03-23 17:29:38,209 - __main__ - INFO - Fan #1 Class: 1
+2025-03-23 17:29:38,209 - __main__ - INFO - Fan #1 Arrangement: 8
+2025-03-23 17:29:38,214 - __main__ - INFO - Fan #1 Total Weight: 900.0
+2025-03-23 17:29:38,214 - __main__ - INFO - Fan #1 Total Cost: 287758.0
+2025-03-23 17:29:38,214 - __main__ - INFO - Data loading test completed successfully

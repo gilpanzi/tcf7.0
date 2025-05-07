@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fan Weights Calculator</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom_accessories.css') }}">
+    <style>
+        .required::after {
+            content: " *";
+            color: red;
+        }
+        .required-field + label::after {
+            content: " *";
+            color: red;
+        }
+        .price-input {
+            display: none;
+            margin-top: 5px;
+        }
+        .cost-breakdown {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .cost-breakdown h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .cost-breakdown h4 {
+            color: #666;
+            margin: 15px 0 10px;
+        }
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .cost-item:last-child {
+            border-bottom: none;
+        }
+        .total {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
+        }
+        .grand-total {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+        .weights-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+        .is-invalid {
+            border-color: red !important;
+        }
+        .calculation-results {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .calculation-results h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .calculation-results p {
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        .form-actions {
+            margin-top: 2rem;
+            text-align: right;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+        }
+        .optional-items-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .optional-item-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .optional-item-group label {
+            font-weight: 500;
+        }
+        .optional-item-group select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 4px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .modal-buttons button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .modal-buttons button:first-child {
+            background-color: #007bff;
+            color: white;
+        }
+        .modal-buttons button:last-child {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        /* Project Summary Styles */
+        .project-summary {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .project-info {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+        .project-info p {
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        .fans-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .fan-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .fan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .fan-card h4 {
+            margin-top: 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #4a90e2;
+            color: #333;
+        }
+        .fan-details p {
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .project-total {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 2px solid #ddd;
+            font-size: 1.2rem;
+        }
+        .project-total p {
+            text-align: right;
+            font-weight: bold;
+        }
+        .btn-success {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 15px 0;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .btn-success:hover {
+            background-color: #45a049;
+        }
+        .add-to-project-section {
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        /* Custom accessory and optional item styling - keep only these */
+        .custom-accessory, .custom-optional-item {
+            margin-bottom: 8px;
+            padding: 5px;
+            background-color: #f0f8ff;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .custom-accessory label, .custom-optional-item label {
+            margin-right: 10px;
+            flex-grow: 1;
+        }
+        
+        .remove-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            line-height: 1;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .remove-btn:hover {
+            background: #ff4757;
+        }
+        
+        /* Styles for custom accessories in cost breakdown */
+        .custom-accessories-costs {
+            margin-top: 10px;
+            border-top: 1px dashed #ccc;
+            padding-top: 8px;
+        }
+        
+        .custom-accessory-item {
+            color: #0056b3;
+            padding-left: 10px;
+        }
+        
+        .custom-accessories-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        /* Styles for optional items in cost breakdown */
+        #optional_items_costs .cost-item {
+            color: #28a745;
+        }
+        
+        /* User info and export button styles */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-info span {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .logout-button {
+            background-color: #dc3545;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+        
+        .export-button {
+            background-color: #28a745;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+            margin-left: 1rem;
+        }
+        
+        .export-button:hover {
+            background-color: #218838;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 1rem;
+        }
+        .nav-button.export {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-button.export:hover {
+            background-color: #218838;
+        }
+
+        .result-section {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .result-section h4 {
+            margin: 0 0 1rem 0;
+            color: #333;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .breakdown-details {
+            font-size: 0.9rem;
+            color: #666;
+            margin-left: 1.5rem;
+            margin-top: 0.25rem;
+        }
+
+        .total {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 2px solid #f0f0f0;
+            font-weight: 600;
+        }
+
+        .margin-info {
+            font-size: 0.9rem;
+            color: #666;
+            text-align: right;
+        }
+
+        .total-margin {
+            margin-top: 1rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #f0f0f0;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+    <script>
+        // Initialize global variables for custom accessories and optional items
+        window.customAccessories = window.customAccessories || {};
+        window.customOptionalItems = window.customOptionalItems || {};
+        window.optionalItemPrices = window.optionalItemPrices || {};
+    </script>
+</head>
+<body>
+    <div class="header-container">
+        <div class="user-info">
+            <span>Welcome, {{ session.full_name }}</span>
+            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+        </div>
+    </div>
+    <div class="container">
+        <h2>Fan Pricing Tool</h2>
+
+        <!-- Navigation Bar -->
+        <div id="navigation-bar" class="navigation-bar">
+            <button type="button" onclick="navigateTo('enquiry-form')" class="nav-button nav-button-active" id="enquiry-nav-btn">ENQUIRY DETAILS</button>
+            <button type="button" onclick="navigateTo('fan-form-section')" class="nav-button" id="calculator-nav-btn">FAN CALCULATOR</button>
+            <button type="button" onclick="navigateTo('project-summary')" class="nav-button" id="summary-nav-btn">PROJECT SUMMARY</button>
+            <button type="button" onclick="exportProject()" class="nav-button export">EXPORT TO EXCEL</button>
+        </div>
+        
+        <!-- Enquiry Details Section -->
+        <div id="enquiry-form" class="section">
+            <h3>Enquiry Details</h3>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="open_enquiry">Open Existing Enquiry:</label>
+                    <select id="open_enquiry" onchange="loadSelectedEnquiry()">
+                        <option value="">Select an enquiry to open</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="enquiry_number" class="required">Enquiry Number:</label>
+                    <input type="text" id="enquiry_number" name="enquiry_number" required>
+                </div>
+                <div class="input-group">
+                    <label for="customer_name" class="required">Customer Name:</label>
+                    <input type="text" id="customer_name" name="customer_name" required>
+                </div>
+                <div class="input-group">
+                    <label for="total_fans">Number of Fans:</label>
+                    <input type="number" id="total_fans" min="1" required>
+                </div>
+                <div class="input-group">
+                    <label for="sales_engineer" class="required">Sales Engineer:</label>
+                    <select id="sales_engineer" name="sales_engineer" required>
+                        <option value="">Select Sales Engineer</option>
+                        <option value="RSP">RSP</option>
+                        <option value="TSH">TSH</option>
+                        <option value="SAB">SAB</option>
+                        <option value="NEM">NEM</option>
+                        <option value="RAG">RAG</option>
+                        <option value="FRA">FRA</option>
+                    </select>
+                </div>
+            </div>
+            <button type="button">Start Fan Entry</button>
+        </div>
+
+        <!-- Fan Form Section -->
+        <div id="fan-form-section" style="display: none;">
+            <div class="fan-tabs-container" id="fan-tabs-container">
+                <!-- Fan tabs will be dynamically added here -->
+            </div>
+
+            <div class="progress-indicator">
+                <div id="current-fan-number" class="progress-step active"></div>
+            </div>
+
+            <button type="button" onclick="openAddFanModal()" style="margin-bottom: 20px;">Add New Fan Model</button>
+            <form id="fan-form" action="/calculate_fan" method="post" class="calculator-form" novalidate>
+                <!-- Fan Specifications -->
+                <h3>Fan Specifications</h3>
+                <label for="fan_model" class="required">Fan Model:</label>
+                <select id="fan_model" name="fan_model" required>
+                    <option value="">Select Fan Model</option>
+                    {% for model in fan_models %}
+                    <option value="{{ model }}">{{ model }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="fan_size" class="required">Fan Size:</label>
+                <select id="fan_size" name="fan_size" required>
+                    <option value="">Select Fan Size</option>
+                </select>
+
+                <label for="class_" class="required">Class:</label>
+                <select id="class_" name="class_" required>
+                    <option value="">Select Class</option>
+                </select>
+
+                <label for="arrangement" class="required">Arrangement:</label>
+                <select id="arrangement" name="arrangement" required>
+                    <option value="">Select Arrangement</option>
+                </select>
+
+                <!-- Accessories -->
+                <h3>Accessories</h3>
+                <div class="form-group">
+                    <div class="accessories-container">
+                        <div class="accessory-item">
+                            <div class="accessory-checkbox">
+                                <input type="checkbox" name="accessories" value="unitary_base_frame" id="unitary_base_frame">
+                                <label for="unitary_base_frame">Unitary Base Frame</label>
+                            </div>
+                            <span class="weight-display" data-weight-display="unitary_base_frame"></span>
+                        </div>
+                        <div class="accessory-item">
+                            <div class="accessory-checkbox">
+                                <input type="checkbox" name="accessories" value="isolation_base_frame" id="isolation_base_frame">
+                                <label for="isolation_base_frame">Isolation Base Frame</label>
+                            </div>
+                            <span class="weight-display" data-weight-display="isolation_base_frame"></span>
+                        </div>
+                        <div class="accessory-item">
+                            <div class="accessory-checkbox">
+                                <input type="checkbox" name="accessories" value="split_casing" id="split_casing">
+                                <label for="split_casing">Split Casing</label>
+                            </div>
+                            <span class="weight-display" data-weight-display="split_casing"></span>
+                        </div>
+                        <div class="accessory-item">
+                            <div class="accessory-checkbox">
+                                <input type="checkbox" name="accessories" value="inlet_companion_flange" id="inlet_companion_flange">
+                                <label for="inlet_companion_flange">Inlet Companion Flange</label>
+                            </div>
+                            <span class="weight-display" data-weight-display="inlet_companion_flange"></span>
+                        </div>
+                        <div class="accessory-item">
+                            <div class="accessory-checkbox">
+                                <input type="checkbox" name="accessories" value="outlet_companion_flange" id="outlet_companion_flange">
+                                <label for="outlet_companion_flange">Outlet Companion Flange</label>
+                            </div>
+                            <span class="weight-display" data-weight-display="outlet_companion_flange"></span>
+                        </div>
+                        <div class="accessory-item">
+                            <div class="accessory-checkbox">
+                                <input type="checkbox" name="accessories" value="inlet_butterfly_damper" id="inlet_butterfly_damper">
+                                <label for="inlet_butterfly_damper">Inlet Butterfly Damper</label>
+                            </div>
+                            <span class="weight-display" data-weight-display="inlet_butterfly_damper"></span>
+                        </div>
+                    </div>
+                    <div id="accessoryContainer" class="accessories-section">
+                        <!-- Custom accessories will be added here -->
+                    </div>
+                    <button type="button" id="add-custom-accessory-btn" class="add-custom-accessory">
+                        <i class="fas fa-plus"></i> Add Custom Accessory
+                    </button>
+                </div>
+                <input type="hidden" id="accessory_weights_display" value="{}">
+
+                <!-- Vendor and Material of Construction -->
+                <h3>Vendor and Material of Construction</h3>
+                <label for="vendor">Vendor:</label>
+                <select id="vendor" name="vendor">
+                    <option value="TCF Factory" selected>TCF Factory</option>
+                    {% for vendor in vendors %}
+                    <option value="{{ vendor }}">{{ vendor }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="moc">Material of Construction:</label>
+                <select id="moc" name="moc" required>
+                    <option value="ms">Complete Fan in MS</option>
+                    <option value="ss304">Complete Fan in SS304</option>
+                    <option value="others">Others</option>
+                </select>
+
+                <!-- Custom Material Form -->
+                <div id="custom-material-form" style="display: none;">
+                    <h4>Custom Materials</h4>
+                    <div class="custom-materials-container" style="display: flex; flex-direction: column; gap: 10px;">
+                        {% for i in range(5) %}
+                        <div class="material-row" style="display: flex; gap: 10px; align-items: center;">
+                            <div style="flex: 2;">
+                                <input type="text" id="material_name_{{ i }}" name="material_name_{{ i }}" class="form-control" placeholder="Material Name">
+                            </div>
+                            <div style="flex: 1;">
+                                <input type="number" id="material_weight_{{ i }}" name="material_weight_{{ i }}" class="form-control" placeholder="Weight (kg)" step="0.01" min="0">
+                            </div>
+                            <div style="flex: 1;">
+                                <input type="number" id="material_rate_{{ i }}" name="material_rate_{{ i }}" class="form-control" placeholder="Rate (₹/kg)" step="0.01" min="0">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Vibration Isolators -->
+                <h3>Vibration Isolators</h3>
+                <label for="vibration_isolators">Vibration Isolators:</label>
+                <select id="vibration_isolators" name="vibration_isolators">
+                    <option value="not_required">Not Required</option>
+                    <option value="polybond">Polybond</option>
+                    <option value="dunlop">Dunlop</option>
+                </select>
+
+                <!-- Bearing Selection - Only visible when Arrangement is not 4 -->
+                <div id="bearing-selection-section" style="display: none;">
+                    <h3>Bearing Details</h3>
+                    <div class="form-group">
+                        <label for="bearing_brand">Bearing Brand:</label>
+                        <select id="bearing_brand" name="bearing_brand" class="form-control">
+                            <option value="">Select Brand</option>
+                            {% for brand in bearing_brands %}
+                            <option value="{{ brand }}">{{ brand }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group bearing-info" style="display: none;">
+                        <label>Bearing Description:</label>
+                        <span id="bearing_description">-</span>
+                    </div>
+                    <div class="form-group bearing-info" style="display: none;">
+                        <label>Bearing Price:</label>
+                        <span>₹<span id="bearing_price">0</span></span>
+                    </div>
+                </div>
+
+                <!-- Motor Selection -->
+                <h3>Motor Details</h3>
+                <div class="form-group">
+                    <label>Motor Required:</label>
+                    <input type="checkbox" id="motor_required" name="motor_required">
+                </div>
+
+                <div id="motor-details" style="display: none;">
+                    <div class="form-group">
+                        <label for="motor_brand">Motor Brand:</label>
+                        <select id="motor_brand" name="motor_brand" class="form-control">
+                            <option value="">Select Brand</option>
+                            {% for brand in motor_brands %}
+                            <option value="{{ brand }}">{{ brand }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="motor_kw">Motor kW:</label>
+                        <select id="motor_kw" name="motor_kw" class="form-control">
+                            <option value="">Select kW</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pole">Pole:</label>
+                        <select id="pole" name="pole" class="form-control">
+                            <option value="">Select Pole</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="efficiency">Efficiency:</label>
+                        <select id="efficiency" name="efficiency" class="form-control">
+                            <option value="">Select Efficiency</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="motor_discount">Motor Discount (%):</label>
+                        <input type="number" id="motor_discount" name="motor_discount" class="form-control" min="0" max="100" value="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Motor List Price:</label>
+                        <span>₹<span id="motor_price">0</span></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Discounted Motor Price:</label>
+                        <span>₹<span id="motor_price_discounted">0</span></span>
+                    </div>
+                </div>
+
+                <div id="drive_pack_section" class="form-group">
+                    <h3>Drive Pack Details</h3>
+                    <div class="form-group">
+                        <label for="drive_pack" class="required">Drive Pack:</label>
+                        <select id="drive_pack" name="drive_pack" class="form-control">
+                            <option value="">Select Drive Pack</option>
+                            {% for kw in drive_pack_options %}
+                            <option value="{{ kw }}">{{ kw }} kW</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Drive Pack is mandatory for all arrangements except Arrangement 4</small>
+                        <!-- Hidden field to store the drive_pack_kw value -->
+                        <input type="hidden" id="drive_pack_kw" name="drive_pack_kw" value="">
+                    </div>
+                </div>
+
+                <!-- Margins -->
+                <h3>Margins</h3>
+                <label for="fabrication_margin" class="required">Fabrication Margin (%):</label>
+                <input type="number" id="fabrication_margin" name="fabrication_margin" step="0.01" value="25" required>
+
+                <label for="bought_out_margin" class="required">Bought Out Margin (%):</label>
+                <input type="number" id="bought_out_margin" name="bought_out_margin" step="0.01" value="25" required>
+
+                <!-- Updated Calculation Results Section -->
+                <div id="calculation-results" class="calculation-results">
+                    <div class="calc-section">
+                        <!-- Weights Breakdown -->
+                        <div class="calc-card orange-card">
+                            <h3>🍊 Weights Breakdown</h3>
+                            <div class="result-row">
+                                <span class="label">Bare Fan Weight:</span>
+                                <span class="value" id="fan_weight">0 kg</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="label">Accessories Weight:</span>
+                                <span class="value" id="accessory_weights">0 kg</span>
+                            </div>
+                            <div class="accessory-breakdown-box" id="accessory_weights_breakdown">
+                                <h4>Standard Accessories</h4>
+                                <!-- Accessory weights will be populated here -->
+                            </div>
+                            <div class="calc-total">
+                                <strong>Total Weight:</strong>
+                                <strong id="total_weight">0 kg</strong>
+                            </div>
+                        </div>
+
+                        <!-- Raw Cost Breakdown -->
+                        <div class="calc-card blue-card">
+                            <h3>💧 Raw Cost Breakdown</h3>
+                            <div class="result-row">
+                                <span class="label">Fabrication Cost:</span>
+                                <span class="value" id="fabrication_cost">₹0</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="label">Bought Out Cost:</span>
+                                <span class="value" id="bought_out_cost">₹0</span>
+                            </div>
+                            <div class="bought-out-breakdown" id="bought_out_breakdown">
+                                <!-- Bought out costs will be populated here -->
+                            </div>
+                            <div class="calc-total">
+                                <strong>Total Raw Cost:</strong>
+                                <strong id="total_raw_cost">₹0</strong>
+                            </div>
+                        </div>
+
+                        <!-- Selling Price Breakdown -->
+                        <div class="calc-card pink-card">
+                            <h3>💎 Selling Price Breakdown</h3>
+                            <div class="result-row">
+                                <span class="label">Fabrication Selling Price:</span>
+                                <span class="value" id="fabrication_selling_price">₹0</span>
+                                <div class="margin-info">
+                                    <small>Margin: <span id="fabrication_margin_display">0</span>%</small>
+                                </div>
+                            </div>
+                            <div class="result-row">
+                                <span class="label">Bought Out Selling Price:</span>
+                                <span class="value" id="bought_out_selling_price">₹0</span>
+                                <div class="margin-info">
+                                    <small>Margin: <span id="bought_out_margin_display">0</span>%</small>
+                                </div>
+                            </div>
+                            <div class="result-row">
+                                <span class="label">Optional Items:</span>
+                                <span class="value" id="optional_items_price">₹0</span>
+                                <div id="optional_items_breakdown" class="breakdown-details"></div>
+                            </div>
+                            <div class="calc-total">
+                                <strong>Total Selling Price:</strong>
+                                <strong id="total_selling_price">₹0</strong>
+                            </div>
+                            <div class="margin-row">
+                                <span>Total Job Margin:</span>
+                                <span id="total_job_margin" class="margin-warning">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Summary Section - Only visible when project is complete -->
+                <div id="project-summary" class="project-summary" style="display: none;">
+                    <h3>Project Summary</h3>
+                    <div class="project-details">
+                        <div class="project-info">
+                            <p><strong>Enquiry Number:</strong> <span id="summary-enquiry-number"></span></p>
+                            <p><strong>Customer Name:</strong> <span id="summary-customer-name"></span></p>
+                            <p><strong>Total Fans:</strong> <span id="summary-total-fans"></span></p>
+                        </div>
+                        
+                        <h4>Fans</h4>
+                        <div id="fans-container" class="fans-container">
+                            <!-- Fan cards will be added here dynamically -->
+                        </div>
+                        
+                        <div class="project-total">
+                            <p><strong>Project Total Cost:</strong> ₹<span id="project-total-cost">0</span></p>
+                            <p><strong>Project Total Margin:</strong> <span id="project-total-margin">0</span>%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optional Items -->
+                <h3>Optional Items</h3>
+                <div class="optional-items-container">
+                    <div class="optional-item-group">
+                        <label for="flex_connectors">Flex Connectors:</label>
+                        <select id="flex_connectors" name="flex_connectors" class="optional-item" onchange="handleOptionalItemChange(this)">
+                            <option value="not_required">Not Required</option>
+                            <option value="required">Required</option>
+                        </select>
+                        <input type="number" class="price-input" data-item="flex_connectors" placeholder="Enter price" min="0" max="1000000" 
+                               onchange="validateOptionalItemPrice(this)">
+                    </div>
+
+                    <div class="optional-item-group">
+                        <label for="silencer">Silencer:</label>
+                        <select id="silencer" name="silencer" class="optional-item" onchange="handleOptionalItemChange(this)">
+                            <option value="not_required">Not Required</option>
+                            <option value="required">Required</option>
+                        </select>
+                        <input type="number" class="price-input" data-item="silencer" placeholder="Enter price" min="0" max="1000000" 
+                               onchange="validateOptionalItemPrice(this)">
+                    </div>
+
+                    <div class="optional-item-group">
+                        <label for="testing_charges">Testing Charges:</label>
+                        <select id="testing_charges" name="testing_charges" class="optional-item" onchange="handleOptionalItemChange(this)">
+                            <option value="not_required">Not Required</option>
+                            <option value="required">Required</option>
+                        </select>
+                        <input type="number" class="price-input" data-item="testing_charges" placeholder="Enter price" min="0" max="1000000" 
+                               onchange="validateOptionalItemPrice(this)">
+                    </div>
+
+                    <div class="optional-item-group">
+                        <label for="freight_charges">Freight Charges:</label>
+                        <select id="freight_charges" name="freight_charges" class="optional-item" onchange="handleOptionalItemChange(this)">
+                            <option value="not_required">Not Required</option>
+                            <option value="required">Required</option>
+                        </select>
+                        <input type="number" class="price-input" data-item="freight_charges" placeholder="Enter price" min="0" max="1000000" 
+                               onchange="validateOptionalItemPrice(this)">
+                    </div>
+
+                    <div class="optional-item-group">
+                        <label for="warranty_charges">Warranty Charges:</label>
+                        <select id="warranty_charges" name="warranty_charges" class="optional-item" onchange="handleOptionalItemChange(this)">
+                            <option value="not_required">Not Required</option>
+                            <option value="required">Required</option>
+                        </select>
+                        <input type="number" class="price-input" data-item="warranty_charges" placeholder="Enter price" min="0" max="1000000" 
+                               onchange="validateOptionalItemPrice(this)">
+                    </div>
+
+                    <div class="optional-item-group">
+                        <label for="packing_charges">Packing Charges:</label>
+                        <select id="packing_charges" name="packing_charges" class="optional-item" onchange="handleOptionalItemChange(this)">
+                            <option value="not_required">Not Required</option>
+                            <option value="required">Required</option>
+                        </select>
+                        <input type="number" class="price-input" data-item="packing_charges" placeholder="Enter price" min="0" max="1000000" 
+                               onchange="validateOptionalItemPrice(this)">
+                    </div>
+                </div>
+
+                <div id="custom-optional-items-container" style="margin-top: 10px;">
+                    <!-- Custom optional items will be added here -->
+                </div>
+                
+                <button type="button" id="add-custom-optional-item-btn" class="btn btn-primary" style="margin-top: 10px;" onclick="openCustomOptionalItemModal()">Add Custom Optional Item</button>
+
+                <!-- Optional Items Costs Display -->
+                <div id="optional_items_costs" class="optional-items-section" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
+                    <!-- Optional items costs will be displayed here -->
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Calculate</button>
+                    <button id="add_to_project_btn" type="button" class="btn btn-success mt-3" style="display: block; width: 100%;">Add Fan to Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Price Input Modal -->
+    <div id="priceModal" class="modal">
+        <div class="modal-content">
+            <h3>Enter Price for <span id="modalItemName"></span></h3>
+            <label for="manualPrice">Price (₹):</label>
+            <input type="number" id="manualPrice" step="0.01" min="0">
+            <div class="modal-buttons">
+                <button onclick="saveManualPrice()">Save</button>
+                <button onclick="closePriceModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Accessory Modal -->
+    <div id="customAccessoryModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Custom Accessory</h3>
+            <label for="customAccessoryName">Accessory Name:</label>
+            <input type="text" id="customAccessoryName" placeholder="Enter accessory name">
+            <label for="customAccessoryWeight">Weight (kg):</label>
+            <input type="number" id="customAccessoryWeight" step="0.01" min="0" placeholder="Enter weight in kg">
+            <div class="modal-buttons">
+                <button onclick="saveCustomAccessory()">Save</button>
+                <button onclick="closeCustomAccessoryModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Optional Item Modal -->
+    <div id="customOptionalItemModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Custom Optional Item</h3>
+            <label for="customOptionalItemName">Item Name:</label>
+            <input type="text" id="customOptionalItemName" placeholder="Enter item name">
+            <label for="customOptionalItemPrice">Price (₹):</label>
+            <input type="number" id="customOptionalItemPrice" step="0.01" min="0" placeholder="Enter price">
+            <div class="modal-buttons">
+                <button onclick="saveCustomOptionalItem()">Save</button>
+                <button onclick="closeCustomOptionalItemModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding new fan model -->
+    <div id="addFanModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeAddFanModal()" style="position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: #888;">&times;</span>
+            
+            <h3 style="text-align: center; color: #333; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee;">Add New Fan Model</h3>
+            
+            <form id="addFanForm" style="display: grid; grid-template-columns: 1fr 1fr; grid-gap: 15px;">
+                <!-- Basic Fan Details - Left Column -->
+                <div class="form-section" style="grid-column: 1 / 2;">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="new_fan_model" style="display: block; margin-bottom: 5px; font-weight: bold;">Fan Model:</label>
+                        <input type="text" id="new_fan_model" name="new_fan_model" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="new_fan_size" style="display: block; margin-bottom: 5px; font-weight: bold;">Fan Size:</label>
+                        <input type="text" id="new_fan_size" name="new_fan_size" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="new_class" style="display: block; margin-bottom: 5px; font-weight: bold;">Class:</label>
+                        <input type="text" id="new_class" name="new_class" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+                
+                <!-- More Details - Right Column -->
+                <div class="form-section" style="grid-column: 2 / 3;">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="new_arrangement" style="display: block; margin-bottom: 5px; font-weight: bold;">Arrangement:</label>
+                        <input type="number" id="new_arrangement" name="new_arrangement" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" 
+                               onchange="toggleShaftDiameterField()">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="new_bare_fan_weight" style="display: block; margin-bottom: 5px; font-weight: bold;">Bare Fan Weight (kg):</label>
+                        <input type="number" id="new_bare_fan_weight" name="new_bare_fan_weight" step="0.01" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: white;"
+                               oninput="console.log('Bare fan weight input: ' + this.value)">
+                        <!-- Alternate input method -->
+                        <div style="margin-top: 5px;">
+                            <button type="button" onclick="setBareFanWeight()" style="padding: 3px 8px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 3px;">
+                                Set Bare Fan Weight
+                            </button>
+                        </div>
+                        <script>
+                            function setBareFanWeight() {
+                                const value = prompt('Enter Bare Fan Weight (kg):', document.getElementById('new_bare_fan_weight').value || '0');
+                                if (value !== null) {
+                                    document.getElementById('new_bare_fan_weight').value = value;
+                                }
+                            }
+                        </script>
+                    </div>
+                    
+                    <div class="form-group" id="shaft_diameter_group" style="margin-bottom: 15px;">
+                        <label for="new_shaft_diameter" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                            Shaft Diameter (mm):
+                            <span style="font-weight: normal; font-size: 0.85em; color: #666;">(Required for arrangements other than 4)</span>
+                        </label>
+                        <input type="number" id="new_shaft_diameter" name="new_shaft_diameter" step="0.01" 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+                
+                <!-- Accessories Section - Full Width -->
+                <div class="accessories-section" style="grid-column: 1 / 3; border-top: 1px solid #eee; padding-top: 15px; margin-top: 10px;">
+                    <h4 style="margin-bottom: 15px; color: #333;">Accessory Weights (Optional)</h4>
+                    
+                    <!-- No. of Isolators Field -->
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="new_no_of_isolators" style="display: block; margin-bottom: 5px; font-weight: bold;">No. of Isolators:</label>
+                        <input type="number" id="new_no_of_isolators" name="new_no_of_isolators" min="0" step="1" 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div class="accessories-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+                        <div class="accessory-item" style="display: flex; align-items: center; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
+                            <input type="checkbox" name="new_accessories" value="Unitary Base Frame" id="acc_ubf" 
+                                   style="margin-right: 8px;" onchange="toggleAccessoryField(this, 'unitary_base_frame_weight')">
+                            <label for="acc_ubf" style="margin-right: auto;">Unitary Base Frame</label>
+                            <input type="number" name="unitary_base_frame_weight" step="0.01" placeholder="Weight (kg)" 
+                                   style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                        </div>
+                        
+                        <div class="accessory-item" style="display: flex; align-items: center; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
+                            <input type="checkbox" name="new_accessories" value="Isolation Base Frame" id="acc_ibf" 
+                                   style="margin-right: 8px;" onchange="toggleAccessoryField(this, 'isolation_base_frame_weight')">
+                            <label for="acc_ibf" style="margin-right: auto;">Isolation Base Frame</label>
+                            <input type="number" name="isolation_base_frame_weight" step="0.01" placeholder="Weight (kg)" 
+                                   style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                        </div>
+                        
+                        <div class="accessory-item" style="display: flex; align-items: center; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
+                            <input type="checkbox" name="new_accessories" value="Split Casing" id="acc_sc" 
+                                   style="margin-right: 8px;" onchange="toggleAccessoryField(this, 'split_casing_weight')">
+                            <label for="acc_sc" style="margin-right: auto;">Split Casing</label>
+                            <input type="number" name="split_casing_weight" step="0.01" placeholder="Weight (kg)" 
+                                   style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                        </div>
+                        
+                        <div class="accessory-item" style="display: flex; align-items: center; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
+                            <input type="checkbox" name="new_accessories" value="Inlet Companion Flange" id="acc_icf" 
+                                   style="margin-right: 8px;" onchange="toggleAccessoryField(this, 'inlet_companion_flange_weight')">
+                            <label for="acc_icf" style="margin-right: auto;">Inlet Companion Flange</label>
+                            <input type="number" name="inlet_companion_flange_weight" step="0.01" placeholder="Weight (kg)" 
+                                   style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                        </div>
+                        
+                        <div class="accessory-item" style="display: flex; align-items: center; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
+                            <input type="checkbox" name="new_accessories" value="Outlet Companion Flange" id="acc_ocf" 
+                                   style="margin-right: 8px;" onchange="toggleAccessoryField(this, 'outlet_companion_flange_weight')">
+                            <label for="acc_ocf" style="margin-right: auto;">Outlet Companion Flange</label>
+                            <input type="number" name="outlet_companion_flange_weight" step="0.01" placeholder="Weight (kg)" 
+                                   style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                        </div>
+                        
+                        <div class="accessory-item" style="display: flex; align-items: center; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
+                            <input type="checkbox" name="new_accessories" value="Inlet Butterfly Damper" id="acc_ibd" 
+                                   style="margin-right: 8px;" onchange="toggleAccessoryField(this, 'inlet_butterfly_damper_weight')">
+                            <label for="acc_ibd" style="margin-right: auto;">Inlet Butterfly Damper</label>
+                            <input type="number" name="inlet_butterfly_damper_weight" step="0.01" placeholder="Weight (kg)" 
+                                   style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Action Buttons -->
+                <div class="form-actions" style="grid-column: 1 / 3; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="closeAddFanModal()" style="background-color: #f2f2f2; color: #333; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button type="button" onclick="submitNewFanModel()" style="background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Save Fan Model</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="calculation-results" class="calculation-results" style="display: none;">
+        <!-- Results will be populated by JavaScript -->
+    </div>
+
+    <!-- Weight Input Modal -->
+    <div id="weightInputModal" class="modal">
+        <div class="modal-content">
+            <h3>Enter Weight for <span id="modalAccessoryName"></span></h3>
+            <div class="input-group">
+                <label for="accessoryWeight">Weight (kg):</label>
+                <input type="number" id="accessoryWeight" step="0.01" min="0" placeholder="Enter weight in kg">
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="saveAccessoryWeight()" class="btn btn-primary">Save</button>
+                <button type="button" onclick="closeWeightModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container for optional items -->
+    <div id="optional-items-section" style="display: none;"></div>
+
+    <!-- Edit mode data container -->
+    <div id="edit-mode-data" 
+         data-is-edit-mode="{{ editing_mode|default(false)|tojson }}"
+         data-fan-data="{{ fan_data|default({})|tojson }}"
+         data-dependent-options="{{ dependent_options|default({})|tojson }}"
+         style="display: none;">
+    </div>
+
+    <!-- Include main JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Include custom accessories handler -->
+    <script src="{{ url_for('static', filename='js/custom_accessories_handler.js') }}"></script>
+    <!-- Include fixes JavaScript -->
+    <script src="{{ url_for('static', filename='js/fixes.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/custom_accessories.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bought_out_components.js') }}"></script>
+    <script>
+        function exportProject() {
+            // Get the enquiry number and customer name
+            const enquiryNumber = document.getElementById('enquiry_number')?.value;
+            const customerName = document.getElementById('customer_name')?.value;
+            
+            if (!enquiryNumber) {
+                alert('Please create or select a project first');
+                return;
+            }
+
+            // Get all fans data from the project summary
+            const allFansData = window.fanData || [];
+            if (!allFansData.length) {
+                alert('No fans found in the project');
+                return;
+            }
+
+            // Create an array to store all fans' data
+            const fansDataArray = allFansData.map((fanData, index) => {
+                if (!fanData) return null;
+                
+                const customMaterials = {};
+                if (fanData.material === 'others') {
+                    for (let i = 0; i < 5; i++) {
+                        const weight = parseFloat(document.querySelector(`input[name="material_weight_${i}"]`).value) || 0;
+                        const cost = parseFloat(document.querySelector(`input[name="material_cost_${i}"]`).value) || 0;
+                        if (weight > 0 && cost > 0) {
+                            customMaterials[`material_weight_${i}`] = weight;
+                            customMaterials[`material_cost_${i}`] = cost;
+                        }
+                    }
+                }
+
+                return {
+                    fan_number: index + 1,
+                    // Basic Specifications
+                    model: fanData.fan_model || fanData.model || '',
+                    size: fanData.fan_size || fanData.size || '',
+                    class: fanData.class || fanData.class_ || '',
+                    arrangement: fanData.arrangement || '',
+                    material: fanData.material || fanData.moc || 'ms',
+
+                    // Motor Details
+                    motor_brand: fanData.motor_brand || '',
+                    motor_power: fanData.motor_power || '',
+                    poles: fanData.poles || fanData.pole || '',
+                    efficiency: fanData.efficiency || '',
+
+                    // Weight Details
+                    fan_weight: (fanData.bare_fan_weight || fanData.fan_weight || '0').toString().replace(/[^\d.]/g, ''),
+                    accessory_weight: (fanData.accessory_weight || '0').toString().replace(/[^\d.]/g, ''),
+                    total_weight: (fanData.total_weight || '0').toString().replace(/[^\d.]/g, ''),
+
+                    // Cost Breakdown
+                    fabrication_cost: (fanData.fabrication_cost || '0').toString().replace(/[^\d.]/g, ''),
+                    motor_cost: (fanData.motor_cost || '0').toString().replace(/[^\d.]/g, ''),
+                    vibration_isolators_cost: (fanData.vibration_isolators_cost || '0').toString().replace(/[^\d.]/g, ''),
+                    drive_pack_cost: (fanData.drive_pack_cost || '0').toString().replace(/[^\d.]/g, ''),
+                    bearing_cost: (fanData.bearing_cost || '0').toString().replace(/[^\d.]/g, ''),
+                    optional_items_cost: (fanData.optional_items_cost || '0').toString().replace(/[^\d.]/g, ''),
+                    flex_connectors_cost: (fanData.flex_connectors_cost || '0').toString().replace(/[^\d.]/g, ''),
+                    bought_out_cost: (fanData.bought_out_cost || '0').toString().replace(/[^\d.]/g, ''),
+                    total_cost: (fanData.total_cost || '0').toString().replace(/[^\d.]/g, ''),
+
+                    // Selling Prices
+                    fabrication_selling_price: (fanData.fabrication_selling_price || '0').toString().replace(/[^\d.]/g, ''),
+                    bought_out_selling_price: (fanData.bought_out_selling_price || '0').toString().replace(/[^\d.]/g, ''),
+                    selling_price: (fanData.total_selling_price || fanData.total_cost || '0').toString().replace(/[^\d.]/g, ''),
+                    margin: (fanData.margin || '0').toString().replace(/[^\d.]/g, ''),
+
+                    // Custom Materials
+                    custom_materials: customMaterials
+                };
+            }).filter(fan => fan !== null);
+
+            // Build query string with all fans data
+            const params = new URLSearchParams({
+                enquiry_number: enquiryNumber,
+                customer_name: customerName,
+                total_fans: fansDataArray.length.toString(),
+                fans_data: JSON.stringify(fansDataArray)
+            });
+
+            // Call the export endpoint with the data
+            fetch(`/export_project?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to export project');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Create a link to download the file
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${enquiryNumber}_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                })
+                .catch(error => {
+                    alert(error.message);
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</body>
+</html> 

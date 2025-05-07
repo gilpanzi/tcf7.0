@@ -1,0 +1,1711 @@
+2025-03-17 18:46:45,389 - root - INFO - Starting application
+2025-03-17 18:46:45,389 - root - INFO - Initializing database tables
+2025-03-17 18:46:45,389 - root - INFO - Database tables initialized successfully
+2025-03-17 18:46:45,480 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 18:46:45,496 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 18:47:03,389 - root - INFO - Rendering main page
+2025-03-17 18:47:03,461 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:47:03] "GET / HTTP/1.1" 200 -
+2025-03-17 18:47:03,580 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:47:03] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 18:47:03,581 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:47:03] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-17 18:47:09,608 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 18:47:09,617 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:47:09] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 18:47:10,722 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 18:47:10,732 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:47:10] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 18:47:11,986 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: II
+2025-03-17 18:47:11,994 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:47:11] "GET /get_available_arrangements/BC-SW/122/II HTTP/1.1" 200 -
+2025-03-17 18:47:22,060 - root - INFO - Calculating fan data
+2025-03-17 18:47:22,067 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-17 18:47:22,067 - root - ERROR - Error calculating fan weight: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+Traceback (most recent call last):
+  File "C:\Abdul - Work\Personal Projects\TCF Pricing Tool\app.py", line 209, in calculate_fan_weight
+    arrangement = int(specifications.get('Arrangement'))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2025-03-17 18:47:22,070 - root - ERROR - Error in fan weight calculation: {'error': 'Error calculating fan weight', 'details': "int() argument must be a string, a bytes-like object or a real number, not 'NoneType'"}
+2025-03-17 18:47:22,071 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:47:22] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 18:48:39,396 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 18:48:40,521 - root - INFO - Starting application
+2025-03-17 18:48:40,522 - root - INFO - Initializing database tables
+2025-03-17 18:48:40,530 - root - INFO - Database tables initialized successfully
+2025-03-17 18:48:40,603 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 18:48:40,612 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 18:49:22,934 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 18:49:24,076 - root - INFO - Starting application
+2025-03-17 18:49:24,076 - root - INFO - Initializing database tables
+2025-03-17 18:49:24,076 - root - INFO - Database tables initialized successfully
+2025-03-17 18:49:24,153 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 18:49:24,169 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 18:49:44,323 - root - INFO - Rendering main page
+2025-03-17 18:49:44,447 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:49:44] "GET / HTTP/1.1" 200 -
+2025-03-17 18:49:44,688 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:49:44] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 18:49:44,699 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:49:44] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-17 18:49:51,357 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 18:49:51,366 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:49:51] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 18:49:52,494 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 18:49:52,502 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:49:52] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 18:49:53,683 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: II
+2025-03-17 18:49:53,687 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:49:53] "GET /get_available_arrangements/BC-SW/122/II HTTP/1.1" 200 -
+2025-03-17 18:50:00,828 - root - INFO - Calculating fan data
+2025-03-17 18:50:00,834 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-17 18:50:00,834 - root - ERROR - Arrangement value is missing
+2025-03-17 18:50:00,836 - root - ERROR - Error in fan weight calculation: {'error': 'Missing required specifications', 'missing_fields': ['Arrangement']}
+2025-03-17 18:50:00,836 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:50:00] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 18:51:29,872 - root - INFO - Rendering main page
+2025-03-17 18:51:29,967 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:51:29] "GET / HTTP/1.1" 200 -
+2025-03-17 18:51:30,031 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:51:30] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 18:51:30,031 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:51:30] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-17 18:51:34,558 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 18:51:34,566 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:51:34] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 18:51:35,626 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 18:51:35,634 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:51:35] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 18:51:36,601 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: I
+2025-03-17 18:51:36,611 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:51:36] "GET /get_available_arrangements/BC-SW/122/I HTTP/1.1" 200 -
+2025-03-17 18:51:47,539 - root - INFO - Calculating fan data
+2025-03-17 18:51:47,544 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-17 18:51:47,544 - root - ERROR - Arrangement value is missing
+2025-03-17 18:51:47,544 - root - ERROR - Error in fan weight calculation: {'error': 'Missing required specifications', 'missing_fields': ['Arrangement']}
+2025-03-17 18:51:47,547 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:51:47] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 18:53:27,093 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 18:53:28,139 - root - INFO - Starting application
+2025-03-17 18:53:28,139 - root - INFO - Initializing database tables
+2025-03-17 18:53:28,139 - root - INFO - Database tables initialized successfully
+2025-03-17 18:53:28,213 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 18:53:28,222 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 18:53:42,393 - root - INFO - Rendering main page
+2025-03-17 18:53:42,505 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:53:42] "GET / HTTP/1.1" 200 -
+2025-03-17 18:53:42,626 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:53:42] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-17 18:53:42,626 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:53:42] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 18:53:50,212 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 18:53:50,222 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:53:50] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 18:53:51,203 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 18:53:51,211 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:53:51] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 18:53:52,202 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: II
+2025-03-17 18:53:52,212 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:53:52] "GET /get_available_arrangements/BC-SW/122/II HTTP/1.1" 200 -
+2025-03-17 18:54:00,124 - root - INFO - Calculating fan data
+2025-03-17 18:54:00,132 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': 'II', 'Arrangement': 4}
+2025-03-17 18:54:00,133 - root - ERROR - Error calculating fan weight: No item with that key
+Traceback (most recent call last):
+  File "C:\Abdul - Work\Personal Projects\TCF Pricing Tool\app.py", line 258, in calculate_fan_weight
+    shaft_diameter = int(fan_weight_row['Shaft Dia']) if fan_weight_row['Shaft Dia'] is not None else None
+                                                         ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+IndexError: No item with that key
+2025-03-17 18:54:00,134 - root - ERROR - Error in calculate_fan: too many values to unpack (expected 4)
+Traceback (most recent call last):
+  File "C:\Abdul - Work\Personal Projects\TCF Pricing Tool\app.py", line 828, in calculate_fan
+    bare_fan_weight, no_of_isolators, shaft_diameter, error = calculate_fan_weight(cursor, data, data.get('accessories', {}))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 4)
+2025-03-17 18:54:00,134 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:54:00] "[35m[1mPOST /calculate_fan HTTP/1.1[0m" 500 -
+2025-03-17 18:55:23,029 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_fanmodels.py', reloading
+2025-03-17 18:55:24,229 - root - INFO - Starting application
+2025-03-17 18:55:24,229 - root - INFO - Initializing database tables
+2025-03-17 18:55:24,235 - root - INFO - Database tables initialized successfully
+2025-03-17 18:55:24,318 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 18:55:24,325 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 18:55:25,372 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 18:57:41,548 - root - INFO - Starting application
+2025-03-17 18:57:41,550 - root - INFO - Initializing database tables
+2025-03-17 18:57:41,552 - root - INFO - Database tables initialized successfully
+2025-03-17 18:57:41,679 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-17 18:57:41,679 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-17 18:57:41,685 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 18:57:42,763 - root - INFO - Starting application
+2025-03-17 18:57:42,769 - root - INFO - Initializing database tables
+2025-03-17 18:57:42,779 - root - INFO - Database tables initialized successfully
+2025-03-17 18:57:42,851 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 18:57:42,854 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 18:57:52,802 - root - INFO - Rendering main page
+2025-03-17 18:57:52,888 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:57:52] "GET / HTTP/1.1" 200 -
+2025-03-17 18:57:53,026 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:57:53] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 18:57:53,028 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:57:53] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-17 18:59:37,018 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 18:59:37,028 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:59:37] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 18:59:38,194 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 18:59:38,205 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:59:38] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 18:59:39,150 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: II
+2025-03-17 18:59:39,158 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:59:39] "GET /get_available_arrangements/BC-SW/122/II HTTP/1.1" 200 -
+2025-03-17 18:59:46,568 - root - INFO - Calculating fan data
+2025-03-17 18:59:46,576 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': 'II', 'Arrangement': 4}
+2025-03-17 18:59:46,578 - root - ERROR - Error calculating fan weight: No item with that key
+Traceback (most recent call last):
+  File "C:\Abdul - Work\Personal Projects\TCF Pricing Tool\app.py", line 257, in calculate_fan_weight
+    shaft_diameter = int(fan_weight_row['Shaft Dia']) if fan_weight_row['Shaft Dia'] is not None else None
+                                                         ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+IndexError: No item with that key
+2025-03-17 18:59:46,582 - root - ERROR - Error in fan weight calculation: {'error': 'Error calculating fan weight', 'details': 'No item with that key'}
+2025-03-17 18:59:46,582 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 18:59:46] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 19:02:31,719 - root - INFO - Starting application
+2025-03-17 19:02:31,719 - root - INFO - Initializing database tables
+2025-03-17 19:02:31,726 - root - INFO - Database tables initialized successfully
+2025-03-17 19:02:31,803 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-17 19:02:31,803 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-17 19:02:31,807 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 19:02:32,921 - root - INFO - Starting application
+2025-03-17 19:02:32,921 - root - INFO - Initializing database tables
+2025-03-17 19:02:32,929 - root - INFO - Database tables initialized successfully
+2025-03-17 19:02:32,991 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 19:02:32,996 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 19:48:50,535 - root - INFO - Starting application
+2025-03-17 19:48:50,536 - root - INFO - Initializing database tables
+2025-03-17 19:48:50,558 - root - INFO - Database tables initialized successfully
+2025-03-17 19:48:50,672 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-17 19:48:50,672 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-17 19:48:50,679 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 19:48:51,634 - root - INFO - Starting application
+2025-03-17 19:48:51,636 - root - INFO - Initializing database tables
+2025-03-17 19:48:51,644 - root - INFO - Database tables initialized successfully
+2025-03-17 19:48:51,698 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 19:48:51,707 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 19:49:12,812 - root - INFO - Rendering main page
+2025-03-17 19:49:12,922 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:49:12] "GET / HTTP/1.1" 200 -
+2025-03-17 19:49:13,084 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:49:13] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 19:49:13,084 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:49:13] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-17 19:49:20,060 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 19:49:20,070 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:49:20] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 19:49:21,284 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 19:49:21,293 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:49:21] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 19:49:22,768 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: II
+2025-03-17 19:49:22,777 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:49:22] "GET /get_available_arrangements/BC-SW/122/II HTTP/1.1" 200 -
+2025-03-17 19:49:32,589 - root - INFO - Calculating fan data
+2025-03-17 19:49:32,595 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': 'II', 'Arrangement': 4}
+2025-03-17 19:49:32,598 - root - ERROR - Error calculating fan weight: No item with that key
+Traceback (most recent call last):
+  File "C:\Abdul - Work\Personal Projects\TCF Pricing Tool\app.py", line 244, in calculate_fan_weight
+    shaft_diameter = int(fan_weight_row['Shaft Dia']) if fan_weight_row['Shaft Dia'] is not None else None
+                                                         ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+IndexError: No item with that key
+2025-03-17 19:49:32,601 - root - ERROR - Error in fan weight calculation: {'error': 'Error calculating fan weight', 'details': 'No item with that key'}
+2025-03-17 19:49:32,602 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:49:32] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 19:51:35,640 - root - INFO - Starting application
+2025-03-17 19:51:35,640 - root - INFO - Initializing database tables
+2025-03-17 19:51:35,647 - root - INFO - Database tables initialized successfully
+2025-03-17 19:51:35,730 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-17 19:51:35,730 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-17 19:51:35,740 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 19:51:36,710 - root - INFO - Starting application
+2025-03-17 19:51:36,710 - root - INFO - Initializing database tables
+2025-03-17 19:51:36,718 - root - INFO - Database tables initialized successfully
+2025-03-17 19:51:36,783 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 19:51:36,787 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 19:51:51,937 - root - INFO - Rendering main page
+2025-03-17 19:51:52,013 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:51:52] "GET / HTTP/1.1" 200 -
+2025-03-17 19:51:52,140 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:51:52] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-17 19:51:52,140 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:51:52] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 19:52:00,352 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 19:52:00,361 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:52:00] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 19:52:01,767 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 19:52:01,776 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:52:01] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 19:52:02,768 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: I
+2025-03-17 19:52:02,777 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:52:02] "GET /get_available_arrangements/BC-SW/122/I HTTP/1.1" 200 -
+2025-03-17 19:52:10,795 - root - INFO - Calculating fan data
+2025-03-17 19:52:10,803 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': 'I', 'Arrangement': 4}
+2025-03-17 19:52:10,806 - root - ERROR - Error calculating fan weight: No item with that key
+Traceback (most recent call last):
+  File "C:\Abdul - Work\Personal Projects\TCF Pricing Tool\app.py", line 258, in calculate_fan_weight
+    shaft_diameter = int(fan_weight_row['Shaft Dia']) if fan_weight_row['Shaft Dia'] is not None else None
+                                                         ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+IndexError: No item with that key
+2025-03-17 19:52:10,810 - root - ERROR - Error in fan weight calculation: {'error': 'Error calculating fan weight', 'details': 'No item with that key'}
+2025-03-17 19:52:10,811 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:52:10] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 19:59:27,348 - root - INFO - Starting application
+2025-03-17 19:59:27,348 - root - INFO - Initializing database tables
+2025-03-17 19:59:27,364 - root - INFO - Database tables initialized successfully
+2025-03-17 19:59:27,493 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-17 19:59:27,494 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-17 19:59:27,496 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 19:59:28,543 - root - INFO - Starting application
+2025-03-17 19:59:28,543 - root - INFO - Initializing database tables
+2025-03-17 19:59:28,543 - root - INFO - Database tables initialized successfully
+2025-03-17 19:59:28,643 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 19:59:28,653 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 19:59:32,090 - root - INFO - Rendering main page
+2025-03-17 19:59:32,202 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:59:32] "GET / HTTP/1.1" 200 -
+2025-03-17 19:59:32,326 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:59:32] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 19:59:32,341 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:59:32] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-17 19:59:37,697 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 19:59:37,706 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:59:37] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 19:59:38,721 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 19:59:38,731 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:59:38] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 19:59:39,834 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: I
+2025-03-17 19:59:39,842 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:59:39] "GET /get_available_arrangements/BC-SW/122/I HTTP/1.1" 200 -
+2025-03-17 19:59:55,039 - root - INFO - Calculating fan data
+2025-03-17 19:59:55,044 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': 'I', 'Arrangement': 1}
+2025-03-17 19:59:55,049 - root - ERROR - Error calculating fan weight: 'sqlite3.Row' object has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\Abdul - Work\Personal Projects\TCF Pricing Tool\app.py", line 258, in calculate_fan_weight
+    shaft_diameter = int(fan_weight_row.get('Shaft Dia', 0)) if fan_weight_row.get('Shaft Dia') is not None else None
+                                                                ^^^^^^^^^^^^^^^^^^
+AttributeError: 'sqlite3.Row' object has no attribute 'get'
+2025-03-17 19:59:55,056 - root - ERROR - Error in fan weight calculation: {'error': 'Error calculating fan weight', 'details': "'sqlite3.Row' object has no attribute 'get'"}
+2025-03-17 19:59:55,057 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 19:59:55] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 20:01:13,543 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 20:01:13,576 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:01:14,691 - root - INFO - Starting application
+2025-03-17 20:01:14,692 - root - INFO - Initializing database tables
+2025-03-17 20:01:14,692 - root - INFO - Database tables initialized successfully
+2025-03-17 20:01:14,758 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:01:14,775 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:01:41,633 - root - INFO - Starting application
+2025-03-17 20:01:41,633 - root - INFO - Initializing database tables
+2025-03-17 20:01:41,636 - root - INFO - Database tables initialized successfully
+2025-03-17 20:01:41,722 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-17 20:01:41,722 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-17 20:01:41,722 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:01:42,702 - root - INFO - Starting application
+2025-03-17 20:01:42,702 - root - INFO - Initializing database tables
+2025-03-17 20:01:42,725 - root - INFO - Database tables initialized successfully
+2025-03-17 20:01:42,820 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:01:42,835 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:01:48,877 - root - INFO - Rendering main page
+2025-03-17 20:01:48,957 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:01:48] "GET / HTTP/1.1" 200 -
+2025-03-17 20:01:49,113 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:01:49] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-17 20:01:49,113 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:01:49] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 20:01:55,208 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 20:01:55,219 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:01:55] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 20:01:56,483 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 20:01:56,492 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:01:56] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 20:01:57,855 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: I
+2025-03-17 20:01:57,864 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:01:57] "GET /get_available_arrangements/BC-SW/122/I HTTP/1.1" 200 -
+2025-03-17 20:02:10,288 - root - INFO - Calculating fan data
+2025-03-17 20:02:10,295 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': 'I', 'Arrangement': 4}
+2025-03-17 20:02:10,299 - root - ERROR - Error calculating fan weight: No item with that key
+Traceback (most recent call last):
+  File "C:\Abdul - Work\Personal Projects\TCF Pricing Tool\app.py", line 258, in calculate_fan_weight
+    shaft_diameter = int(fan_weight_row['Shaft Dia']) if fan_weight_row['Shaft Dia'] is not None else 0
+                                                         ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+IndexError: No item with that key
+2025-03-17 20:02:10,303 - root - ERROR - Error in fan weight calculation: {'error': 'Error calculating fan weight', 'details': 'No item with that key'}
+2025-03-17 20:02:10,304 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:02:10] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 20:02:54,779 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:02:54] "[31m[1mGET /calculate_fan HTTP/1.1[0m" 405 -
+2025-03-17 20:03:35,787 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 20:03:35,820 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:03:35,904 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 20:03:35,941 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:03:36,692 - root - INFO - Starting application
+2025-03-17 20:03:36,692 - root - INFO - Initializing database tables
+2025-03-17 20:03:36,708 - root - INFO - Database tables initialized successfully
+2025-03-17 20:03:36,758 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:03:36,775 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:03:36,825 - root - INFO - Starting application
+2025-03-17 20:03:36,825 - root - INFO - Initializing database tables
+2025-03-17 20:03:36,839 - root - INFO - Database tables initialized successfully
+2025-03-17 20:03:36,892 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:03:36,909 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:03:46,887 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 20:03:46,942 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:03:47,002 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 20:03:47,036 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:03:47,884 - root - INFO - Starting application
+2025-03-17 20:03:47,885 - root - INFO - Initializing database tables
+2025-03-17 20:03:47,885 - root - INFO - Database tables initialized successfully
+2025-03-17 20:03:47,947 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:03:47,963 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:03:47,973 - root - INFO - Starting application
+2025-03-17 20:03:47,973 - root - INFO - Initializing database tables
+2025-03-17 20:03:47,986 - root - INFO - Database tables initialized successfully
+2025-03-17 20:03:48,051 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:03:48,057 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:03:55,345 - root - INFO - Rendering main page
+2025-03-17 20:03:55,457 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:03:55] "GET / HTTP/1.1" 200 -
+2025-03-17 20:03:55,622 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:03:55] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 20:03:55,623 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:03:55] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-17 20:04:00,677 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 20:04:00,688 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:04:00] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 20:04:01,852 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 20:04:01,862 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:04:01] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 20:04:02,831 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: I
+2025-03-17 20:04:02,839 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:04:02] "GET /get_available_arrangements/BC-SW/122/I HTTP/1.1" 200 -
+2025-03-17 20:04:15,201 - root - INFO - Calculating fan data
+2025-03-17 20:04:15,210 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': 'I', 'Arrangement': 4}
+2025-03-17 20:04:15,214 - root - INFO - Successfully calculated total fan weight: 60.0
+2025-03-17 20:04:15,214 - root - INFO - Calculating fabrication cost for vendor: Air Master, material: ms, weight: 60.0
+2025-03-17 20:04:15,214 - root - ERROR - No matching vendor price found for vendor: Air Master, weight: 60.0
+2025-03-17 20:04:15,214 - root - ERROR - Error in cost calculation: {'error': 'No matching vendor price found', 'details': {'vendor': 'Air Master', 'weight': 60.0}}
+2025-03-17 20:04:15,223 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:04:15] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 20:05:26,826 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 20:05:26,862 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:05:26,941 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 20:05:26,976 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:05:27,801 - root - INFO - Starting application
+2025-03-17 20:05:27,801 - root - INFO - Initializing database tables
+2025-03-17 20:05:27,817 - root - INFO - Database tables initialized successfully
+2025-03-17 20:05:27,873 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:05:27,883 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:05:27,905 - root - INFO - Starting application
+2025-03-17 20:05:27,905 - root - INFO - Initializing database tables
+2025-03-17 20:05:27,910 - root - INFO - Database tables initialized successfully
+2025-03-17 20:05:27,960 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:05:27,967 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:05:39,724 - root - INFO - Rendering main page
+2025-03-17 20:05:39,822 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:05:39] "GET / HTTP/1.1" 200 -
+2025-03-17 20:05:39,957 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:05:39] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-17 20:05:39,957 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:05:39] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 20:05:45,462 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-17 20:05:45,472 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:05:45] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-17 20:05:46,382 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-17 20:05:46,392 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:05:46] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-17 20:05:47,689 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: I
+2025-03-17 20:05:47,698 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:05:47] "GET /get_available_arrangements/BC-SW/122/I HTTP/1.1" 200 -
+2025-03-17 20:05:55,940 - root - INFO - Calculating fan data
+2025-03-17 20:05:55,950 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': 'I', 'Arrangement': 4}
+2025-03-17 20:05:55,956 - root - INFO - Successfully calculated total fan weight: 60.0
+2025-03-17 20:05:55,961 - root - INFO - Calculating fabrication cost for vendor: Air Master, material: ms, weight: 60.0
+2025-03-17 20:05:55,962 - root - ERROR - No matching vendor price found for vendor: Air Master, weight: 60.0
+2025-03-17 20:05:55,962 - root - ERROR - Error in cost calculation: {'error': 'No matching vendor price found', 'details': {'vendor': 'Air Master', 'weight': 60.0}}
+2025-03-17 20:05:55,963 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:05:55] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-17 20:05:59,923 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:05:59] "[31m[1mGET /calculate_fan HTTP/1.1[0m" 405 -
+2025-03-17 20:07:16,864 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 20:07:16,886 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-17 20:07:16,889 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:07:16,921 - werkzeug - INFO -  * Restarting with stat
+2025-03-17 20:07:17,814 - root - INFO - Starting application
+2025-03-17 20:07:17,814 - root - INFO - Initializing database tables
+2025-03-17 20:07:17,832 - root - INFO - Database tables initialized successfully
+2025-03-17 20:07:17,858 - root - INFO - Starting application
+2025-03-17 20:07:17,858 - root - INFO - Initializing database tables
+2025-03-17 20:07:17,867 - root - INFO - Database tables initialized successfully
+2025-03-17 20:07:17,896 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:07:17,901 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:07:17,921 - werkzeug - WARNING -  * Debugger is active!
+2025-03-17 20:07:17,932 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-17 20:07:52,142 - root - INFO - Rendering main page
+2025-03-17 20:07:52,234 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:07:52] "GET / HTTP/1.1" 200 -
+2025-03-17 20:07:52,356 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:07:52] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-17 20:07:52,357 - werkzeug - INFO - 127.0.0.1 - - [17/Mar/2025 20:07:52] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 09:25:23,542 - root - INFO - Starting application
+2025-03-18 09:25:23,543 - root - INFO - Initializing database tables
+2025-03-18 09:25:23,553 - root - INFO - Database tables initialized successfully
+2025-03-18 09:25:23,814 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-18 09:25:23,816 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-18 09:25:23,823 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:25:24,757 - root - INFO - Starting application
+2025-03-18 09:25:24,757 - root - INFO - Initializing database tables
+2025-03-18 09:25:24,764 - root - INFO - Database tables initialized successfully
+2025-03-18 09:25:24,815 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:25:24,821 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:25:46,779 - root - INFO - Rendering main page
+2025-03-18 09:25:46,893 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:25:46] "GET / HTTP/1.1" 200 -
+2025-03-18 09:25:47,503 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:25:47] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 09:25:47,503 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:25:47] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 09:25:56,258 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 09:25:56,269 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:25:56] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 09:25:57,394 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-18 09:25:57,403 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:25:57] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-18 09:25:58,708 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: 2
+2025-03-18 09:25:58,717 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:25:58] "GET /get_available_arrangements/BC-SW/122/2 HTTP/1.1" 200 -
+2025-03-18 09:26:15,265 - root - INFO - Calculating fan data
+2025-03-18 09:26:15,275 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': '2', 'Arrangement': 4}
+2025-03-18 09:26:15,347 - root - INFO - Successfully calculated total fan weight: 82.0
+2025-03-18 09:26:15,353 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 82.0
+2025-03-18 09:26:15,354 - root - INFO - Calculated fabrication cost: 18450.0
+2025-03-18 09:26:15,355 - root - INFO - Calculating bought out components
+2025-03-18 09:26:15,437 - root - INFO - Successfully calculated fan data - Weight: 82.0, Cost: 59562.5
+2025-03-18 09:26:15,438 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:26:15] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 09:26:59,348 - root - INFO - Calculating fan data
+2025-03-18 09:26:59,359 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': '2', 'Arrangement': 4}
+2025-03-18 09:26:59,413 - root - INFO - Successfully calculated total fan weight: 82.0
+2025-03-18 09:26:59,419 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 82.0
+2025-03-18 09:26:59,420 - root - INFO - Calculated fabrication cost: 18450.0
+2025-03-18 09:26:59,421 - root - INFO - Calculating bought out components
+2025-03-18 09:26:59,431 - root - INFO - Successfully calculated fan data - Weight: 82.0, Cost: 59562.5
+2025-03-18 09:26:59,431 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:26:59] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 09:27:22,137 - root - INFO - Calculating fan data
+2025-03-18 09:27:22,148 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '122', 'Class': '2', 'Arrangement': 1}
+2025-03-18 09:27:22,193 - root - INFO - Successfully calculated total fan weight: 115.0
+2025-03-18 09:27:22,199 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 115.0
+2025-03-18 09:27:22,200 - root - INFO - Calculated fabrication cost: 25875.0
+2025-03-18 09:27:22,200 - root - INFO - Calculating bought out components
+2025-03-18 09:27:22,212 - root - INFO - Successfully calculated fan data - Weight: 115.0, Cost: 250500.0
+2025-03-18 09:27:22,212 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:27:22] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 09:35:51,229 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 09:35:51,272 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:35:52,180 - root - INFO - Starting application
+2025-03-18 09:35:52,181 - root - INFO - Initializing database tables
+2025-03-18 09:35:52,189 - root - INFO - Database tables initialized successfully
+2025-03-18 09:35:52,254 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:35:52,260 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:36:48,714 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\create_tables.py', reloading
+2025-03-18 09:36:48,741 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:36:49,710 - root - INFO - Starting application
+2025-03-18 09:36:49,710 - root - INFO - Initializing database tables
+2025-03-18 09:36:49,720 - root - INFO - Database tables initialized successfully
+2025-03-18 09:36:49,786 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:36:49,787 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:37:05,944 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_schema.py', reloading
+2025-03-18 09:37:05,979 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:37:06,913 - root - INFO - Starting application
+2025-03-18 09:37:06,914 - root - INFO - Initializing database tables
+2025-03-18 09:37:06,925 - root - INFO - Database tables initialized successfully
+2025-03-18 09:37:06,987 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:37:06,987 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:38:17,598 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_motor_prices.py', reloading
+2025-03-18 09:38:17,638 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:38:18,668 - root - INFO - Starting application
+2025-03-18 09:38:18,668 - root - INFO - Initializing database tables
+2025-03-18 09:38:18,680 - root - INFO - Database tables initialized successfully
+2025-03-18 09:38:18,754 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:38:18,764 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:39:21,339 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\create_tables.py', reloading
+2025-03-18 09:39:21,373 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:39:22,363 - root - INFO - Starting application
+2025-03-18 09:39:22,363 - root - INFO - Initializing database tables
+2025-03-18 09:39:22,367 - root - INFO - Database tables initialized successfully
+2025-03-18 09:39:22,418 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:39:22,418 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:39:36,591 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\create_tables.py', reloading
+2025-03-18 09:39:36,635 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:39:37,551 - root - INFO - Starting application
+2025-03-18 09:39:37,565 - root - INFO - Initializing database tables
+2025-03-18 09:39:37,574 - root - INFO - Database tables initialized successfully
+2025-03-18 09:39:37,633 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:39:37,636 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:39:53,796 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\create_tables.py', reloading
+2025-03-18 09:39:53,829 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:39:54,752 - root - INFO - Starting application
+2025-03-18 09:39:54,753 - root - INFO - Initializing database tables
+2025-03-18 09:39:54,760 - root - INFO - Database tables initialized successfully
+2025-03-18 09:39:54,807 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:39:54,819 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:40:15,031 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\create_tables.py', reloading
+2025-03-18 09:40:15,068 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:40:16,040 - root - INFO - Starting application
+2025-03-18 09:40:16,041 - root - INFO - Initializing database tables
+2025-03-18 09:40:16,050 - root - INFO - Database tables initialized successfully
+2025-03-18 09:40:16,103 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:40:16,106 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:40:35,292 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\create_tables.py', reloading
+2025-03-18 09:40:35,324 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:40:36,257 - root - INFO - Starting application
+2025-03-18 09:40:36,258 - root - INFO - Initializing database tables
+2025-03-18 09:40:36,267 - root - INFO - Database tables initialized successfully
+2025-03-18 09:40:36,334 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:40:36,334 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:41:33,891 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\create_tables.py', reloading
+2025-03-18 09:41:33,937 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:41:34,953 - root - INFO - Starting application
+2025-03-18 09:41:34,953 - root - INFO - Initializing database tables
+2025-03-18 09:41:34,953 - root - INFO - Database tables initialized successfully
+2025-03-18 09:41:35,035 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:41:35,037 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:41:51,055 - root - INFO - Starting application
+2025-03-18 09:41:51,055 - root - INFO - Initializing database tables
+2025-03-18 09:41:51,060 - root - INFO - Database tables initialized successfully
+2025-03-18 09:41:51,150 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-03-18 09:41:51,150 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-03-18 09:41:51,158 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:41:52,241 - root - INFO - Starting application
+2025-03-18 09:41:52,241 - root - INFO - Initializing database tables
+2025-03-18 09:41:52,251 - root - INFO - Database tables initialized successfully
+2025-03-18 09:41:52,304 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:41:52,309 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:44:51,602 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 09:44:51,635 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:44:51,736 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 09:44:51,765 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:44:52,476 - root - INFO - Starting application
+2025-03-18 09:44:52,477 - root - INFO - Initializing database tables
+2025-03-18 09:44:52,484 - root - INFO - Database tables initialized successfully
+2025-03-18 09:44:52,532 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:44:52,543 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:44:52,614 - root - INFO - Starting application
+2025-03-18 09:44:52,615 - root - INFO - Initializing database tables
+2025-03-18 09:44:52,623 - root - INFO - Database tables initialized successfully
+2025-03-18 09:44:52,677 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:44:52,681 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:45:04,667 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 09:45:04,707 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:45:04,802 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 09:45:04,833 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:45:05,612 - root - INFO - Starting application
+2025-03-18 09:45:05,612 - root - INFO - Initializing database tables
+2025-03-18 09:45:05,620 - root - INFO - Database tables initialized successfully
+2025-03-18 09:45:05,680 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:45:05,685 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:45:05,722 - root - INFO - Starting application
+2025-03-18 09:45:05,722 - root - INFO - Initializing database tables
+2025-03-18 09:45:05,731 - root - INFO - Database tables initialized successfully
+2025-03-18 09:45:05,776 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:45:05,776 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:47:23,856 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 09:47:23,893 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:47:23,933 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 09:47:23,967 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:47:24,820 - root - INFO - Starting application
+2025-03-18 09:47:24,821 - root - INFO - Initializing database tables
+2025-03-18 09:47:24,823 - root - INFO - Database tables initialized successfully
+2025-03-18 09:47:24,872 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:47:24,872 - root - INFO - Starting application
+2025-03-18 09:47:24,872 - root - INFO - Initializing database tables
+2025-03-18 09:47:24,882 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:47:24,887 - root - INFO - Database tables initialized successfully
+2025-03-18 09:47:24,940 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:47:24,942 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:47:54,061 - root - INFO - Rendering main page
+2025-03-18 09:47:54,158 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:47:54] "GET / HTTP/1.1" 200 -
+2025-03-18 09:47:54,307 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:47:54] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 09:47:54,323 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:47:54] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 09:48:00,434 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 09:48:00,442 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:48:00] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 09:48:02,148 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-18 09:48:02,159 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:48:02] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-18 09:48:03,323 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: 2
+2025-03-18 09:48:03,330 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:48:03] "GET /get_available_arrangements/BC-SW/122/2 HTTP/1.1" 200 -
+2025-03-18 09:52:14,805 - root - INFO - Rendering main page
+2025-03-18 09:52:14,906 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:52:14] "GET / HTTP/1.1" 200 -
+2025-03-18 09:52:14,944 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:52:14] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 09:52:14,945 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:52:14] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 09:52:22,365 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 09:52:22,373 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:52:22] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 09:52:23,448 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-18 09:52:23,458 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:52:23] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-18 09:52:25,457 - root - INFO - Fetching available classes for fan model: BC-SW, size: 200
+2025-03-18 09:52:25,466 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:52:25] "GET /get_available_classes/BC-SW/200 HTTP/1.1" 200 -
+2025-03-18 09:52:27,329 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 200, class: 2
+2025-03-18 09:52:27,339 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:52:27] "GET /get_available_arrangements/BC-SW/200/2 HTTP/1.1" 200 -
+2025-03-18 09:53:52,374 - root - INFO - Rendering main page
+2025-03-18 09:53:52,442 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:53:52] "GET / HTTP/1.1" 200 -
+2025-03-18 09:53:52,507 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:53:52] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 09:53:52,508 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:53:52] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 09:53:57,539 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 09:53:57,548 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:53:57] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 09:53:59,190 - root - INFO - Fetching available classes for fan model: BC-SW, size: 300
+2025-03-18 09:53:59,200 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:53:59] "GET /get_available_classes/BC-SW/300 HTTP/1.1" 200 -
+2025-03-18 09:54:00,868 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 300, class: 2
+2025-03-18 09:54:00,873 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:54:00] "GET /get_available_arrangements/BC-SW/300/2 HTTP/1.1" 200 -
+2025-03-18 09:54:25,469 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 09:54:25,469 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 09:54:25,521 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:54:25,524 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:54:26,452 - root - INFO - Starting application
+2025-03-18 09:54:26,452 - root - INFO - Starting application
+2025-03-18 09:54:26,452 - root - INFO - Initializing database tables
+2025-03-18 09:54:26,452 - root - INFO - Initializing database tables
+2025-03-18 09:54:26,470 - root - INFO - Database tables initialized successfully
+2025-03-18 09:54:26,471 - root - INFO - Database tables initialized successfully
+2025-03-18 09:54:26,536 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:54:26,536 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:54:26,552 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:54:26,552 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:58:13,369 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 09:58:13,374 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 09:58:13,448 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:58:13,450 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 09:58:14,560 - root - INFO - Starting application
+2025-03-18 09:58:14,560 - root - INFO - Initializing database tables
+2025-03-18 09:58:14,569 - root - INFO - Database tables initialized successfully
+2025-03-18 09:58:14,588 - root - INFO - Starting application
+2025-03-18 09:58:14,589 - root - INFO - Initializing database tables
+2025-03-18 09:58:14,598 - root - INFO - Database tables initialized successfully
+2025-03-18 09:58:14,648 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:58:14,661 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:58:14,681 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 09:58:14,687 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 09:59:31,691 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:59:31] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 09:59:35,091 - root - INFO - Rendering main page
+2025-03-18 09:59:35,204 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:59:35] "GET / HTTP/1.1" 200 -
+2025-03-18 09:59:35,269 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:59:35] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 09:59:35,271 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:59:35] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 09:59:42,625 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 09:59:42,635 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:59:42] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 09:59:43,859 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-18 09:59:43,868 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:59:43] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-18 09:59:44,934 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: 2
+2025-03-18 09:59:44,944 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 09:59:44] "GET /get_available_arrangements/BC-SW/122/2 HTTP/1.1" 200 -
+2025-03-18 10:02:02,286 - root - INFO - Rendering main page
+2025-03-18 10:02:02,367 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:02] "GET / HTTP/1.1" 200 -
+2025-03-18 10:02:02,419 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:02] "GET /static/css/style.css HTTP/1.1" 200 -
+2025-03-18 10:02:02,420 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:02] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:02:02,868 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:02:02,873 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:02:02,874 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:02:02,875 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:02] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:02:02,879 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:02] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-03-18 10:02:10,815 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 10:02:10,821 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:02:10,829 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:10] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 10:02:10,832 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:02:10,833 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:02:10,835 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:10] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:02:11,821 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-18 10:02:11,826 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:02:11,830 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:11] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-18 10:02:11,835 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:02:11,836 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:02:11,838 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:11] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:02:13,154 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: 2
+2025-03-18 10:02:13,168 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:02:13,169 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:13] "GET /get_available_arrangements/BC-SW/122/2 HTTP/1.1" 200 -
+2025-03-18 10:02:13,174 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:02:13,175 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:02:13,176 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:13] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:02:17,865 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:02:17,866 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:02:17,874 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:02:17,874 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:02:17,874 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:02:17,875 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:02:17,876 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:17] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:02:17,877 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:17] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:02:26,194 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:02:26,200 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:02:26,202 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:02:26,203 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:26] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:02:27,477 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:02:27,492 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:02:27,493 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:02:27,495 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:02:27] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:05:30,556 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 10:05:30,587 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:05:30,673 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 10:05:30,702 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:05:31,478 - root - INFO - Starting application
+2025-03-18 10:05:31,478 - root - INFO - Initializing database tables
+2025-03-18 10:05:31,486 - root - INFO - Database tables initialized successfully
+2025-03-18 10:05:31,548 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:05:31,554 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:05:31,568 - root - INFO - Starting application
+2025-03-18 10:05:31,568 - root - INFO - Initializing database tables
+2025-03-18 10:05:31,575 - root - INFO - Database tables initialized successfully
+2025-03-18 10:05:31,627 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:05:31,635 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:05:59,837 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\calculations.py', reloading
+2025-03-18 10:05:59,866 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:05:59,917 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\calculations.py', reloading
+2025-03-18 10:05:59,970 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:06:00,777 - root - INFO - Starting application
+2025-03-18 10:06:00,778 - root - INFO - Initializing database tables
+2025-03-18 10:06:00,790 - root - INFO - Database tables initialized successfully
+2025-03-18 10:06:00,836 - root - INFO - Starting application
+2025-03-18 10:06:00,836 - root - INFO - Initializing database tables
+2025-03-18 10:06:00,844 - root - INFO - Database tables initialized successfully
+2025-03-18 10:06:00,846 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:06:00,851 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:06:00,910 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:06:00,915 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:12:46,470 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 10:12:46,476 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 10:12:46,514 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:12:47,458 - root - INFO - Starting application
+2025-03-18 10:12:47,458 - root - INFO - Initializing database tables
+2025-03-18 10:12:47,458 - root - INFO - Starting application
+2025-03-18 10:12:47,458 - root - INFO - Initializing database tables
+2025-03-18 10:12:47,458 - root - INFO - Database tables initialized successfully
+2025-03-18 10:12:47,467 - root - INFO - Database tables initialized successfully
+2025-03-18 10:12:47,523 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:12:47,523 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:12:47,530 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:12:47,530 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:13:06,751 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\calculations.py', reloading
+2025-03-18 10:13:06,754 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\calculations.py', reloading
+2025-03-18 10:13:06,786 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:13:06,788 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:13:07,649 - root - INFO - Starting application
+2025-03-18 10:13:07,650 - root - INFO - Starting application
+2025-03-18 10:13:07,650 - root - INFO - Initializing database tables
+2025-03-18 10:13:07,650 - root - INFO - Initializing database tables
+2025-03-18 10:13:07,658 - root - INFO - Database tables initialized successfully
+2025-03-18 10:13:07,659 - root - INFO - Database tables initialized successfully
+2025-03-18 10:13:07,715 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:13:07,715 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:13:07,721 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:13:07,721 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:15:42,009 - root - INFO - Rendering main page
+2025-03-18 10:15:42,122 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:15:42] "GET / HTTP/1.1" 200 -
+2025-03-18 10:15:42,284 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:15:42] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:15:42,284 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:15:42] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:15:48,278 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:15:48,284 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:15:48,285 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:15:48,287 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:15:48] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:16:50,447 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_schema.py', reloading
+2025-03-18 10:16:50,447 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_schema.py', reloading
+2025-03-18 10:16:50,484 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:16:50,486 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:16:51,408 - root - INFO - Starting application
+2025-03-18 10:16:51,408 - root - INFO - Initializing database tables
+2025-03-18 10:16:51,408 - root - INFO - Starting application
+2025-03-18 10:16:51,408 - root - INFO - Initializing database tables
+2025-03-18 10:16:51,424 - root - INFO - Database tables initialized successfully
+2025-03-18 10:16:51,441 - root - INFO - Database tables initialized successfully
+2025-03-18 10:16:51,490 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:16:51,491 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:16:51,508 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:16:51,517 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:17:09,694 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_fanmodels.py', reloading
+2025-03-18 10:17:09,714 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_fanmodels.py', reloading
+2025-03-18 10:17:09,725 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:17:09,747 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:17:10,680 - root - INFO - Starting application
+2025-03-18 10:17:10,681 - root - INFO - Initializing database tables
+2025-03-18 10:17:10,685 - root - INFO - Database tables initialized successfully
+2025-03-18 10:17:10,702 - root - INFO - Starting application
+2025-03-18 10:17:10,703 - root - INFO - Initializing database tables
+2025-03-18 10:17:10,711 - root - INFO - Database tables initialized successfully
+2025-03-18 10:17:10,745 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:17:10,745 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:17:10,765 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:17:10,770 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:17:28,948 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 10:17:28,950 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 10:17:28,985 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:17:28,985 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:17:29,933 - root - INFO - Starting application
+2025-03-18 10:17:29,933 - root - INFO - Initializing database tables
+2025-03-18 10:17:29,935 - root - INFO - Database tables initialized successfully
+2025-03-18 10:17:29,942 - root - INFO - Starting application
+2025-03-18 10:17:29,944 - root - INFO - Initializing database tables
+2025-03-18 10:17:29,950 - root - INFO - Database tables initialized successfully
+2025-03-18 10:17:29,996 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:17:30,000 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:17:30,001 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:17:30,005 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:18:11,983 - root - INFO - Rendering main page
+2025-03-18 10:18:12,088 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:18:12] "GET / HTTP/1.1" 200 -
+2025-03-18 10:18:12,265 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:18:12] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:18:12,266 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:18:12] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:18:17,521 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:18:17,527 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:18:17,527 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:18:17,529 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:18:17] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:20:13,908 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\database.py', reloading
+2025-03-18 10:20:13,908 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\database.py', reloading
+2025-03-18 10:20:13,936 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:20:14,902 - root - INFO - Starting application
+2025-03-18 10:20:14,903 - root - INFO - Initializing database tables
+2025-03-18 10:20:14,911 - root - INFO - Starting application
+2025-03-18 10:20:14,911 - root - INFO - Database tables initialized successfully
+2025-03-18 10:20:14,917 - root - INFO - Database tables initialized successfully
+2025-03-18 10:20:14,991 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:20:14,998 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:20:14,999 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:20:15,003 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:20:30,170 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\test_db.py', reloading
+2025-03-18 10:20:30,173 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\test_db.py', reloading
+2025-03-18 10:20:30,214 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:20:30,214 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:20:31,146 - root - INFO - Starting application
+2025-03-18 10:20:31,147 - root - INFO - Starting application
+2025-03-18 10:20:31,147 - root - INFO - Initializing database tables
+2025-03-18 10:20:31,147 - root - INFO - Initializing database tables
+2025-03-18 10:20:31,149 - root - INFO - Database tables initialized successfully
+2025-03-18 10:20:31,158 - root - INFO - Database tables initialized successfully
+2025-03-18 10:20:31,226 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:20:31,226 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:20:31,232 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:20:31,232 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:24:47,856 - root - INFO - Rendering main page
+2025-03-18 10:24:47,972 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:47] "GET / HTTP/1.1" 200 -
+2025-03-18 10:24:48,092 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:48] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:24:48,092 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:48] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:24:55,894 - root - INFO - Rendering main page
+2025-03-18 10:24:55,966 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:55] "GET / HTTP/1.1" 200 -
+2025-03-18 10:24:56,018 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:56] "GET /static/css/style.css HTTP/1.1" 200 -
+2025-03-18 10:24:56,019 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:56] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:24:56,069 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:56] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-03-18 10:24:59,579 - root - INFO - Rendering main page
+2025-03-18 10:24:59,668 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:59] "GET / HTTP/1.1" 200 -
+2025-03-18 10:24:59,738 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:59] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:24:59,739 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:24:59] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 10:25:09,010 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:25:09,017 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:25:09,018 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:25:09,020 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:25:09] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:28:21,439 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_db_data.py', reloading
+2025-03-18 10:28:21,439 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_db_data.py', reloading
+2025-03-18 10:28:21,485 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:28:21,486 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:28:22,454 - root - INFO - Starting application
+2025-03-18 10:28:22,454 - root - INFO - Initializing database tables
+2025-03-18 10:28:22,457 - root - INFO - Starting application
+2025-03-18 10:28:22,457 - root - INFO - Initializing database tables
+2025-03-18 10:28:22,461 - root - INFO - Database tables initialized successfully
+2025-03-18 10:28:22,463 - root - INFO - Database tables initialized successfully
+2025-03-18 10:28:22,515 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:28:22,515 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:28:22,521 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:28:22,521 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:32:34,154 - root - INFO - Rendering main page
+2025-03-18 10:32:34,260 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:34] "GET / HTTP/1.1" 200 -
+2025-03-18 10:32:34,425 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:34] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:32:34,427 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:34] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:32:48,140 - root - INFO - Rendering main page
+2025-03-18 10:32:48,240 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:48] "GET / HTTP/1.1" 200 -
+2025-03-18 10:32:48,298 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:48] "GET /static/css/style.css HTTP/1.1" 200 -
+2025-03-18 10:32:48,304 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:48] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:32:48,348 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:48] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-03-18 10:32:51,440 - root - INFO - Rendering main page
+2025-03-18 10:32:51,527 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:51] "GET / HTTP/1.1" 200 -
+2025-03-18 10:32:51,584 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:51] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 10:32:51,586 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:32:51] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:33:49,757 - root - INFO - Rendering main page
+2025-03-18 10:33:49,845 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:33:49] "GET / HTTP/1.1" 200 -
+2025-03-18 10:33:49,909 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:33:49] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:33:49,910 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:33:49] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:33:57,808 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 10:33:57,808 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:33:57,819 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:33:57,819 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:33:57] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 10:33:57,820 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:33:57,822 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:33:57] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:34:02,305 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-18 10:34:02,311 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:34:02,316 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:34:02] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-18 10:34:02,320 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:34:02,322 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:34:02,324 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:34:02] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:34:07,419 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: 2
+2025-03-18 10:34:07,424 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:34:07,428 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:34:07] "GET /get_available_arrangements/BC-SW/122/2 HTTP/1.1" 200 -
+2025-03-18 10:34:07,435 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:34:07,436 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:34:07,438 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:34:07] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:34:08,727 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:34:08,732 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:34:08,733 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:34:08,734 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:34:08] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:34:14,051 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:34:14,057 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:34:14,059 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:34:14,061 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:34:14] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:34:15,203 - root - INFO - Calculating fan weight for specifications: {}
+2025-03-18 10:34:15,212 - root - ERROR - No matching fan model found for params: ('', '', '', None)
+2025-03-18 10:34:15,213 - root - ERROR - Error calculating weights: {'error': 'No matching fan model found', 'details': {}}
+2025-03-18 10:34:15,215 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:34:15] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:39:27,305 - root - INFO - Rendering main page
+2025-03-18 10:39:27,390 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:39:27] "GET / HTTP/1.1" 200 -
+2025-03-18 10:39:27,428 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:39:27] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:39:27,428 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:39:27] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:48:33,170 - root - INFO - Rendering main page
+2025-03-18 10:48:33,268 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:48:33] "GET / HTTP/1.1" 200 -
+2025-03-18 10:48:33,311 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:48:33] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:48:33,313 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:48:33] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 10:48:43,580 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 10:48:43,591 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:48:43] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 10:48:45,797 - root - INFO - Fetching available classes for fan model: BC-SW, size: 122
+2025-03-18 10:48:45,805 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:48:45] "GET /get_available_classes/BC-SW/122 HTTP/1.1" 200 -
+2025-03-18 10:48:50,126 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 122, class: 2
+2025-03-18 10:48:50,136 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:48:50] "GET /get_available_arrangements/BC-SW/122/2 HTTP/1.1" 200 -
+2025-03-18 10:48:52,279 - root - ERROR - Missing required fields in request
+2025-03-18 10:48:52,280 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:48:52] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:49:01,576 - root - ERROR - Missing required fields in request
+2025-03-18 10:49:01,577 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:49:01] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:49:02,928 - root - ERROR - Missing required fields in request
+2025-03-18 10:49:02,930 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:49:02] "[31m[1mPOST /calculate_fan HTTP/1.1[0m" 400 -
+2025-03-18 10:50:27,372 - root - INFO - Rendering main page
+2025-03-18 10:50:27,478 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:50:27] "GET / HTTP/1.1" 200 -
+2025-03-18 10:50:27,549 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:50:27] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 10:50:27,550 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:50:27] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:50:33,811 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 10:50:33,820 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:50:33] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 10:50:36,668 - root - INFO - Fetching available classes for fan model: BC-SW, size: 245
+2025-03-18 10:50:36,677 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:50:36] "GET /get_available_classes/BC-SW/245 HTTP/1.1" 200 -
+2025-03-18 10:50:38,945 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 245, class: 2
+2025-03-18 10:50:38,954 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:50:38] "GET /get_available_arrangements/BC-SW/245/2 HTTP/1.1" 200 -
+2025-03-18 10:52:19,547 - root - INFO - Rendering main page
+2025-03-18 10:52:19,661 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:52:19] "GET / HTTP/1.1" 200 -
+2025-03-18 10:52:19,725 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:52:19] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:52:19,727 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:52:19] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 10:52:24,413 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 10:52:24,422 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:52:24] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 10:52:28,721 - root - INFO - Fetching available classes for fan model: BC-SW, size: 150
+2025-03-18 10:52:28,731 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:52:28] "GET /get_available_classes/BC-SW/150 HTTP/1.1" 200 -
+2025-03-18 10:52:31,453 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 150, class: 2
+2025-03-18 10:52:31,463 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:52:31] "GET /get_available_arrangements/BC-SW/150/2 HTTP/1.1" 200 -
+2025-03-18 10:54:15,970 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:54:15,971 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:54:16,041 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:54:17,049 - root - INFO - Starting application
+2025-03-18 10:54:17,050 - root - INFO - Initializing database tables
+2025-03-18 10:54:17,050 - root - INFO - Starting application
+2025-03-18 10:54:17,051 - root - INFO - Initializing database tables
+2025-03-18 10:54:17,057 - root - INFO - Database tables initialized successfully
+2025-03-18 10:54:17,057 - root - INFO - Database tables initialized successfully
+2025-03-18 10:54:17,114 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:54:17,114 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:54:17,119 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:54:17,119 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:54:28,258 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:54:28,261 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:54:28,300 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:54:28,302 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:54:29,199 - root - INFO - Starting application
+2025-03-18 10:54:29,200 - root - INFO - Initializing database tables
+2025-03-18 10:54:29,206 - root - INFO - Starting application
+2025-03-18 10:54:29,206 - root - INFO - Initializing database tables
+2025-03-18 10:54:29,207 - root - INFO - Database tables initialized successfully
+2025-03-18 10:54:29,214 - root - INFO - Database tables initialized successfully
+2025-03-18 10:54:29,262 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:54:29,266 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:54:29,267 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:54:29,271 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:54:38,379 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:54:38,383 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:54:38,423 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:54:38,424 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:54:39,382 - root - INFO - Starting application
+2025-03-18 10:54:39,382 - root - INFO - Starting application
+2025-03-18 10:54:39,383 - root - INFO - Initializing database tables
+2025-03-18 10:54:39,383 - root - INFO - Initializing database tables
+2025-03-18 10:54:39,390 - root - INFO - Database tables initialized successfully
+2025-03-18 10:54:39,393 - root - INFO - Database tables initialized successfully
+2025-03-18 10:54:39,447 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:54:39,448 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:54:39,452 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:54:39,452 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:54:53,655 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:54:53,657 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:54:53,695 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:54:53,695 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:54:54,625 - root - INFO - Starting application
+2025-03-18 10:54:54,626 - root - INFO - Initializing database tables
+2025-03-18 10:54:54,634 - root - INFO - Database tables initialized successfully
+2025-03-18 10:54:54,639 - root - INFO - Starting application
+2025-03-18 10:54:54,641 - root - INFO - Initializing database tables
+2025-03-18 10:54:54,650 - root - INFO - Database tables initialized successfully
+2025-03-18 10:54:54,713 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:54:54,727 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:54:54,740 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:54:54,749 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:55:13,966 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:55:13,996 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:55:14,892 - root - INFO - Starting application
+2025-03-18 10:55:14,893 - root - INFO - Initializing database tables
+2025-03-18 10:55:14,903 - root - INFO - Database tables initialized successfully
+2025-03-18 10:55:14,943 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:55:14,960 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:55:14,965 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:55:14,970 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:55:15,923 - root - INFO - Starting application
+2025-03-18 10:55:15,924 - root - INFO - Initializing database tables
+2025-03-18 10:55:15,935 - root - INFO - Database tables initialized successfully
+2025-03-18 10:55:16,012 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:55:16,020 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:55:25,101 - root - INFO - Rendering main page
+2025-03-18 10:55:25,192 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:55:25] "GET / HTTP/1.1" 200 -
+2025-03-18 10:55:25,345 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:55:25] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:55:25,345 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:55:25] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 10:55:29,635 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 10:55:29,645 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:55:29] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 10:55:32,468 - root - INFO - Fetching available classes for fan model: BC-SW, size: 245
+2025-03-18 10:55:32,476 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:55:32] "GET /get_available_classes/BC-SW/245 HTTP/1.1" 200 -
+2025-03-18 10:55:34,111 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 245, class: 1
+2025-03-18 10:55:34,120 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:55:34] "GET /get_available_arrangements/BC-SW/245/1 HTTP/1.1" 200 -
+2025-03-18 10:56:32,744 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:56:32,770 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:56:32,796 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:56:32,805 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:56:33,829 - root - INFO - Starting application
+2025-03-18 10:56:33,830 - root - INFO - Initializing database tables
+2025-03-18 10:56:33,841 - root - INFO - Database tables initialized successfully
+2025-03-18 10:56:33,860 - root - INFO - Starting application
+2025-03-18 10:56:33,861 - root - INFO - Initializing database tables
+2025-03-18 10:56:33,871 - root - INFO - Database tables initialized successfully
+2025-03-18 10:56:33,916 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:56:33,923 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:56:33,934 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:56:33,939 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:56:46,071 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:56:46,094 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:56:46,113 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:56:46,127 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:56:47,208 - root - INFO - Starting application
+2025-03-18 10:56:47,209 - root - INFO - Starting application
+2025-03-18 10:56:47,210 - root - INFO - Initializing database tables
+2025-03-18 10:56:47,210 - root - INFO - Initializing database tables
+2025-03-18 10:56:47,241 - root - INFO - Database tables initialized successfully
+2025-03-18 10:56:47,255 - root - INFO - Database tables initialized successfully
+2025-03-18 10:56:47,316 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:56:47,324 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:56:47,332 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:56:47,341 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:57:02,504 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:57:02,512 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:57:02,552 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:57:02,555 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:57:03,611 - root - INFO - Starting application
+2025-03-18 10:57:03,611 - root - INFO - Starting application
+2025-03-18 10:57:03,612 - root - INFO - Initializing database tables
+2025-03-18 10:57:03,612 - root - INFO - Initializing database tables
+2025-03-18 10:57:03,634 - root - INFO - Database tables initialized successfully
+2025-03-18 10:57:03,651 - root - INFO - Database tables initialized successfully
+2025-03-18 10:57:03,736 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:57:03,741 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:57:03,744 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:57:03,748 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:57:13,865 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:57:13,867 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:57:13,917 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:57:13,915 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:57:14,871 - root - INFO - Starting application
+2025-03-18 10:57:14,872 - root - INFO - Initializing database tables
+2025-03-18 10:57:14,885 - root - INFO - Database tables initialized successfully
+2025-03-18 10:57:14,902 - root - INFO - Starting application
+2025-03-18 10:57:14,903 - root - INFO - Initializing database tables
+2025-03-18 10:57:14,918 - root - INFO - Database tables initialized successfully
+2025-03-18 10:57:14,986 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:57:14,993 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:57:15,000 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:57:15,005 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:57:33,251 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:57:33,252 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 10:57:33,305 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:57:33,305 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:57:34,321 - root - INFO - Starting application
+2025-03-18 10:57:34,321 - root - INFO - Initializing database tables
+2025-03-18 10:57:34,332 - root - INFO - Database tables initialized successfully
+2025-03-18 10:57:34,355 - root - INFO - Starting application
+2025-03-18 10:57:34,355 - root - INFO - Initializing database tables
+2025-03-18 10:57:34,364 - root - INFO - Database tables initialized successfully
+2025-03-18 10:57:34,410 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:57:34,417 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:57:34,448 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:57:34,458 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:57:42,187 - root - INFO - Rendering main page
+2025-03-18 10:57:42,301 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:57:42] "GET / HTTP/1.1" 200 -
+2025-03-18 10:57:42,468 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:57:42] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 10:57:42,469 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:57:42] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 10:57:46,601 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 10:57:46,610 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:57:46] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 10:57:48,553 - root - INFO - Fetching available classes for fan model: BC-SW, size: 330
+2025-03-18 10:57:48,561 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:57:48] "GET /get_available_classes/BC-SW/330 HTTP/1.1" 200 -
+2025-03-18 10:57:51,464 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 330, class: 2
+2025-03-18 10:57:51,471 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 10:57:51] "GET /get_available_arrangements/BC-SW/330/2 HTTP/1.1" 200 -
+2025-03-18 10:59:45,660 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\compare_databases.py', reloading
+2025-03-18 10:59:45,688 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\compare_databases.py', reloading
+2025-03-18 10:59:45,715 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:59:45,741 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 10:59:46,735 - root - INFO - Starting application
+2025-03-18 10:59:46,736 - root - INFO - Initializing database tables
+2025-03-18 10:59:46,747 - root - INFO - Database tables initialized successfully
+2025-03-18 10:59:46,754 - root - INFO - Starting application
+2025-03-18 10:59:46,754 - root - INFO - Initializing database tables
+2025-03-18 10:59:46,763 - root - INFO - Database tables initialized successfully
+2025-03-18 10:59:46,819 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:59:46,823 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 10:59:46,827 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 10:59:46,832 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:01:24,103 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\verify_database.py', reloading
+2025-03-18 11:01:24,104 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\verify_database.py', reloading
+2025-03-18 11:01:24,161 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:01:24,161 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:01:25,325 - root - INFO - Starting application
+2025-03-18 11:01:25,326 - root - INFO - Initializing database tables
+2025-03-18 11:01:25,335 - root - INFO - Database tables initialized successfully
+2025-03-18 11:01:25,350 - root - INFO - Starting application
+2025-03-18 11:01:25,351 - root - INFO - Initializing database tables
+2025-03-18 11:01:25,363 - root - INFO - Database tables initialized successfully
+2025-03-18 11:01:25,410 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:01:25,416 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:01:25,431 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:01:25,441 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:02:03,921 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:02:03,922 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:02:03,979 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:02:03,979 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:02:05,151 - root - INFO - Starting application
+2025-03-18 11:02:05,152 - root - INFO - Starting application
+2025-03-18 11:02:05,152 - root - INFO - Initializing database tables
+2025-03-18 11:02:05,165 - root - INFO - Database tables initialized successfully
+2025-03-18 11:02:05,173 - root - INFO - Database tables initialized successfully
+2025-03-18 11:02:05,249 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:02:05,252 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:02:05,260 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:02:05,261 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:02:27,349 - root - INFO - Rendering main page
+2025-03-18 11:02:27,455 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:02:27] "GET / HTTP/1.1" 200 -
+2025-03-18 11:02:27,607 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:02:27] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 11:02:27,608 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:02:27] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 11:02:32,302 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 11:02:32,309 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:02:32] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 11:02:34,125 - root - INFO - Fetching available classes for fan model: BC-SW, size: 330
+2025-03-18 11:02:34,135 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:02:34] "GET /get_available_classes/BC-SW/330 HTTP/1.1" 200 -
+2025-03-18 11:02:36,798 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 330, class: 2
+2025-03-18 11:02:36,805 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:02:36] "GET /get_available_arrangements/BC-SW/330/2 HTTP/1.1" 200 -
+2025-03-18 11:05:29,791 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:05:29,792 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:05:29,838 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:05:29,840 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:05:31,335 - root - INFO - Starting application
+2025-03-18 11:05:31,336 - root - INFO - Initializing database tables
+2025-03-18 11:05:31,336 - root - INFO - Initializing database tables
+2025-03-18 11:05:31,349 - root - INFO - Database tables initialized successfully
+2025-03-18 11:05:31,350 - root - INFO - Database tables initialized successfully
+2025-03-18 11:05:31,457 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:05:31,461 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:05:31,473 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:05:31,473 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:06:00,907 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:06:00,911 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:06:00,955 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:06:02,200 - root - INFO - Starting application
+2025-03-18 11:06:02,200 - root - INFO - Initializing database tables
+2025-03-18 11:06:02,202 - root - INFO - Starting application
+2025-03-18 11:06:02,202 - root - INFO - Initializing database tables
+2025-03-18 11:06:02,224 - root - INFO - Database tables initialized successfully
+2025-03-18 11:06:02,241 - root - INFO - Database tables initialized successfully
+2025-03-18 11:06:02,304 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:06:02,309 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:06:02,318 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:06:02,328 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:08:07,765 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:08:07,769 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:08:07,807 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:08:07,808 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:08:08,827 - root - INFO - Starting application
+2025-03-18 11:08:08,828 - root - INFO - Initializing database tables
+2025-03-18 11:08:08,849 - root - INFO - Starting application
+2025-03-18 11:08:08,849 - root - INFO - Initializing database tables
+2025-03-18 11:08:08,851 - root - INFO - Database tables initialized successfully
+2025-03-18 11:08:08,856 - root - INFO - Database tables initialized successfully
+2025-03-18 11:08:08,917 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:08:08,919 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:08:08,923 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:08:08,925 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:08:35,297 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_motor_prices.py', reloading
+2025-03-18 11:08:35,298 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_motor_prices.py', reloading
+2025-03-18 11:08:35,338 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:08:35,338 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:08:36,339 - root - INFO - Starting application
+2025-03-18 11:08:36,339 - root - INFO - Initializing database tables
+2025-03-18 11:08:36,351 - root - INFO - Starting application
+2025-03-18 11:08:36,351 - root - INFO - Initializing database tables
+2025-03-18 11:08:36,368 - root - INFO - Database tables initialized successfully
+2025-03-18 11:08:36,377 - root - INFO - Database tables initialized successfully
+2025-03-18 11:08:36,425 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:08:36,430 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:08:36,437 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:08:36,442 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:09:26,023 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_drive_pack.py', reloading
+2025-03-18 11:09:26,024 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_drive_pack.py', reloading
+2025-03-18 11:09:26,067 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:09:26,067 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:09:27,165 - root - INFO - Starting application
+2025-03-18 11:09:27,166 - root - INFO - Initializing database tables
+2025-03-18 11:09:27,166 - root - INFO - Starting application
+2025-03-18 11:09:27,167 - root - INFO - Initializing database tables
+2025-03-18 11:09:27,176 - root - INFO - Database tables initialized successfully
+2025-03-18 11:09:27,181 - root - INFO - Database tables initialized successfully
+2025-03-18 11:09:27,230 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:09:27,233 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:09:27,235 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:09:27,237 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:10:13,910 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:10:13,912 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:10:13,969 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:10:13,972 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:10:14,991 - root - INFO - Starting application
+2025-03-18 11:10:14,991 - root - INFO - Initializing database tables
+2025-03-18 11:10:14,991 - root - INFO - Starting application
+2025-03-18 11:10:14,992 - root - INFO - Initializing database tables
+2025-03-18 11:10:15,012 - root - INFO - Database tables initialized successfully
+2025-03-18 11:10:15,029 - root - INFO - Database tables initialized successfully
+2025-03-18 11:10:15,077 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:10:15,082 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:10:15,091 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:10:15,107 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:28:45,085 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_drive_pack.py', reloading
+2025-03-18 11:28:45,154 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:28:45,179 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_drive_pack.py', reloading
+2025-03-18 11:28:45,278 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:28:49,026 - root - INFO - Starting application
+2025-03-18 11:28:49,026 - root - INFO - Initializing database tables
+2025-03-18 11:28:49,027 - root - INFO - Starting application
+2025-03-18 11:28:49,027 - root - INFO - Initializing database tables
+2025-03-18 11:28:49,077 - root - INFO - Database tables initialized successfully
+2025-03-18 11:28:49,092 - root - INFO - Database tables initialized successfully
+2025-03-18 11:28:49,292 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:28:49,292 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:28:49,303 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:28:49,303 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:29:08,655 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_bearing_lookup.py', reloading
+2025-03-18 11:29:08,656 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_bearing_lookup.py', reloading
+2025-03-18 11:29:08,707 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:29:08,707 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:29:10,081 - root - INFO - Starting application
+2025-03-18 11:29:10,083 - root - INFO - Initializing database tables
+2025-03-18 11:29:10,095 - root - INFO - Starting application
+2025-03-18 11:29:10,095 - root - INFO - Database tables initialized successfully
+2025-03-18 11:29:10,096 - root - INFO - Initializing database tables
+2025-03-18 11:29:10,111 - root - INFO - Database tables initialized successfully
+2025-03-18 11:29:10,201 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:29:10,202 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:29:10,210 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:29:10,211 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:30:19,987 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:30:19,990 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\fix_schema.py', reloading
+2025-03-18 11:30:20,023 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:30:20,023 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:30:20,922 - root - INFO - Starting application
+2025-03-18 11:30:20,923 - root - INFO - Initializing database tables
+2025-03-18 11:30:20,931 - root - INFO - Database tables initialized successfully
+2025-03-18 11:30:20,940 - root - INFO - Starting application
+2025-03-18 11:30:20,940 - root - INFO - Initializing database tables
+2025-03-18 11:30:20,948 - root - INFO - Database tables initialized successfully
+2025-03-18 11:30:20,986 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:30:20,990 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:30:21,003 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:30:21,007 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:30:59,473 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_bearing_lookup.py', reloading
+2025-03-18 11:30:59,474 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\check_bearing_lookup.py', reloading
+2025-03-18 11:30:59,515 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:30:59,516 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:31:00,469 - root - INFO - Starting application
+2025-03-18 11:31:00,470 - root - INFO - Initializing database tables
+2025-03-18 11:31:00,477 - root - INFO - Starting application
+2025-03-18 11:31:00,477 - root - INFO - Initializing database tables
+2025-03-18 11:31:00,496 - root - INFO - Database tables initialized successfully
+2025-03-18 11:31:00,504 - root - INFO - Database tables initialized successfully
+2025-03-18 11:31:00,575 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:31:00,583 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:31:00,584 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:31:00,588 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:31:40,499 - root - INFO - Rendering main page
+2025-03-18 11:31:40,615 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:31:40] "GET / HTTP/1.1" 200 -
+2025-03-18 11:31:40,771 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:31:40] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 11:31:40,771 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:31:40] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 11:31:48,010 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 11:31:48,018 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:31:48] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 11:31:50,097 - root - INFO - Fetching available classes for fan model: BC-SW, size: 402
+2025-03-18 11:31:50,108 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:31:50] "GET /get_available_classes/BC-SW/402 HTTP/1.1" 200 -
+2025-03-18 11:31:52,195 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 402, class: 2
+2025-03-18 11:31:52,203 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:31:52] "GET /get_available_arrangements/BC-SW/402/2 HTTP/1.1" 200 -
+2025-03-18 11:36:31,860 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\calculations.py', reloading
+2025-03-18 11:36:31,861 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\calculations.py', reloading
+2025-03-18 11:36:31,905 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:36:31,905 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:36:32,830 - root - INFO - Starting application
+2025-03-18 11:36:32,831 - root - INFO - Initializing database tables
+2025-03-18 11:36:32,835 - root - INFO - Starting application
+2025-03-18 11:36:32,836 - root - INFO - Initializing database tables
+2025-03-18 11:36:32,839 - root - INFO - Database tables initialized successfully
+2025-03-18 11:36:32,844 - root - INFO - Database tables initialized successfully
+2025-03-18 11:36:32,901 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:36:32,903 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:36:32,906 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:36:32,907 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:36:34,973 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\calculations.py', reloading
+2025-03-18 11:36:34,976 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\calculations.py', reloading
+2025-03-18 11:36:35,013 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:36:35,913 - root - INFO - Starting application
+2025-03-18 11:36:35,913 - root - INFO - Starting application
+tables
+2025-03-18 11:36:35,914 - root - INFO - Initializing database tables
+2025-03-18 11:36:35,939 - root - INFO - Database tables initialized successfully
+2025-03-18 11:36:35,956 - root - INFO - Database tables initialized successfully
+2025-03-18 11:36:36,011 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:36:36,017 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:36:36,019 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:36:36,025 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:37:08,413 - root - INFO - Rendering main page
+2025-03-18 11:37:08,524 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:37:08] "GET / HTTP/1.1" 200 -
+2025-03-18 11:37:08,683 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:37:08] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 11:37:08,684 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:37:08] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 11:37:14,203 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 11:37:14,212 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:37:14] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 11:37:17,057 - root - INFO - Fetching available classes for fan model: BC-SW, size: 270
+2025-03-18 11:37:17,064 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:37:17] "GET /get_available_classes/BC-SW/270 HTTP/1.1" 200 -
+2025-03-18 11:37:18,870 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 270, class: 2
+2025-03-18 11:37:18,879 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:37:18] "GET /get_available_arrangements/BC-SW/270/2 HTTP/1.1" 200 -
+2025-03-18 11:39:09,210 - root - INFO - Rendering main page
+2025-03-18 11:39:09,292 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:39:09] "GET / HTTP/1.1" 200 -
+2025-03-18 11:39:09,362 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:39:09] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 11:39:09,362 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:39:09] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 11:39:14,573 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 11:39:14,582 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:39:14] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 11:39:17,141 - root - INFO - Fetching available classes for fan model: BC-SW, size: 270
+2025-03-18 11:39:17,151 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:39:17] "GET /get_available_classes/BC-SW/270 HTTP/1.1" 200 -
+2025-03-18 11:39:19,937 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 270, class: 2
+2025-03-18 11:39:19,948 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:39:19] "GET /get_available_arrangements/BC-SW/270/2 HTTP/1.1" 200 -
+2025-03-18 11:39:25,239 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '270', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:39:25,280 - root - INFO - Successfully calculated total fan weight: 255.0
+2025-03-18 11:39:25,286 - root - INFO - Calculating fabrication cost for vendor: Air Master, material: ms, weight: 255.0
+2025-03-18 11:39:25,287 - root - INFO - Fabrication cost calculated: 51000.0
+2025-03-18 11:39:25,288 - root - INFO - Calculating bought out components
+2025-03-18 11:39:25,288 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:39:25,351 - root - INFO - Successfully calculated fan data - Weight: 255.0, Cost: 63750.0
+2025-03-18 11:39:25,351 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:39:25] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:40:29,190 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 11:40:29,192 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 11:40:29,229 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:40:29,234 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:40:30,075 - root - INFO - Starting application
+2025-03-18 11:40:30,076 - root - INFO - Initializing database tables
+2025-03-18 11:40:30,084 - root - INFO - Database tables initialized successfully
+2025-03-18 11:40:30,097 - root - INFO - Starting application
+2025-03-18 11:40:30,097 - root - INFO - Initializing database tables
+2025-03-18 11:40:30,106 - root - INFO - Database tables initialized successfully
+2025-03-18 11:40:30,147 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:40:30,153 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:40:30,163 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:40:30,169 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:41:00,580 - root - INFO - Rendering main page
+2025-03-18 11:41:00,674 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:00] "GET / HTTP/1.1" 200 -
+2025-03-18 11:41:00,844 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:00] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 11:41:00,845 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:00] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 11:41:05,703 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 11:41:05,713 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:05] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 11:41:07,867 - root - INFO - Fetching available classes for fan model: BC-SW, size: 300
+2025-03-18 11:41:07,876 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:07] "GET /get_available_classes/BC-SW/300 HTTP/1.1" 200 -
+2025-03-18 11:41:09,625 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 300, class: 2
+2025-03-18 11:41:09,636 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:09] "GET /get_available_arrangements/BC-SW/300/2 HTTP/1.1" 200 -
+2025-03-18 11:41:15,822 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:41:15,857 - root - INFO - Successfully calculated total fan weight: 355.0
+2025-03-18 11:41:15,862 - root - INFO - Calculating fabrication cost for vendor: Air Master, material: ms, weight: 355.0
+2025-03-18 11:41:15,863 - root - INFO - Fabrication cost calculated: 71000.0
+2025-03-18 11:41:15,864 - root - INFO - Calculating bought out components
+2025-03-18 11:41:15,865 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:41:15,894 - root - INFO - Successfully calculated fan data - Weight: 355.0, Cost: 88750.0
+2025-03-18 11:41:15,895 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:15] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:41:35,093 - root - INFO - Fetching available classes for fan model: BC-SW, size: 330
+2025-03-18 11:41:35,098 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:35] "GET /get_available_classes/BC-SW/330 HTTP/1.1" 200 -
+2025-03-18 11:41:46,149 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 330, class: 2
+2025-03-18 11:41:46,159 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:46] "GET /get_available_arrangements/BC-SW/330/2 HTTP/1.1" 200 -
+2025-03-18 11:41:51,416 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:41:51,446 - root - INFO - Successfully calculated total fan weight: 430.0
+2025-03-18 11:41:51,452 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 430.0
+2025-03-18 11:41:51,453 - root - INFO - Fabrication cost calculated: 90300.0
+2025-03-18 11:41:51,453 - root - INFO - Calculating bought out components
+2025-03-18 11:41:51,453 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:41:51,460 - root - INFO - Successfully calculated fan data - Weight: 430.0, Cost: 112875.0
+2025-03-18 11:41:51,461 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:41:51] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:42:01,996 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:42:02,058 - root - INFO - Successfully calculated total fan weight: 430.0
+2025-03-18 11:42:02,064 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 430.0
+2025-03-18 11:42:02,066 - root - INFO - Fabrication cost calculated: 90300.0
+2025-03-18 11:42:02,067 - root - INFO - Calculating bought out components
+2025-03-18 11:42:02,068 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:42:02,078 - root - INFO - Successfully calculated fan data - Weight: 430.0, Cost: 122875.0
+2025-03-18 11:42:02,079 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:42:02] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:42:09,610 - root - INFO - Checking accessory weight for Isolation Base Frame
+2025-03-18 11:42:09,619 - root - ERROR - Error checking accessory weight: 'fan_model'
+Traceback (most recent call last):
+  File "C:\Abdul - Work\Personal Projects\TCF Pricing Tool\app.py", line 843, in check_accessory_weight
+    (data['fan_model'], data['fan_size'], data['class_'], data['arrangement']))
+     ~~~~^^^^^^^^^^^^^
+KeyError: 'fan_model'
+2025-03-18 11:42:09,622 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:42:09] "[35m[1mPOST /check_accessory_weight HTTP/1.1[0m" 500 -
+2025-03-18 11:46:03,702 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 11:46:03,705 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 11:46:03,747 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:46:03,747 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:46:04,628 - root - INFO - Starting application
+2025-03-18 11:46:04,628 - root - INFO - Initializing database tables
+2025-03-18 11:46:04,638 - root - INFO - Database tables initialized successfully
+2025-03-18 11:46:04,646 - root - INFO - Starting application
+2025-03-18 11:46:04,646 - root - INFO - Initializing database tables
+2025-03-18 11:46:04,658 - root - INFO - Database tables initialized successfully
+2025-03-18 11:46:04,718 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:46:04,724 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:46:04,739 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:46:04,745 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:46:43,175 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 11:46:43,176 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 11:46:43,211 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 11:46:44,146 - root - INFO - Starting application
+2025-03-18 11:46:44,146 - root - INFO - Initializing database tables
+2025-03-18 11:46:44,153 - root - INFO - Database tables initialized successfully
+2025-03-18 11:46:44,163 - root - INFO - Starting application
+2025-03-18 11:46:44,163 - root - INFO - Initializing database tables
+2025-03-18 11:46:44,170 - root - INFO - Database tables initialized successfully
+2025-03-18 11:46:44,202 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:46:44,207 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:46:44,218 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 11:46:44,225 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 11:47:15,376 - root - INFO - Rendering main page
+2025-03-18 11:47:15,467 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:15] "GET / HTTP/1.1" 200 -
+2025-03-18 11:47:15,620 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:15] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 11:47:15,620 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:15] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 11:47:21,071 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 11:47:21,080 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:21] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 11:47:24,137 - root - INFO - Fetching available classes for fan model: BC-SW, size: 330
+2025-03-18 11:47:24,146 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:24] "GET /get_available_classes/BC-SW/330 HTTP/1.1" 200 -
+2025-03-18 11:47:27,048 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 330, class: 2
+2025-03-18 11:47:27,058 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:27] "GET /get_available_arrangements/BC-SW/330/2 HTTP/1.1" 200 -
+2025-03-18 11:47:37,606 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:47:37,660 - root - INFO - Successfully calculated total fan weight: 430.0
+2025-03-18 11:47:37,667 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 430.0
+2025-03-18 11:47:37,669 - root - INFO - Fabrication cost calculated: 90300.0
+2025-03-18 11:47:37,670 - root - INFO - Calculating bought out components
+2025-03-18 11:47:37,671 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:47:37,709 - root - INFO - Successfully calculated fan data - Weight: 430.0, Cost: 112875.0
+2025-03-18 11:47:37,709 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:37] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:47:42,319 - root - INFO - Checking accessory weight for Isolation Base Frame
+2025-03-18 11:47:42,327 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:42] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:47:42,350 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:47:42,395 - root - INFO - Successfully calculated total fan weight: 480.0
+2025-03-18 11:47:42,401 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 480.0
+2025-03-18 11:47:42,402 - root - INFO - Fabrication cost calculated: 100800.0
+2025-03-18 11:47:42,402 - root - INFO - Calculating bought out components
+2025-03-18 11:47:42,402 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:47:42,408 - root - INFO - Successfully calculated fan data - Weight: 480.0, Cost: 126000.0
+2025-03-18 11:47:42,409 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:42] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:47:47,423 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:47:47,470 - root - INFO - Successfully calculated total fan weight: 480.0
+2025-03-18 11:47:47,477 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 480.0
+2025-03-18 11:47:47,478 - root - INFO - Fabrication cost calculated: 100800.0
+2025-03-18 11:47:47,478 - root - INFO - Calculating bought out components
+2025-03-18 11:47:47,479 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:47:47,486 - root - INFO - Successfully calculated fan data - Weight: 480.0, Cost: 126000.0
+2025-03-18 11:47:47,487 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:47] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:47:51,432 - root - INFO - Checking accessory weight for Unitary Base Frame
+2025-03-18 11:47:51,444 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:51] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:47:51,470 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:47:51,546 - root - INFO - Successfully calculated total fan weight: 530.0
+2025-03-18 11:47:51,555 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 530.0
+2025-03-18 11:47:51,556 - root - INFO - Fabrication cost calculated: 111300.0
+2025-03-18 11:47:51,559 - root - INFO - Calculating bought out components
+2025-03-18 11:47:51,560 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:47:51,583 - root - INFO - Successfully calculated fan data - Weight: 530.0, Cost: 139125.0
+2025-03-18 11:47:51,585 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:51] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:47:54,302 - root - INFO - Checking accessory weight for Split Casing
+2025-03-18 11:47:54,310 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:54] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:47:54,335 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:47:54,378 - root - INFO - Successfully calculated total fan weight: 568.0
+2025-03-18 11:47:54,383 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 568.0
+2025-03-18 11:47:54,384 - root - INFO - Fabrication cost calculated: 119280.0
+2025-03-18 11:47:54,384 - root - INFO - Calculating bought out components
+2025-03-18 11:47:54,385 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:47:54,390 - root - INFO - Successfully calculated fan data - Weight: 568.0, Cost: 149100.0
+2025-03-18 11:47:54,390 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:47:54] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:48:04,482 - root - INFO - Checking accessory weight for Inlet Companion Flange
+2025-03-18 11:48:04,492 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:48:04] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:48:04,513 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:48:04,549 - root - INFO - Successfully calculated total fan weight: 582.0
+2025-03-18 11:48:04,553 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 582.0
+2025-03-18 11:48:04,555 - root - INFO - Fabrication cost calculated: 122220.0
+2025-03-18 11:48:04,556 - root - INFO - Calculating bought out components
+2025-03-18 11:48:04,556 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:48:04,562 - root - INFO - Successfully calculated fan data - Weight: 582.0, Cost: 152775.0
+2025-03-18 11:48:04,563 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:48:04] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:48:06,443 - root - INFO - Checking accessory weight for Outlet Companion Flange
+2025-03-18 11:48:06,452 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:48:06] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:48:06,476 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:48:06,545 - root - INFO - Successfully calculated total fan weight: 595.0
+2025-03-18 11:48:06,552 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 595.0
+2025-03-18 11:48:06,555 - root - INFO - Fabrication cost calculated: 124950.0
+2025-03-18 11:48:06,556 - root - INFO - Calculating bought out components
+2025-03-18 11:48:06,557 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:48:06,574 - root - INFO - Successfully calculated fan data - Weight: 595.0, Cost: 156187.5
+2025-03-18 11:48:06,576 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:48:06] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:48:18,202 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:48:18,238 - root - INFO - Successfully calculated total fan weight: 595.0
+2025-03-18 11:48:18,244 - root - INFO - Calculating fabrication cost for vendor: Sri Sakthi, material: ms, weight: 595.0
+2025-03-18 11:48:18,246 - root - INFO - Fabrication cost calculated: 124950.0
+2025-03-18 11:48:18,246 - root - INFO - Calculating bought out components
+2025-03-18 11:48:18,247 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:48:18,254 - root - INFO - Successfully calculated fan data - Weight: 595.0, Cost: 156187.5
+2025-03-18 11:48:18,254 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:48:18] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:48:24,687 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:48:24,756 - root - INFO - Successfully calculated total fan weight: 595.0
+2025-03-18 11:48:24,764 - root - INFO - Calculating fabrication cost for vendor: Bajaj Steel, material: ms, weight: 595.0
+2025-03-18 11:48:24,767 - root - INFO - Fabrication cost calculated: 136850.0
+2025-03-18 11:48:24,768 - root - INFO - Calculating bought out components
+2025-03-18 11:48:24,769 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:48:24,782 - root - INFO - Successfully calculated fan data - Weight: 595.0, Cost: 171062.5
+2025-03-18 11:48:24,783 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:48:24] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:48:32,268 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:48:32,344 - root - INFO - Successfully calculated total fan weight: 595.0
+2025-03-18 11:48:32,352 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 595.0
+2025-03-18 11:48:32,355 - root - INFO - Fabrication cost calculated: 124950.0
+2025-03-18 11:48:32,355 - root - INFO - Calculating bought out components
+2025-03-18 11:48:32,357 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:48:32,376 - root - INFO - Successfully calculated fan data - Weight: 595.0, Cost: 156187.5
+2025-03-18 11:48:32,377 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:48:32] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:48:41,105 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:48:41,162 - root - INFO - Successfully calculated total fan weight: 595.0
+2025-03-18 11:48:41,168 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 595.0
+2025-03-18 11:48:41,170 - root - INFO - Fabrication cost calculated: 124950.0
+2025-03-18 11:48:41,170 - root - INFO - Calculating bought out components
+2025-03-18 11:48:41,172 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:48:41,180 - root - INFO - Successfully calculated fan data - Weight: 595.0, Cost: 176187.5
+2025-03-18 11:48:41,181 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:48:41] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:49:02,447 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '330', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:49:02,510 - root - INFO - Successfully calculated total fan weight: 595.0
+2025-03-18 11:49:02,518 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 595.0
+2025-03-18 11:49:02,520 - root - INFO - Fabrication cost calculated: 124950.0
+2025-03-18 11:49:02,521 - root - INFO - Calculating bought out components
+2025-03-18 11:49:02,523 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:49:02,545 - root - INFO - Successfully calculated fan data - Weight: 595.0, Cost: 176187.5
+2025-03-18 11:49:02,547 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:49:02] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:55:02,627 - root - INFO - Rendering main page
+2025-03-18 11:55:02,730 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:55:02] "GET / HTTP/1.1" 200 -
+2025-03-18 11:55:02,794 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:55:02] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 11:55:02,797 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:55:02] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-03-18 11:55:02,817 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:55:02] "[33mGET /get_motor_options HTTP/1.1[0m" 404 -
+2025-03-18 11:55:13,060 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 11:55:13,070 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:55:13] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 11:55:15,564 - root - INFO - Fetching available classes for fan model: BC-SW, size: 300
+2025-03-18 11:55:15,574 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:55:15] "GET /get_available_classes/BC-SW/300 HTTP/1.1" 200 -
+2025-03-18 11:55:20,026 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 300, class: 2
+2025-03-18 11:55:20,027 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:55:20] "GET /get_available_arrangements/BC-SW/300/2 HTTP/1.1" 200 -
+2025-03-18 11:58:27,283 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:58:27,313 - root - INFO - Successfully calculated total fan weight: 355.0
+2025-03-18 11:58:27,319 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 355.0
+2025-03-18 11:58:27,320 - root - INFO - Fabrication cost calculated: 74550.0
+2025-03-18 11:58:27,320 - root - INFO - Calculating bought out components
+2025-03-18 11:58:27,321 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:58:27,329 - root - INFO - Successfully calculated fan data - Weight: 355.0, Cost: 93187.5
+2025-03-18 11:58:27,329 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:58:27] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:58:33,054 - root - INFO - Checking accessory weight for Isolation Base Frame
+2025-03-18 11:58:33,063 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:58:33] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:58:33,092 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:58:33,162 - root - INFO - Successfully calculated total fan weight: 403.0
+2025-03-18 11:58:33,169 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 403.0
+2025-03-18 11:58:33,170 - root - INFO - Fabrication cost calculated: 84630.0
+2025-03-18 11:58:33,171 - root - INFO - Calculating bought out components
+2025-03-18 11:58:33,171 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:58:33,178 - root - INFO - Successfully calculated fan data - Weight: 403.0, Cost: 105787.5
+2025-03-18 11:58:33,178 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:58:33] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:58:36,217 - root - INFO - Checking accessory weight for Split Casing
+2025-03-18 11:58:36,228 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:58:36] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:58:58,686 - root - INFO - Saving accessory weight for Split Casing
+2025-03-18 11:58:58,704 - root - INFO - Successfully saved accessory weight: 30 for Split Casing
+2025-03-18 11:58:58,704 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:58:58] "POST /save_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:58:58,726 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:58:58,751 - root - INFO - Successfully calculated total fan weight: 403.0
+2025-03-18 11:58:58,757 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 403.0
+2025-03-18 11:58:58,758 - root - INFO - Fabrication cost calculated: 84630.0
+2025-03-18 11:58:58,759 - root - INFO - Calculating bought out components
+2025-03-18 11:58:58,759 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:58:58,768 - root - INFO - Successfully calculated fan data - Weight: 403.0, Cost: 105787.5
+2025-03-18 11:58:58,769 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:58:58] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:59:06,709 - root - INFO - Checking accessory weight for Split Casing
+2025-03-18 11:59:06,718 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:06] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:59:06,742 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:59:06,801 - root - INFO - Successfully calculated total fan weight: 433.0
+2025-03-18 11:59:06,808 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 433.0
+2025-03-18 11:59:06,810 - root - INFO - Fabrication cost calculated: 90930.0
+2025-03-18 11:59:06,810 - root - INFO - Calculating bought out components
+2025-03-18 11:59:06,811 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:59:06,823 - root - INFO - Successfully calculated fan data - Weight: 433.0, Cost: 113662.5
+2025-03-18 11:59:06,824 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:06] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:59:08,215 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:59:08,261 - root - INFO - Successfully calculated total fan weight: 403.0
+2025-03-18 11:59:08,267 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 403.0
+2025-03-18 11:59:08,269 - root - INFO - Fabrication cost calculated: 84630.0
+2025-03-18 11:59:08,270 - root - INFO - Calculating bought out components
+2025-03-18 11:59:08,272 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:59:08,285 - root - INFO - Successfully calculated fan data - Weight: 403.0, Cost: 105787.5
+2025-03-18 11:59:08,286 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:08] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:59:09,294 - root - INFO - Checking accessory weight for Split Casing
+2025-03-18 11:59:09,304 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:09] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:59:09,330 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:59:09,395 - root - INFO - Successfully calculated total fan weight: 433.0
+2025-03-18 11:59:09,402 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 433.0
+2025-03-18 11:59:09,405 - root - INFO - Fabrication cost calculated: 90930.0
+2025-03-18 11:59:09,406 - root - INFO - Calculating bought out components
+2025-03-18 11:59:09,408 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:59:09,429 - root - INFO - Successfully calculated fan data - Weight: 433.0, Cost: 113662.5
+2025-03-18 11:59:09,430 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:09] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:59:09,733 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:59:09,762 - root - INFO - Successfully calculated total fan weight: 403.0
+2025-03-18 11:59:09,768 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 403.0
+2025-03-18 11:59:09,770 - root - INFO - Fabrication cost calculated: 84630.0
+2025-03-18 11:59:09,771 - root - INFO - Calculating bought out components
+2025-03-18 11:59:09,771 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:59:09,776 - root - INFO - Successfully calculated fan data - Weight: 403.0, Cost: 105787.5
+2025-03-18 11:59:09,776 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:09] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:59:11,723 - root - INFO - Checking accessory weight for Unitary Base Frame
+2025-03-18 11:59:11,731 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:11] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:59:11,757 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:59:11,791 - root - INFO - Successfully calculated total fan weight: 451.0
+2025-03-18 11:59:11,795 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 451.0
+2025-03-18 11:59:11,796 - root - INFO - Fabrication cost calculated: 94710.0
+2025-03-18 11:59:11,796 - root - INFO - Calculating bought out components
+2025-03-18 11:59:11,796 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:59:11,805 - root - INFO - Successfully calculated fan data - Weight: 451.0, Cost: 118387.5
+2025-03-18 11:59:11,806 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:11] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:59:12,210 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:59:12,272 - root - INFO - Successfully calculated total fan weight: 403.0
+2025-03-18 11:59:12,280 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 403.0
+2025-03-18 11:59:12,283 - root - INFO - Fabrication cost calculated: 84630.0
+2025-03-18 11:59:12,283 - root - INFO - Calculating bought out components
+2025-03-18 11:59:12,285 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:59:12,306 - root - INFO - Successfully calculated fan data - Weight: 403.0, Cost: 105787.5
+2025-03-18 11:59:12,308 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:12] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:59:16,373 - root - INFO - Checking accessory weight for Split Casing
+2025-03-18 11:59:16,382 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:16] "POST /check_accessory_weight HTTP/1.1" 200 -
+2025-03-18 11:59:16,405 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:59:16,435 - root - INFO - Successfully calculated total fan weight: 433.0
+2025-03-18 11:59:16,442 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 433.0
+2025-03-18 11:59:16,443 - root - INFO - Fabrication cost calculated: 90930.0
+2025-03-18 11:59:16,443 - root - INFO - Calculating bought out components
+2025-03-18 11:59:16,444 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:59:16,450 - root - INFO - Successfully calculated fan data - Weight: 433.0, Cost: 113662.5
+2025-03-18 11:59:16,451 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:16] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:59:17,625 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:59:17,660 - root - INFO - Successfully calculated total fan weight: 403.0
+2025-03-18 11:59:17,667 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 403.0
+2025-03-18 11:59:17,668 - root - INFO - Fabrication cost calculated: 84630.0
+2025-03-18 11:59:17,668 - root - INFO - Calculating bought out components
+2025-03-18 11:59:17,669 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:59:17,676 - root - INFO - Successfully calculated fan data - Weight: 403.0, Cost: 105787.5
+2025-03-18 11:59:17,677 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:17] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 11:59:25,347 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 11:59:25,382 - root - INFO - Successfully calculated total fan weight: 403.0
+2025-03-18 11:59:25,388 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 403.0
+2025-03-18 11:59:25,388 - root - INFO - Fabrication cost calculated: 84630.0
+2025-03-18 11:59:25,389 - root - INFO - Calculating bought out components
+2025-03-18 11:59:25,389 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 11:59:25,396 - root - INFO - Successfully calculated fan data - Weight: 403.0, Cost: 115787.5
+2025-03-18 11:59:25,397 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 11:59:25] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 12:01:23,423 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 12:01:23,425 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 12:01:23,475 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 12:01:23,475 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 12:01:24,480 - root - INFO - Starting application
+2025-03-18 12:01:24,480 - root - INFO - Initializing database tables
+2025-03-18 12:01:24,490 - root - INFO - Database tables initialized successfully
+2025-03-18 12:01:24,524 - root - INFO - Starting application
+2025-03-18 12:01:24,525 - root - INFO - Initializing database tables
+2025-03-18 12:01:24,535 - root - INFO - Database tables initialized successfully
+2025-03-18 12:01:24,553 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 12:01:24,560 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 12:01:24,599 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 12:01:24,603 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 12:02:59,562 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 12:02:59,563 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\routes.py', reloading
+2025-03-18 12:02:59,608 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 12:02:59,608 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 12:03:00,548 - root - INFO - Starting application
+2025-03-18 12:03:00,549 - root - INFO - Initializing database tables
+2025-03-18 12:03:00,550 - root - INFO - Starting application
+2025-03-18 12:03:00,550 - root - INFO - Initializing database tables
+2025-03-18 12:03:00,562 - root - INFO - Database tables initialized successfully
+2025-03-18 12:03:00,570 - root - INFO - Database tables initialized successfully
+2025-03-18 12:03:00,635 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 12:03:00,636 - werkzeug - WARNING -  * Debugger is active!
+2025-03-18 12:03:00,640 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 12:03:00,640 - werkzeug - INFO -  * Debugger PIN: 422-435-141
+2025-03-18 12:03:33,748 - root - INFO - Rendering main page
+2025-03-18 12:03:33,835 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 12:03:33] "GET / HTTP/1.1" 200 -
+2025-03-18 12:03:33,968 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 12:03:33] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-03-18 12:03:33,968 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 12:03:33] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-03-18 12:03:33,997 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 12:03:33] "[33mGET /get_motor_options HTTP/1.1[0m" 404 -
+2025-03-18 12:03:39,904 - root - INFO - Fetching available sizes for fan model: BC-SW
+2025-03-18 12:03:39,911 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 12:03:39] "GET /get_available_sizes/BC-SW HTTP/1.1" 200 -
+2025-03-18 12:03:44,494 - root - INFO - Fetching available classes for fan model: BC-SW, size: 300
+2025-03-18 12:03:44,502 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 12:03:44] "GET /get_available_classes/BC-SW/300 HTTP/1.1" 200 -
+2025-03-18 12:03:47,258 - root - INFO - Fetching available arrangements for fan model: BC-SW, size: 300, class: 2
+2025-03-18 12:03:47,268 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 12:03:47] "GET /get_available_arrangements/BC-SW/300/2 HTTP/1.1" 200 -
+2025-03-18 12:03:56,129 - root - INFO - Calculating fan weight for specifications: {'Fan Model': 'BC-SW', 'Fan Size': '300', 'Class': '2', 'Arrangement': 4}
+2025-03-18 12:03:56,158 - root - INFO - Successfully calculated total fan weight: 355.0
+2025-03-18 12:03:56,163 - root - INFO - Calculating fabrication cost for vendor: TCF Factory, material: ms, weight: 355.0
+2025-03-18 12:03:56,164 - root - INFO - Fabrication cost calculated: 74550.0
+2025-03-18 12:03:56,165 - root - INFO - Calculating bought out components
+2025-03-18 12:03:56,165 - root - WARNING - No drive pack price found for kW: 0.0
+2025-03-18 12:03:56,190 - root - INFO - Successfully calculated fan data - Weight: 355.0, Cost: 93187.5
+2025-03-18 12:03:56,190 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 12:03:56] "POST /calculate_fan HTTP/1.1" 200 -
+2025-03-18 12:03:59,881 - werkzeug - INFO - 127.0.0.1 - - [18/Mar/2025 12:03:59] "[33mGET /get_motor_options HTTP/1.1[0m" 404 -
+2025-03-18 12:04:30,731 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 12:04:30,733 - werkzeug - INFO -  * Detected change in 'C:\\Abdul - Work\\Personal Projects\\TCF Pricing Tool\\app.py', reloading
+2025-03-18 12:04:30,785 - werkzeug - INFO -  * Restarting with stat
+2025-03-18 12:04:30,789 - werkzeug - INFO -  * Restarting with stat

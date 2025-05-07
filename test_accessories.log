@@ -1,0 +1,95 @@
+2025-03-23 18:34:44,312 - __main__ - INFO - Testing with enquiry number: TEST_ACC_9ddeb024
+2025-03-23 18:34:44,312 - __main__ - INFO - Using central database at: data\central_database\all_projects.db
+2025-03-23 18:34:44,336 - __main__ - INFO - Successfully inserted test project TEST_ACC_9ddeb024
+2025-03-23 18:34:44,340 - __main__ - INFO - 
+Test Fan Data Retrieved:
+2025-03-23 18:34:44,340 - __main__ - INFO - ========================
+2025-03-23 18:34:44,340 - __main__ - INFO - vibration_isolators: dunlop
+2025-03-23 18:34:44,344 - __main__ - INFO - accessories: ['Inlet Guard', 'Outlet Guard', 'Unitary Base Frame']
+2025-03-23 18:34:44,345 - __main__ - INFO - motor_pole: 4
+2025-03-23 18:34:44,345 - __main__ - INFO - motor_efficiency: 0.95
+2025-03-23 18:34:44,347 - __main__ - INFO - 
+Test completed successfully
+2025-03-23 18:34:44,348 - __main__ - INFO - Test completed successfully
+2025-03-23 18:35:34,600 - __main__ - INFO - Testing with enquiry number: TEST_ACC_9c6a24d2
+2025-03-23 18:35:34,600 - __main__ - INFO - Using central database at: data\central_database\all_projects.db
+2025-03-23 18:35:34,615 - __main__ - INFO - 
+Inserting the following data into ProjectFans:
+2025-03-23 18:35:34,615 - __main__ - INFO -   - vibration_isolators: dunlop
+2025-03-23 18:35:34,615 - __main__ - INFO -   - accessories: ['Inlet Guard', 'Outlet Guard', 'Unitary Base Frame']
+2025-03-23 18:35:34,615 - __main__ - INFO -   - drive_pack_kw: 22.5
+2025-03-23 18:35:34,615 - __main__ - INFO -   - motor_kw: 18.5
+2025-03-23 18:35:34,615 - __main__ - INFO -   - motor_brand: ABB
+2025-03-23 18:35:34,615 - __main__ - INFO -   - motor_pole: 4
+2025-03-23 18:35:34,615 - __main__ - INFO -   - motor_efficiency: 0.95
+2025-03-23 18:35:34,620 - __main__ - INFO - Successfully inserted test project TEST_ACC_9c6a24d2
+2025-03-23 18:35:34,623 - __main__ - INFO - 
+Test Fan Data Retrieved:
+2025-03-23 18:35:34,623 - __main__ - INFO - ========================
+2025-03-23 18:35:34,623 - __main__ - INFO - id: 39
+2025-03-23 18:35:34,623 - __main__ - INFO - enquiry_number: TEST_ACC_9c6a24d2
+2025-03-23 18:35:34,623 - __main__ - INFO - fan_number: 1
+2025-03-23 18:35:34,623 - __main__ - INFO - fan_model: TEST-FAN
+2025-03-23 18:35:34,623 - __main__ - INFO - size: 1000
+2025-03-23 18:35:34,623 - __main__ - INFO - class: 2
+2025-03-23 18:35:34,623 - __main__ - INFO - arrangement: 4
+2025-03-23 18:35:34,623 - __main__ - INFO - vendor: TCF Factory
+2025-03-23 18:35:34,623 - __main__ - INFO - material: ms
+2025-03-23 18:35:34,627 - __main__ - INFO - accessories: ['Inlet Guard', 'Outlet Guard', 'Unitary Base Frame']
+2025-03-23 18:35:34,627 - __main__ - INFO - bare_fan_weight: 500.0
+2025-03-23 18:35:34,627 - __main__ - INFO - accessory_weight: 50.0
+2025-03-23 18:35:34,627 - __main__ - INFO - total_weight: 550.0
+2025-03-23 18:35:34,627 - __main__ - INFO - fabrication_weight: None
+2025-03-23 18:35:34,627 - __main__ - INFO - bought_out_weight: None
+2025-03-23 18:35:34,627 - __main__ - INFO - fabrication_cost: 1500.0
+2025-03-23 18:35:34,627 - __main__ - INFO - bought_out_cost: 1000.0
+2025-03-23 18:35:34,627 - __main__ - INFO - total_cost: 2500.0
+2025-03-23 18:35:34,627 - __main__ - INFO - total_job_margin: 0.0
+2025-03-23 18:35:34,627 - __main__ - INFO - fabrication_selling_price: 0.0
+2025-03-23 18:35:34,627 - __main__ - INFO - bought_out_selling_price: 0.0
+2025-03-23 18:35:34,627 - __main__ - INFO - total_selling_price: 0.0
+2025-03-23 18:35:34,631 - __main__ - INFO - vibration_isolators: dunlop
+2025-03-23 18:35:34,631 - __main__ - INFO - drive_pack_kw: 22.5
+2025-03-23 18:35:34,631 - __main__ - INFO - custom_accessories: ['Custom Item 1', 'Custom Item 2']
+2025-03-23 18:35:34,631 - __main__ - INFO - optional_items: ['Vibration Sensors', 'Temperature Sensors']
+2025-03-23 18:35:34,631 - __main__ - INFO - custom_option_items: ['Custom Option 1', 'Custom Option 2']
+2025-03-23 18:35:34,631 - __main__ - INFO - motor_kw: 18.5
+2025-03-23 18:35:34,631 - __main__ - INFO - motor_brand: ABB
+2025-03-23 18:35:34,631 - __main__ - INFO - motor_pole: 4
+2025-03-23 18:35:34,631 - __main__ - INFO - motor_efficiency: 0.95
+2025-03-23 18:35:34,631 - __main__ - INFO - motor_discount_rate: 0.15
+2025-03-23 18:35:34,631 - __main__ - INFO - bearing_brand: SKF
+2025-03-23 18:35:34,631 - __main__ - INFO - 
+Validation Results:
+2025-03-23 18:35:34,631 - __main__ - INFO - ==================
+2025-03-23 18:35:34,693 - __main__ - INFO - 
+All values matched expected values!
+2025-03-23 18:35:34,693 - __main__ - INFO - Test completed successfully
+2025-03-23 18:36:27,636 - __main__ - INFO - Testing with enquiry number: TEST_ACC_dbb67ecc
+2025-03-23 18:36:27,641 - __main__ - INFO - Using central database at: data\central_database\all_projects.db
+2025-03-23 18:36:27,650 - __main__ - INFO - Inserting the following data into ProjectFans:
+2025-03-23 18:36:27,650 - __main__ - INFO -   vibration_isolators: dunlop
+2025-03-23 18:36:27,650 - __main__ - INFO -   accessories: ['Inlet Guard', 'Outlet Guard', 'Unitary Base Frame']
+2025-03-23 18:36:27,656 - __main__ - INFO -   drive_pack_kw: 22.5
+2025-03-23 18:36:27,657 - __main__ - INFO -   motor_kw: 18.5
+2025-03-23 18:36:27,658 - __main__ - INFO -   motor_brand: ABB
+2025-03-23 18:36:27,658 - __main__ - INFO -   motor_pole: 4
+2025-03-23 18:36:27,658 - __main__ - INFO -   motor_efficiency: 0.95
+2025-03-23 18:36:27,661 - __main__ - INFO - Successfully inserted test project TEST_ACC_dbb67ecc
+2025-03-23 18:36:27,665 - __main__ - INFO - Test Fan Data Retrieved:
+2025-03-23 18:36:27,665 - __main__ - INFO - ========================
+2025-03-23 18:36:27,665 - __main__ - INFO - vibration_isolators: dunlop
+2025-03-23 18:36:27,665 - __main__ - INFO - drive_pack_kw: 22.5
+2025-03-23 18:36:27,665 - __main__ - INFO - motor_kw: 18.5
+2025-03-23 18:36:27,667 - __main__ - INFO - motor_brand: ABB
+2025-03-23 18:36:27,667 - __main__ - INFO - motor_pole: 4
+2025-03-23 18:36:27,667 - __main__ - INFO - motor_efficiency: 0.95
+2025-03-23 18:36:27,667 - __main__ - INFO - bearing_brand: SKF
+2025-03-23 18:36:27,667 - __main__ - INFO - accessories: ['Inlet Guard', 'Outlet Guard', 'Unitary Base Frame']
+2025-03-23 18:36:27,667 - __main__ - INFO - custom_accessories: ['Custom Item 1', 'Custom Item 2']
+2025-03-23 18:36:27,667 - __main__ - INFO - optional_items: ['Vibration Sensors', 'Temperature Sensors']
+2025-03-23 18:36:27,667 - __main__ - INFO - custom_option_items: ['Custom Option 1', 'Custom Option 2']
+2025-03-23 18:36:27,667 - __main__ - INFO - Validation Results:
+2025-03-23 18:36:27,667 - __main__ - INFO - ==================
+2025-03-23 18:36:27,728 - __main__ - INFO - All values matched expected values!
+2025-03-23 18:36:27,732 - __main__ - INFO - Test completed successfully
