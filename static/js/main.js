@@ -2747,6 +2747,15 @@ function calculateFanData() {
                 }
             }
         }
+        // Collect no_of_isolators and shaft_diameter for 'others'
+        const isolatorsInput = document.getElementById('custom_no_of_isolators');
+        const shaftDiameterInput = document.getElementById('custom_shaft_diameter');
+        if (isolatorsInput && isolatorsInput.value) {
+            customMaterialData['no_of_isolators'] = parseInt(isolatorsInput.value, 10);
+        }
+        if (shaftDiameterInput && shaftDiameterInput.value) {
+            customMaterialData['shaft_diameter'] = parseFloat(shaftDiameterInput.value);
+        }
     }
 
     const vibrationIsolators = document.getElementById('vibration_isolators')?.value || 'not_required';
@@ -2794,14 +2803,14 @@ function calculateFanData() {
     });
     
     // Get optional item prices - IMPORTANT: Include BOTH standard and custom optional items
-    const optionalItemPrices = {};
+    const localOptionalItemPrices = {};
     
     // Standard optional items
     document.querySelectorAll('.optional-item').forEach(select => {
         if (select && select.value === 'required') {
             const priceInput = select.parentElement?.querySelector('.price-input');
             if (priceInput && priceInput.value) {
-                optionalItemPrices[select.id] = parseFloat(priceInput.value);
+                localOptionalItemPrices[select.id] = parseFloat(priceInput.value);
             }
         }
     });
@@ -2814,7 +2823,7 @@ function calculateFanData() {
     if (window.customOptionalItems && Object.keys(window.customOptionalItems).length > 0) {
         console.log("Including custom optional items in calculation request");
         for (const [itemId, price] of Object.entries(window.customOptionalItems)) {
-            optionalItemPrices[itemId] = parseFloat(price);
+            localOptionalItemPrices[itemId] = parseFloat(price);
             console.log(`Added custom optional item to request: ${itemId} = ${price}`);
         }
     }
@@ -2830,12 +2839,16 @@ function calculateFanData() {
         }
     }
 
+    // Get vendor rate
+    const vendorRate = parseFloat(document.getElementById('vendor_rate').value) || 200;
+
     console.log("Sending data to calculate_fan:", {
         Fan_Model: fanModel,
         Fan_Size: fanSize,
         Class: class_,
         Arrangement: arrangement,
         vendor: vendor,
+        vendor_rate: vendorRate, // Add vendor rate to the data being sent
         material: material,
         ...customMaterialData,  // Include custom material data
         vibration_isolators: vibrationIsolators,
@@ -2851,11 +2864,11 @@ function calculateFanData() {
         efficiency: efficiency,
         motor_discount: motorDiscount,
         accessories: accessories,
-        optional_items: optionalItemPrices,  // Changed from optionalItemPrices to optional_items
+        optional_items: localOptionalItemPrices,  // Changed from optionalItemPrices to optional_items
         customAccessories: customAccessoriesData
     });
     
-    console.log("Optional item prices being sent:", optionalItemPrices);
+    console.log("Optional item prices being sent:", localOptionalItemPrices);
     console.log("Custom accessories being sent:", customAccessoriesData);
 
     // Send AJAX request
@@ -2870,6 +2883,7 @@ function calculateFanData() {
             Class: class_,
             Arrangement: arrangement,
             vendor: vendor,
+            vendor_rate: vendorRate, // Add vendor rate to request body
             material: material,
             ...customMaterialData,  // Include custom material data
             vibration_isolators: vibrationIsolators,
@@ -2885,7 +2899,7 @@ function calculateFanData() {
             efficiency: efficiency,
             motor_discount: motorDiscount,
             accessories: accessories,
-            optional_items: optionalItemPrices,  // Changed from optionalItemPrices to optional_items
+            optional_items: localOptionalItemPrices,  // Changed from optionalItemPrices to optional_items
             customAccessories: customAccessoriesData
         })
     })
@@ -3430,6 +3444,20 @@ function displayProjectSummary() {
         }
         boughtOutHtml += '</div>';
         fanCard.innerHTML += boughtOutHtml;
+        if (fanData.material === 'others') {
+            let customMatHtml = '<div class="custom-materials-breakdown"><strong>Custom Materials:</strong><ul>';
+            for (let j = 0; j < 5; j++) {
+                const name = fanData[`material_name_${j}`];
+                const weight = fanData[`material_weight_${j}`];
+                const rate = fanData[`material_rate_${j}`];
+                if (name && weight && rate) {
+                    const cost = (parseFloat(weight) * parseFloat(rate)).toFixed(2);
+                    customMatHtml += `<li>${name}: ${weight} kg × ₹${rate}/kg = ₹${cost}</li>`;
+                }
+            }
+            customMatHtml += '</ul></div>';
+            fanCard.innerHTML += customMatHtml;
+        }
     }
     
     summaryContainer.appendChild(fansContainer);
@@ -3970,6 +3998,9 @@ function initializeFanForm() {
             bearingBrandSelect.dispatchEvent(event);
         }
     }
+
+    // Initialize the vendor rate handling
+    initializeVendorRateHandling();
 }
 
 // Add event listener to initialize the page once loaded
@@ -4131,7 +4162,22 @@ function saveProjectToDatabase(enquiryNumber) {
                         drive_pack_kw: parseFloat(fan.drive_pack_kw || 0),
                         custom_accessories: fan.custom_accessories || [],
                         optional_items: fan.optional_items || [],
-                        custom_option_items: fan.custom_option_items || []
+                        custom_option_items: fan.custom_option_items || [],
+                        shaft_diameter: fan.shaft_diameter || fan.custom_shaft_diameter || 0,
+                        no_of_isolators: fan.no_of_isolators || fan.custom_no_of_isolators || 0,
+                        fabrication_margin: fan.fabrication_margin || 0,
+                        bought_out_margin: fan.bought_out_margin || 0,
+                        // Add custom material fields if material is 'others'
+                        ...(fan.material === 'others' ?
+                            (() => {
+                                const customFields = {};
+                                for (let j = 0; j < 5; j++) {
+                                    if (fan[`material_name_${j}`]) customFields[`material_name_${j}`] = fan[`material_name_${j}`];
+                                    if (fan[`material_weight_${j}`]) customFields[`material_weight_${j}`] = fan[`material_weight_${j}`];
+                                    if (fan[`material_rate_${j}`]) customFields[`material_rate_${j}`] = fan[`material_rate_${j}`];
+                                }
+                                return customFields;
+                            })() : {})
                     },
                     weights: {
                         bare_fan_weight: parseFloat(fan.bare_fan_weight || 0),
@@ -4351,9 +4397,13 @@ async function loadSelectedEnquiry() {
                             arrangement: fan.specifications.arrangement,
                             vendor: fan.specifications.vendor,
                             material: fan.specifications.material,
-                            vibration_isolators: fan.specifications.vibration_isolators,
-                            bearing_brand: fan.specifications.bearing_brand,
-                            drive_pack_kw: parseFloat(fan.specifications.drive_pack_kw) || 0
+                            vibration_isolators: fan.specifications.vibration_isolators || 'not_required',
+                            bearing_brand: fan.specifications.bearing_brand || '',
+                            drive_pack_kw: parseFloat(fan.specifications.drive_pack_kw) || 0,
+                            
+                            // Add explicit margin fields with defaults if missing
+                            fabrication_margin: parseFloat(fan.fabrication_margin) || 25,
+                            bought_out_margin: parseFloat(fan.bought_out_margin) || 25,
                         },
                         
                         weights: {
@@ -4474,6 +4524,10 @@ async function loadSelectedEnquiry() {
                         fanData.optional_items = fan.specifications.optional_items;
                         fanData.specifications.optional_items = fan.specifications.optional_items;
                     }
+                    
+                    // Add explicit margin fields with defaults if missing
+                    fanData.fabrication_margin = parseFloat(fan.fabrication_margin) || parseFloat(fan.costs.fabrication_margin) || 25;
+                    fanData.bought_out_margin = parseFloat(fan.bought_out_margin) || parseFloat(fan.costs.bought_out_margin) || 25;
                     
                     console.log("Processed fan data:", fanData);
                     
@@ -5515,5 +5569,36 @@ function validateOptionalItemPrice(inputElement) {
             delete window.optionalItemPrices[itemId];
             console.log(`Removed ${itemId} from optionalItemPrices due to invalid price`);
         }
+    }
+}
+
+function initializeVendorRateHandling() {
+    const vendorSelect = document.getElementById('vendor');
+    const vendorRateInput = document.getElementById('vendor_rate');
+    
+    if (vendorSelect && vendorRateInput) {
+        // Initial default rates for different vendors
+        const defaultRates = {
+            'TCF Factory': 200,
+            'ABC Manufacturer': 220,
+            'XYZ Industries': 185,
+            // Add more default rates as needed
+        };
+        
+        // Update rate when vendor changes
+        vendorSelect.addEventListener('change', function() {
+            const selectedVendor = vendorSelect.value;
+            // Set default rate for vendor if available
+            if (defaultRates[selectedVendor]) {
+                vendorRateInput.value = defaultRates[selectedVendor];
+            }
+        });
+        
+        // Ensure rate is always valid
+        vendorRateInput.addEventListener('change', function() {
+            if (vendorRateInput.value <= 0 || isNaN(vendorRateInput.value)) {
+                vendorRateInput.value = 200; // Default to 200 if invalid
+            }
+        });
     }
 }

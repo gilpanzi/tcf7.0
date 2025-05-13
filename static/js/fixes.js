@@ -790,6 +790,13 @@ function saveFanData(fanNumber) {
             console.warn("Missing vibration_isolators_price in calculatedData");
             data.vibration_isolators_cost = 0;
         }
+        // Always save no_of_isolators and shaft_diameter from calculatedData if present
+        if (calculatedData.no_of_isolators !== undefined) {
+            data.no_of_isolators = calculatedData.no_of_isolators;
+        }
+        if (calculatedData.shaft_diameter !== undefined) {
+            data.shaft_diameter = calculatedData.shaft_diameter;
+        }
         
         if (calculatedData.drive_pack_price !== undefined) {
             data.drive_pack_cost = calculatedData.drive_pack_price;
@@ -1355,10 +1362,9 @@ function resetFanForm() {
 // Show project summary
 function showProjectSummary() {
     console.log("Showing project summary");
-    
     // Print the fan data
     console.log("Fan data for summary:", JSON.stringify(window.fanData));
-    
+
     // First, check if we need to create the summary section
     let summarySection = document.getElementById('project-summary');
     if (!summarySection) {
@@ -1367,74 +1373,49 @@ function showProjectSummary() {
         summarySection.id = 'project-summary';
         summarySection.className = 'section project-summary';
         summarySection.style.display = 'none';
-        
-        // Create the HTML structure for the summary section
+
+        // Add common margin inputs at the top
         summarySection.innerHTML = `
             <h3 class="summary-header">Project Summary</h3>
+            <div class="common-margins" style="display: flex; gap: 30px; align-items: center; margin-bottom: 30px;">
+                <label style="font-weight: 600;">Common Fabrication Margin (%):
+                    <input type="number" id="common-fabrication-margin" style="margin-left: 10px; width: 80px; padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc;" min="0" max="100" step="0.01">
+                </label>
+                <label style="font-weight: 600;">Common Bought Out Margin (%):
+                    <input type="number" id="common-boughtout-margin" style="margin-left: 10px; width: 80px; padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc;" min="0" max="100" step="0.01">
+                </label>
+                <span style="color: #888; font-size: 0.95em;">(Editing these will update all fans below)</span>
+            </div>
             <div class="project-details">
                 <div class="project-info">
                     <div class="info-grid">
-                        <div class="info-item">
-                            <label>Enquiry Number:</label>
-                            <span class="info-value">${window.enquiryNumber}</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Customer Name:</label>
-                            <span class="info-value">${window.customerName}</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Total Fans:</label>
-                            <span class="info-value">${window.totalFans}</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Sales Engineer:</label>
-                            <span class="info-value">${window.salesEngineer}</span>
-                        </div>
+                        <div class="info-item"><label>Enquiry Number:</label><span class="info-value">${window.enquiryNumber}</span></div>
+                        <div class="info-item"><label>Customer Name:</label><span class="info-value">${window.customerName}</span></div>
+                        <div class="info-item"><label>Total Fans:</label><span class="info-value">${window.totalFans}</span></div>
+                        <div class="info-item"><label>Sales Engineer:</label><span class="info-value">${window.salesEngineer}</span></div>
                     </div>
                 </div>
-                
-                <div id="fans-container" class="fans-container">
-                    <!-- Fan cards will be added here dynamically -->
-                </div>
-                
+                <div id="fans-container" class="fans-container"></div>
                 <div class="project-total-section">
                     <h3>Project Totals</h3>
                     <div class="project-total-grid">
-                        <div class="total-card">
-                            <div class="total-label">Total Weight</div>
-                            <div class="total-value" id="project-total-weight">0 kg</div>
-                        </div>
-                        <div class="total-card">
-                            <div class="total-label">Total Fabrication Cost</div>
-                            <div class="total-value" id="project-total-fabrication">₹0</div>
-                        </div>
-                        <div class="total-card">
-                            <div class="total-label">Total Bought Out Cost</div>
-                            <div class="total-value" id="project-total-bought-out">₹0</div>
-                        </div>
-                        <div class="total-card">
-                            <div class="total-label">Total Project Cost</div>
-                            <div class="total-value" id="project-total-cost">₹0</div>
-                        </div>
-                        <div class="total-card">
-                            <div class="total-label">Project Margin</div>
-                            <div class="total-value" id="project-total-margin">0%</div>
-                        </div>
+                        <div class="total-card"><div class="total-label">Total Weight</div><div class="total-value" id="project-total-weight">0 kg</div></div>
+                        <div class="total-card"><div class="total-label">Total Fabrication Cost</div><div class="total-value" id="project-total-fabrication">₹0</div></div>
+                        <div class="total-card"><div class="total-label">Total Bought Out Cost</div><div class="total-value" id="project-total-bought-out">₹0</div></div>
+                        <div class="total-card"><div class="total-label">Total Project Cost</div><div class="total-value" id="project-total-cost">₹0</div></div>
+                        <div class="total-card"><div class="total-label">Project Margin</div><div class="total-value" id="project-total-margin">0%</div></div>
                     </div>
                 </div>
             </div>
-            
             <div class="button-group">
                 <button id="return-to-calculator" class="action-button">Return to Fan Calculator</button>
                 <button type="button" onclick="window.print()" class="action-button print-btn">Print Summary</button>
                 <button type="button" onclick="saveProjectToDatabase('${window.enquiryNumber}')" class="action-button save-btn">Add to Database</button>
             </div>
         `;
-        
         // Add to the document
         const container = document.querySelector('.container') || document.body;
         container.appendChild(summarySection);
-        
         // Add event listener to the return button
         const returnButton = summarySection.querySelector('#return-to-calculator');
         if (returnButton) {
@@ -1443,16 +1424,21 @@ function showProjectSummary() {
             });
         }
     }
-    
+    // Set default values for common margin inputs
+    const fabricationMargins = window.fanData.filter(f => f !== null).map(f => parseFloat(f.fabrication_margin || 0));
+    const boughtOutMargins = window.fanData.filter(f => f !== null).map(f => parseFloat(f.bought_out_margin || 0));
+    const avgFab = fabricationMargins.length ? (fabricationMargins.reduce((a, b) => a + b, 0) / fabricationMargins.length) : 25;
+    const avgBO = boughtOutMargins.length ? (boughtOutMargins.reduce((a, b) => a + b, 0) / boughtOutMargins.length) : 25;
+    const fabInput = document.getElementById('common-fabrication-margin');
+    if (fabInput) fabInput.value = avgFab.toFixed(2);
+    const boInput = document.getElementById('common-boughtout-margin');
+    if (boInput) boInput.value = avgBO.toFixed(2);
     // Get or create fans container
     let fansContainer = document.getElementById('fans-container');
     if (!fansContainer) {
-        console.log("Fans container not found, creating it");
         fansContainer = document.createElement('div');
         fansContainer.id = 'fans-container';
         fansContainer.className = 'fans-container';
-        
-        // Add it to the project summary section
         const projectDetails = summarySection.querySelector('.project-details');
         if (projectDetails) {
             const projectTotal = projectDetails.querySelector('.project-total-section');
@@ -1463,57 +1449,31 @@ function showProjectSummary() {
             }
         }
     }
-    
-    // Clear container
     fansContainer.innerHTML = '';
-    
-    // Add a card for each fan
     let totalProjectWeight = 0;
     let totalFabricationCost = 0;
     let totalBoughtOutCost = 0;
     let totalProjectCost = 0;
     let totalJobMarginSum = 0;
     let fanCount = 0;
-    
     for (let i = 0; i < window.totalFans; i++) {
         const fanData = window.fanData[i];
         if (fanData) {
-            // Add to totals
             totalProjectWeight += parseFloat(fanData.total_weight) || 0;
             totalFabricationCost += parseFloat(fanData.fabrication_cost) || 0;
             totalBoughtOutCost += parseFloat(fanData.bought_out_cost) || 0;
             totalProjectCost += parseFloat(fanData.total_cost) || 0;
             totalJobMarginSum += parseFloat(fanData.total_job_margin) || 0;
             fanCount++;
-            
-            // Create fan card
             const fanCard = createFanCard(i + 1, fanData);
             fansContainer.appendChild(fanCard);
         } else {
-            // Create empty fan card
             const emptyFanCard = createEmptyFanCard(i + 1);
             fansContainer.appendChild(emptyFanCard);
         }
     }
-    
-    // Update project totals - ensure elements exist first
-    const updateElement = (id, value) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
-    };
-    
-    // Update all total elements
-    updateElement('project-total-weight', `${totalProjectWeight.toFixed(2)} kg`);
-    updateElement('project-total-fabrication', `₹${totalFabricationCost.toLocaleString('en-IN')}`);
-    updateElement('project-total-bought-out', `₹${totalBoughtOutCost.toLocaleString('en-IN')}`);
-    updateElement('project-total-cost', `₹${totalProjectCost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`);
-    
-    // Calculate and update project margin with 2 decimal places
-    const averageJobMargin = fanCount > 0 ? parseFloat((totalJobMarginSum / fanCount).toFixed(2)) : 0;
-    updateElement('project-total-margin', `${averageJobMargin}%`);
-    
+    // Update project totals
+    updateProjectTotals();
     // Show no fans message if needed
     if (!fanCount) {
         const message = document.createElement('div');
@@ -1522,9 +1482,7 @@ function showProjectSummary() {
         message.style.cssText = 'text-align: center; padding: 20px; color: #6c757d; font-style: italic; grid-column: 1 / -1;';
         fansContainer.prepend(message);
     }
-    
     // Make sure project summary section is visible
-    // Hide all sections
     const sections = ['enquiry-form', 'fan-form-section'];
     sections.forEach(id => {
         const section = document.getElementById(id);
@@ -1532,262 +1490,258 @@ function showProjectSummary() {
             section.style.display = 'none';
         }
     });
-    
-    // Show the project summary
     summarySection.style.display = 'block';
-    
-    // Update active navigation button
     updateNavigationButtons('project-summary');
-    
-    // Update project totals display
-    const projectTotalBoughtOut = document.getElementById('project_total_bought_out_cost');
-    if (projectTotalBoughtOut) {
-        projectTotalBoughtOut.textContent = `₹${totalBoughtOutCost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
-    }
+    // Wire up common margin input logic
+    document.getElementById('common-fabrication-margin').addEventListener('change', function() {
+        const val = parseFloat(this.value);
+        if (!isNaN(val)) {
+            for (let i = 0; i < window.fanData.length; i++) {
+                if (window.fanData[i] === null) continue;
+                window.fanData[i].fabrication_margin = val;
+                window.fanData[i].fabrication_selling_price = window.fanData[i].fabrication_cost * (1 + val / 100);
+                window.fanData[i].total_selling_price = window.fanData[i].fabrication_selling_price + window.fanData[i].bought_out_selling_price;
+                const totalCost = window.fanData[i].fabrication_cost + window.fanData[i].bought_out_cost;
+                window.fanData[i].total_job_margin = totalCost > 0 ? ((window.fanData[i].total_selling_price - totalCost) / totalCost * 100) : 0;
+            }
+            showProjectSummary();
+        }
+    });
+    document.getElementById('common-boughtout-margin').addEventListener('change', function() {
+        const val = parseFloat(this.value);
+        if (!isNaN(val)) {
+            for (let i = 0; i < window.fanData.length; i++) {
+                if (window.fanData[i] === null) continue;
+                window.fanData[i].bought_out_margin = val;
+                window.fanData[i].bought_out_selling_price = window.fanData[i].bought_out_cost * (1 + val / 100);
+                window.fanData[i].total_selling_price = window.fanData[i].fabrication_selling_price + window.fanData[i].bought_out_selling_price;
+                const totalCost = window.fanData[i].fabrication_cost + window.fanData[i].bought_out_cost;
+                window.fanData[i].total_job_margin = totalCost > 0 ? ((window.fanData[i].total_selling_price - totalCost) / totalCost * 100) : 0;
+            }
+            showProjectSummary();
+        }
+    });
+    // --- BEGIN: Project Summary Export to Excel ---
+    setTimeout(addExportToExcelButton, 500);
+    // --- END: Project Summary Export to Excel ---
 }
 
-// Create a fan card with the new RocksMax design
 function createFanCard(fanNumber, fanData) {
     const card = document.createElement('div');
     card.className = 'fan-card';
-    
-    // Create fan model header with fan number
-    const header = document.createElement('div');
-    header.className = 'fan-header';
-    header.innerHTML = `
-        <div class="fan-model">${fanData.fan_model} ${fanData.fan_size ? '- Size ' + fanData.fan_size : ''}</div>
-        <div class="fan-number">Fan ${fanNumber}</div>
-        <div class="edit-btn">
-            <button onclick="editFan(${fanNumber})" class="edit-fan-btn">EDIT FAN</button>
+    const fanClass = fanData.class_ || fanData.class || 'N/A';
+    const accessoryWeight = fanData.accessory_weights !== undefined ? fanData.accessory_weights : (fanData.accessory_weight !== undefined ? fanData.accessory_weight : 0);
+    // Motor details
+    const motorBrand = fanData.motor_brand || '';
+    const motorKw = fanData.motor_kw || '';
+    const pole = fanData.pole || '';
+    const efficiency = fanData.efficiency || '';
+    const motorDiscount = fanData.motor_discount || '';
+    // Vendor
+    const vendor = fanData.vendor || '';
+    // Shaft diameter
+    const shaftDia = fanData.custom_shaft_diameter || fanData.shaft_diameter || '';
+    // No of isolators
+    const noOfIsolators = fanData.custom_no_of_isolators || fanData.no_of_isolators || '';
+    // Bearing brand
+    const bearingBrand = fanData.bearing_brand || '';
+    // Isolator brand/type
+    const isolatorBrand = fanData.vibration_isolators || '';
+    // Drive pack kW
+    const drivePackKw = fanData.drive_pack_kw || fanData.drive_pack || '';
+    card.innerHTML = `
+        <div class="fan-header">
+            <div class="fan-model">${fanData.fan_model} ${fanData.fan_size ? '- Size ' + fanData.fan_size : ''}</div>
+            <div class="fan-number">Fan ${fanNumber}</div>
+        </div>
+        <div class="fan-specs">
+            <div class="spec-item"><span>Class:</span><span>${fanClass}</span></div>
+            <div class="spec-item"><span>Arrangement:</span><span>${fanData.arrangement || 'N/A'}</span></div>
+            <div class="spec-item"><span>Material:</span><span>${fanData.material || 'N/A'}</span></div>
+            <div class="spec-item"><span>Vendor:</span><span>${vendor}</span></div>
+            <div class="spec-item"><span>Shaft Diameter (mm):</span><span>${shaftDia}</span></div>
+            <div class="spec-item"><span>No. of Isolators:</span><span>${noOfIsolators}</span></div>
+            <div class="spec-item"><span>Isolator Brand/Type:</span><span>${isolatorBrand}</span></div>
+            <div class="spec-item"><span>Bearing Brand:</span><span>${bearingBrand}</span></div>
+            <div class="spec-item"><span>Drive Pack kW:</span><span>${drivePackKw}</span></div>
+            <div class="spec-item"><span>Motor Brand:</span><span>${motorBrand}</span></div>
+            <div class="spec-item"><span>Motor kW:</span><span>${motorKw}</span></div>
+            <div class="spec-item"><span>Pole:</span><span>${pole}</span></div>
+            <div class="spec-item"><span>Efficiency:</span><span>${efficiency}</span></div>
+            <div class="spec-item"><span>Motor Discount (%):</span><span>${motorDiscount}</span></div>
+        </div>
+        <div class="weights-section">
+            <h3>Weights</h3>
+            <div class="detail-item"><span>Bare Fan Weight:</span><span>${parseFloat(fanData.bare_fan_weight || 0).toFixed(2)} kg</span></div>
+            <div class="detail-item"><span>Accessory Weight:</span><span>${parseFloat(accessoryWeight || 0).toFixed(2)} kg</span></div>
+            <div class="detail-item"><span>Total Weight:</span><span>${parseFloat(fanData.total_weight || 0).toFixed(2)} kg</span></div>
+        </div>
+        <div class="cost-summary-section">
+            <h3>Cost Summary</h3>
+            <div class="detail-item"><span>Fabrication Cost:</span><span>₹${parseFloat(fanData.fabrication_cost || 0).toLocaleString('en-IN')}</span></div>
+            <div class="detail-item"><span>Fabrication Margin (%):</span><input type="number" class="margin-input" data-fan="${fanNumber}" data-type="fabrication" value="${parseFloat(fanData.fabrication_margin || 0).toFixed(2)}" step="0.01" min="0" max="100"></div>
+            <div class="detail-item"><span>Fabrication Selling Price:</span><span class="fabrication-selling-price">₹${parseFloat(fanData.fabrication_selling_price || 0).toLocaleString('en-IN')}</span></div>
+            <div class="detail-item"><span>Bought Out Cost:</span><span>₹${parseFloat(fanData.bought_out_cost || 0).toLocaleString('en-IN')}</span></div>
+            <div class="detail-item"><span>Bought Out Margin (%):</span><input type="number" class="margin-input" data-fan="${fanNumber}" data-type="bought_out" value="${parseFloat(fanData.bought_out_margin || 0).toFixed(2)}" step="0.01" min="0" max="100"></div>
+            <div class="detail-item"><span>Bought Out Selling Price:</span><span class="bought-out-selling-price">₹${parseFloat(fanData.bought_out_selling_price || 0).toLocaleString('en-IN')}</span></div>
+            <div class="detail-item total-cost"><span>Total Cost:</span><span>₹${parseFloat(fanData.total_cost || 0).toLocaleString('en-IN')}</span></div>
+            <div class="detail-item total-selling-price"><span>Total Selling Price:</span><span class="total-selling-price-value">₹${parseFloat(fanData.total_selling_price || 0).toLocaleString('en-IN')}</span></div>
+            <div class="detail-item job-margin"><span>Job Margin:</span><span class="job-margin-value">${parseFloat(fanData.total_job_margin || 0).toFixed(2)}%</span></div>
         </div>
     `;
-    card.appendChild(header);
-    
-    // Create details grid
-    const detailsGrid = document.createElement('div');
-    detailsGrid.className = 'fan-details-grid';
-    
-    // Basic details with fan specifications
-    const basicDetails = document.createElement('div');
-    basicDetails.className = 'fan-basic-details';
-    basicDetails.innerHTML = `
-        <div class="detail-section">
-            <div class="specifications">
-                <h3>Fan Specifications</h3>
-                <div class="detail-item">
-                    <span>Model:</span>
-                    <span>${fanData.fan_model || ''}</span>
-                </div>
-                <div class="detail-item">
-                    <span>Size:</span>
-                    <span>${fanData.fan_size || ''}</span>
-                </div>
-                <div class="detail-item">
-                    <span>Class:</span>
-                    <span>${fanData.class_ || fanData.class || ''}</span>
-                </div>
-                <div class="detail-item">
-                    <span>Arrangement:</span>
-                    <span>${fanData.arrangement || ''}</span>
-                </div>
-            </div>
-            <div class="vendor-material">
-                <div class="box-item">
-                    <div class="item-label">Vendor</div>
-                    <div class="item-value">${fanData.vendor || 'TCF Factory'}</div>
-                </div>
-                <div class="box-item">
-                    <div class="item-label">Material</div>
-                    <div class="item-value">${fanData.material || fanData.moc || 'ms'}</div>
-                </div>
-            </div>
-        </div>
-    `;
-    detailsGrid.appendChild(basicDetails);
-    
-    // Weights section
-    const weightsSection = document.createElement('div');
-    weightsSection.className = 'weights-section detail-section';
-    const bareFanWeight = parseFloat(fanData.bare_fan_weight) || 0;
-    const accessoriesWeight = parseFloat(fanData.accessory_weights) || 0;
-    const totalWeight = bareFanWeight + accessoriesWeight;
-    weightsSection.innerHTML = `
-        <h3>Weights Breakdown</h3>
-        <div class="detail-item">
-            <span>Bare Fan Weight:</span>
-            <span>${bareFanWeight.toFixed(0)} kg</span>
-        </div>
-        <div class="detail-item">
-            <span>Accessories Weight:</span>
-            <span>${accessoriesWeight.toFixed(0)} kg</span>
-        </div>
-        <div class="detail-item total-weight">
-            <span>Total Weight:</span>
-            <span>${totalWeight.toFixed(0)} kg</span>
-        </div>
-    `;
-    detailsGrid.appendChild(weightsSection);
-    card.appendChild(detailsGrid);
-    
-    // Accessories section
-    const accessoriesSection = document.createElement('div');
-    accessoriesSection.className = 'accessories-section detail-section';
-    
-    // Standard accessories
-    const standardAccessories = [];
-    if (fanData.accessories) {
-        if (fanData.accessories.unitary_base_frame) standardAccessories.push('Unitary Base Frame Included');
-        if (fanData.accessories.outlet_companion_flange) standardAccessories.push('Outlet Companion Flange Included');
-    }
-    
-    let accessoriesHtml = '<div class="standard-accessories"><h3>Standard Accessories</h3>';
-    if (standardAccessories.length > 0) {
-        standardAccessories.forEach(acc => {
-            accessoriesHtml += `<div class="accessory-item">${acc}</div>`;
-        });
-    } else {
-        accessoriesHtml += '<div class="accessory-item">No standard accessories</div>';
-    }
-    accessoriesHtml += '</div>';
-    
-    // Custom accessories
-    accessoriesHtml += '<div class="custom-accessories"><h3>Custom Accessories</h3>';
-    if (fanData.custom_accessories) {
-        if (typeof fanData.custom_accessories === 'string' && fanData.custom_accessories.trim()) {
-            accessoriesHtml += `<div class="accessory-item">${fanData.custom_accessories} Included</div>`;
-        } else if (Array.isArray(fanData.custom_accessories) && fanData.custom_accessories.length > 0) {
-            fanData.custom_accessories.forEach(acc => {
-                accessoriesHtml += `<div class="accessory-item">${acc.name || acc} Included</div>`;
-            });
-        } else if (typeof fanData.custom_accessories === 'object' && Object.keys(fanData.custom_accessories).length > 0) {
-            for (const [key, value] of Object.entries(fanData.custom_accessories)) {
-                if (value) {
-                    accessoriesHtml += `<div class="accessory-item">${key} Included</div>`;
-                }
-            }
-        } else {
-            accessoriesHtml += '<div class="accessory-item">No custom accessories</div>';
+    // Bought Out Items Section
+    let boughtOutHtml = '';
+    if ((fanData.vibration_isolators_cost && fanData.vibration_isolators_cost > 0) || (fanData.bearing_cost && fanData.bearing_cost > 0) || (fanData.drive_pack_cost && fanData.drive_pack_cost > 0) || (fanData.motor_cost && fanData.motor_cost > 0)) {
+        boughtOutHtml += '<div class="bought-out-section"><h3>Bought Out Items</h3>';
+        if (fanData.vibration_isolators_cost && fanData.vibration_isolators_cost > 0) {
+            boughtOutHtml += `<div class="detail-item"><span>Vibration Isolators:</span><span>₹${parseFloat(fanData.vibration_isolators_cost).toLocaleString('en-IN')}</span></div>`;
         }
-    } else {
-        accessoriesHtml += '<div class="accessory-item">No custom accessories</div>';
+        if (fanData.bearing_cost && fanData.bearing_cost > 0) {
+            boughtOutHtml += `<div class="detail-item"><span>Bearings:</span><span>₹${parseFloat(fanData.bearing_cost).toLocaleString('en-IN')}</span></div>`;
+        }
+        if (fanData.drive_pack_cost && fanData.drive_pack_cost > 0) {
+            boughtOutHtml += `<div class="detail-item"><span>Drive Pack:</span><span>₹${parseFloat(fanData.drive_pack_cost).toLocaleString('en-IN')}</span></div>`;
+        }
+        if (fanData.motor_cost && fanData.motor_cost > 0) {
+            boughtOutHtml += `<div class="detail-item"><span>Motor:</span><span>₹${parseFloat(fanData.motor_cost).toLocaleString('en-IN')}</span></div>`;
+        }
+        boughtOutHtml += '</div>';
     }
-    accessoriesHtml += '</div>';
-    
-    accessoriesSection.innerHTML = accessoriesHtml;
-    detailsGrid.appendChild(accessoriesSection);
-    
-    // Bought Out Items section
-    const boughtOutSection = document.createElement('div');
-    boughtOutSection.className = 'bought-out-section detail-section';
-    boughtOutSection.innerHTML = `<h3>Bought Out Items</h3>`;
-    
-    // Add bought out items with enhanced price detection
-    function getBoughtOutPrice(item) {
-        // Try all variations of the item cost/price
-        const priceFields = [
-            `${item}_cost`, 
-            `${item}_price`,
-            `discounted_${item}_price`
-        ];
-        
-        for (const field of priceFields) {
-            if (fanData[field] && parseFloat(fanData[field]) > 0) {
-                return parseFloat(fanData[field]);
-            }
-            if (fanData.costs && fanData.costs[field] && parseFloat(fanData.costs[field]) > 0) {
-                return parseFloat(fanData.costs[field]);
+    card.innerHTML += boughtOutHtml;
+    // Accessories Section
+    let accessoriesHtml = '';
+    if (fanData.accessories && Object.keys(fanData.accessories).length > 0) {
+        accessoriesHtml += '<div class="accessories-section"><h3>Accessories</h3>';
+        for (const [key, value] of Object.entries(fanData.accessories)) {
+            if (value) {
+                accessoriesHtml += `<div class="detail-item"><span>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span><span>Included</span></div>`;
             }
         }
-        return 0;
+        accessoriesHtml += '</div>';
     }
-    
-    // Create a consistent display function
-    function addBoughtOutItem(name, key) {
-        const price = getBoughtOutPrice(key);
-        if (price > 0) {
-            boughtOutSection.innerHTML += `
-                <div class="detail-item">
-                    <span>${name}:</span>
-                    <span>₹${price.toLocaleString('en-IN')}</span>
-                </div>`;
-            return true;
-        }
-        return false;
-    }
-    
-    // Check each bought out item and add if present
-    let hasBoughtOutItems = false;
-    
-    hasBoughtOutItems |= addBoughtOutItem('Vibration Isolators', 'vibration_isolators');
-    hasBoughtOutItems |= addBoughtOutItem('Bearings', 'bearing');
-    hasBoughtOutItems |= addBoughtOutItem('Drive Pack', 'drive_pack');
-    hasBoughtOutItems |= addBoughtOutItem('Motor', 'motor');
-    
-    // Add optional items if present
-    if (fanData.optional_items && typeof fanData.optional_items === 'object') {
-        const optionalItems = fanData.optional_items;
-        for (const [key, value] of Object.entries(optionalItems)) {
+    card.innerHTML += accessoriesHtml;
+    // Optional Items Section
+    let optionalHtml = '';
+    if (fanData.optional_items && Object.keys(fanData.optional_items).length > 0) {
+        optionalHtml += '<div class="bought-out-section"><h3>Optional Items</h3>';
+        for (const [key, value] of Object.entries(fanData.optional_items)) {
             if (value && parseFloat(value) > 0) {
-                hasBoughtOutItems = true;
-                const displayName = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                boughtOutSection.innerHTML += `
-                    <div class="detail-item">
-                        <span>${displayName}:</span>
-                        <span>₹${parseFloat(value).toLocaleString('en-IN')}</span>
-                    </div>`;
+                optionalHtml += `<div class="detail-item"><span>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span><span>₹${parseFloat(value).toLocaleString('en-IN')}</span></div>`;
             }
         }
+        optionalHtml += '</div>';
     }
-    
-    if (!hasBoughtOutItems) {
-        boughtOutSection.innerHTML += `<div class="detail-item no-items">No bought out items</div>`;
+    card.innerHTML += optionalHtml;
+    // --- Custom Materials Section ---
+    if (fanData.material === 'others' || fanData.moc === 'others') {
+        let customMatHtml = '<div class="custom-materials-section" style="margin:18px 32px 0 32px;padding:18px 22px;background:#f8f9fa;border-radius:14px;box-shadow:0 1.5px 6px rgba(67,97,238,0.04);margin-bottom:18px;"><h3 style="color:#f72585;font-size:1.15rem;font-weight:700;margin-bottom:12px;letter-spacing:0.5px;">Custom Materials</h3>';
+        customMatHtml += '<ul style="padding-left:18px;">';
+        for (let j = 0; j < 5; j++) {
+            const name = fanData[`material_name_${j}`];
+            const weight = fanData[`material_weight_${j}`];
+            const rate = fanData[`material_rate_${j}`];
+            if (name && weight && rate) {
+                const cost = (parseFloat(weight) * parseFloat(rate)).toFixed(2);
+                customMatHtml += `<li>${name}: ${weight} kg × ₹${rate}/kg = <strong>₹${cost}</strong></li>`;
+            }
+        }
+        customMatHtml += '</ul></div>';
+        card.innerHTML += customMatHtml;
     }
-    
-    detailsGrid.appendChild(boughtOutSection);
-    
-    // Cost Summary Section
-    const costSummarySection = document.createElement('div');
-    costSummarySection.className = 'cost-summary-section detail-section';
-    
-    // Format cost values
-    const fabricationCost = parseFloat(fanData.fabrication_cost) || 0;
-    const fabricationSelling = parseFloat(fanData.fabrication_selling_price) || 0;
-    const boughtOutCost = parseFloat(fanData.bought_out_cost) || 0;
-    const boughtOutSelling = parseFloat(fanData.bought_out_selling_price) || 0;
-    const totalCost = parseFloat(fanData.total_cost) || 0;
-    const jobMargin = parseFloat(fanData.total_job_margin) || 0;
-    
-    costSummarySection.innerHTML = `
-        <h3>Cost Summary</h3>
-        <div class="detail-item">
-            <span>Fabrication Cost:</span>
-            <span>₹${fabricationCost.toLocaleString('en-IN')}</span>
-        </div>
-        <div class="detail-item">
-            <span>Fabrication Selling Price:</span>
-            <span>₹${fabricationSelling.toLocaleString('en-IN')}</span>
-        </div>
-        <div class="detail-item">
-            <span>Bought Out Cost:</span>
-            <span>₹${boughtOutCost.toLocaleString('en-IN')}</span>
-        </div>
-        <div class="detail-item">
-            <span>Bought Out Selling Price:</span>
-            <span>₹${boughtOutSelling.toLocaleString('en-IN')}</span>
-        </div>
-        <div class="detail-item total-cost">
-            <span>Total Cost:</span>
-            <span>₹${totalCost.toLocaleString('en-IN')}</span>
-        </div>
-        <div class="detail-item job-margin">
-            <span>Job Margin:</span>
-            <span>${jobMargin.toFixed(2)}%</span>
-        </div>
-    `;
-    
-    detailsGrid.appendChild(costSummarySection);
-    
+    // Add event listeners for margin inputs
+    const marginInputs = card.querySelectorAll('.margin-input');
+    marginInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            updateFanPricing(fanNumber, this.dataset.type, parseFloat(this.value));
+        });
+    });
+    // Add Edit Fan button at the bottom of the card
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-fan-btn';
+    editBtn.textContent = `Edit Fan ${fanNumber}`;
+    editBtn.style = 'margin-top: 18px; padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600;';
+    editBtn.addEventListener('click', function() {
+        editFan(fanNumber);
+    });
+    card.appendChild(editBtn);
     return card;
+}
+
+// Add new function to update fan pricing when margins change
+function updateFanPricing(fanNumber, marginType, marginValue) {
+    const fanData = window.fanData[fanNumber - 1];
+    if (!fanData) return;
+
+    // Update the margin in fanData
+    if (marginType === 'fabrication') {
+        fanData.fabrication_margin = marginValue;
+        fanData.fabrication_selling_price = fanData.fabrication_cost * (1 + marginValue / 100);
+    } else if (marginType === 'bought_out') {
+        fanData.bought_out_margin = marginValue;
+        fanData.bought_out_selling_price = fanData.bought_out_cost * (1 + marginValue / 100);
+    }
+
+    // Update total selling price
+    fanData.total_selling_price = fanData.fabrication_selling_price + fanData.bought_out_selling_price;
+
+    // Calculate new job margin
+    const totalCost = fanData.fabrication_cost + fanData.bought_out_cost;
+    fanData.total_job_margin = totalCost > 0 ? ((fanData.total_selling_price - totalCost) / totalCost * 100) : 0;
+
+    // Update the display
+    const fanCard = document.querySelector(`.fan-card:nth-child(${fanNumber})`);
+    if (fanCard) {
+        fanCard.querySelector('.fabrication-selling-price').textContent = 
+            `₹${fanData.fabrication_selling_price.toLocaleString('en-IN')}`;
+        fanCard.querySelector('.bought-out-selling-price').textContent = 
+            `₹${fanData.bought_out_selling_price.toLocaleString('en-IN')}`;
+        fanCard.querySelector('.total-selling-price-value').textContent = 
+            `₹${fanData.total_selling_price.toLocaleString('en-IN')}`;
+        fanCard.querySelector('.job-margin-value').textContent = 
+            `${fanData.total_job_margin.toFixed(2)}%`;
+    }
+
+    // Update project totals
+    updateProjectTotals();
+}
+
+// Add function to update project totals
+function updateProjectTotals() {
+    let totalProjectWeight = 0;
+    let totalFabricationCost = 0;
+    let totalBoughtOutCost = 0;
+    let totalProjectCost = 0;
+    let totalJobMarginSum = 0;
+    let fanCount = 0;
+
+    for (let i = 0; i < window.totalFans; i++) {
+        const fanData = window.fanData[i];
+        if (fanData) {
+            totalProjectWeight += parseFloat(fanData.total_weight) || 0;
+            totalFabricationCost += parseFloat(fanData.fabrication_cost) || 0;
+            totalBoughtOutCost += parseFloat(fanData.bought_out_cost) || 0;
+            totalProjectCost += parseFloat(fanData.total_cost) || 0;
+            totalJobMarginSum += parseFloat(fanData.total_job_margin) || 0;
+            fanCount++;
+        }
+    }
+
+    // Update project total elements
+    const updateElement = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    };
+
+    updateElement('project-total-weight', `${totalProjectWeight.toFixed(2)} kg`);
+    updateElement('project-total-fabrication', `₹${totalFabricationCost.toLocaleString('en-IN')}`);
+    updateElement('project-total-bought-out', `₹${totalBoughtOutCost.toLocaleString('en-IN')}`);
+    updateElement('project-total-cost', `₹${totalProjectCost.toLocaleString('en-IN')}`);
+
+    // Calculate and update project margin
+    const averageJobMargin = fanCount > 0 ? parseFloat((totalJobMarginSum / fanCount).toFixed(2)) : 0;
+    updateElement('project-total-margin', `${averageJobMargin}%`);
 }
 
 function generateAccessoriesRows(fanData) {
@@ -3494,3 +3448,497 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show the enquiry form by default
     navigateTo('enquiry-form');
 });
+
+// --- BEGIN: Project Summary Export to Excel ---
+function extractProjectSummaryTable() {
+    const summary = document.getElementById('project-summary');
+    const fans = window.fanData || [];
+    const fanCards = summary.querySelectorAll('.fan-card');
+    const rows = [];
+    const sectionRows = [];
+    // Build a map of label to row index for easy column filling
+    const labelToRow = {};
+    // For each fan, collect all rows (label, value)
+    fanCards.forEach((fanCard, fanIdx) => {
+        let currentSection = '';
+        fanCard.querySelectorAll('h3, .detail-item').forEach(item => {
+            if (item.tagName === 'H3') {
+                currentSection = item.textContent.trim();
+                if (fanIdx === 0) {
+                    rows.push([currentSection]);
+                    sectionRows.push(rows.length - 1);
+                }
+            } else {
+                const spans = item.querySelectorAll('span, input');
+                let label = spans[0]?.textContent?.trim() || '';
+                let value = '';
+                if (spans[1]) {
+                    value = spans[1].tagName === 'INPUT' ? spans[1].value : spans[1].textContent.trim();
+                } else if (spans[0] && spans[0].tagName === 'INPUT') {
+                    value = spans[0].value;
+                }
+                // Find or create the row for this label
+                let rowIdx = labelToRow[label];
+                if (fanIdx === 0) {
+                    rows.push([label, value]);
+                    rowIdx = rows.length - 1;
+                    labelToRow[label] = rowIdx;
+                } else {
+                    rowIdx = labelToRow[label];
+                    if (rowIdx !== undefined) {
+                        rows[rowIdx][fanIdx + 1] = value;
+                    }
+                }
+            }
+        });
+    });
+    // Add header row
+    const header = ['Field'];
+    for (let i = 0; i < fans.length; i++) {
+        const fan = fans[i];
+        header.push(`${fan.fan_model || ''} ${fan.fan_size ? '- ' + fan.fan_size : ''}`.trim() || `Fan ${i+1}`);
+    }
+    rows.unshift(header);
+    return rows;
+}
+
+function addExportToExcelButton() {
+    const summary = document.getElementById('project-summary');
+    if (!summary) return;
+    if (document.getElementById('export-to-excel-btn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'export-to-excel-btn';
+    btn.textContent = 'Export to Excel';
+    btn.className = 'action-button export-btn';
+    btn.style = 'margin-left: 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; padding: 10px 24px; font-size: 1.1em; font-weight: 700; box-shadow: 0 2px 8px rgba(67,97,238,0.08);';
+    btn.onclick = function() {
+        const table = extractProjectSummaryTable();
+        fetch('/export_project_summary_excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                table,
+                enquiry_number: window.enquiryNumber,
+                customer_name: window.customerName,
+                sales_engineer: window.salesEngineer
+            })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to export');
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${window.enquiryNumber || 'Project'}_summary.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(err => alert('Export failed: ' + err.message));
+    };
+    // Add to button group or at the end
+    const btnGroup = summary.querySelector('.button-group');
+    if (btnGroup) {
+        btnGroup.appendChild(btn);
+    } else {
+        summary.appendChild(btn);
+    }
+}
+
+// Patch showProjectSummary to add the export button
+const originalShowProjectSummary = window.showProjectSummary;
+window.showProjectSummary = function() {
+    originalShowProjectSummary.apply(this, arguments);
+    setTimeout(addExportToExcelButton, 500);
+};
+// --- END: Project Summary Export to Excel ---
+
+// --- BEGIN: SheetJS WYSIWYG Export ---
+function ensureSheetJSLoaded(callback) {
+    if (window.XLSX) {
+        callback();
+        return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js';
+    script.onload = callback;
+    document.head.appendChild(script);
+}
+
+function exportProjectSummaryToExcelWYSIWYG() {
+    ensureSheetJSLoaded(() => {
+        const summary = document.getElementById('project-summary');
+        if (!summary) return alert('Project summary not found!');
+        const fans = window.fanData || [];
+        const fanCards = summary.querySelectorAll('.fan-card');
+        const rows = [];
+        const header = ['Field'];
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            header.push(`${fan.fan_model || ''} ${fan.fan_size ? '- ' + fan.fan_size : ''}`.trim() || `Fan ${i+1}`);
+        }
+        rows.push(header);
+        // --- FAN DETAILS SECTION ---
+        const fanDetailsFields = [
+            {label: 'Class', key: fan => fan.class_ || fan.class || ''},
+            {label: 'Arrangement', key: fan => fan.arrangement || ''},
+            {label: 'Material', key: fan => fan.material || ''},
+            {label: 'Vendor', key: fan => fan.vendor || ''},
+            {label: 'Shaft Diameter (mm)', key: fan => fan.custom_shaft_diameter || fan.shaft_diameter || ''},
+            {label: 'No. of Isolators', key: fan => fan.custom_no_of_isolators || fan.no_of_isolators || ''},
+            {label: 'Isolator Brand/Type', key: fan => fan.vibration_isolators || ''},
+            {label: 'Bearing Brand', key: fan => fan.bearing_brand || ''},
+            {label: 'Drive Pack kW', key: fan => fan.drive_pack_kw || fan.drive_pack || ''},
+            {label: 'Motor Brand', key: fan => fan.motor_brand || ''},
+            {label: 'Motor kW', key: fan => fan.motor_kw || ''},
+            {label: 'Pole', key: fan => fan.pole || ''},
+            {label: 'Efficiency', key: fan => fan.efficiency || ''},
+            {label: 'Motor Discount (%)', key: fan => fan.motor_discount || ''}
+        ];
+        rows.push(['Fan Details', ...Array(fans.length).fill('')]);
+        fanDetailsFields.forEach(field => {
+            const row = [field.label];
+            for (let i = 0; i < fans.length; i++) {
+                row.push(field.key(fans[i]));
+            }
+            rows.push(row);
+        });
+        // --- END FAN DETAILS SECTION ---
+        let maxRows = 0;
+        const fanSections = [];
+        fanCards.forEach(fanCard => {
+            const section = [];
+            let currentSection = '';
+            fanCard.querySelectorAll('h3, .detail-item').forEach(item => {
+                if (item.tagName === 'H3') {
+                    currentSection = item.textContent.trim();
+                    section.push({type: 'section', label: currentSection});
+                } else {
+                    const spans = item.querySelectorAll('span, input');
+                    let label = spans[0]?.textContent?.trim() || '';
+                    let value = '';
+                    if (spans[1]) {
+                        value = spans[1].tagName === 'INPUT' ? spans[1].value : spans[1].textContent.trim();
+                    } else if (spans[0] && spans[0].tagName === 'INPUT') {
+                        value = spans[0].value;
+                    }
+                    section.push({type: 'row', label, value});
+                }
+            });
+            fanSections.push(section);
+            if (section.length > maxRows) maxRows = section.length;
+        });
+        const masterRows = [];
+        fanSections[0].forEach(item => {
+            if (item.type === 'section') {
+                masterRows.push({type: 'section', label: item.label});
+            } else {
+                masterRows.push({type: 'row', label: item.label});
+            }
+        });
+        masterRows.forEach(rowDef => {
+            if (rowDef.type === 'section') {
+                if (rowDef.label === 'Fan Details') return;
+                const row = [rowDef.label];
+                for (let i = 0; i < fans.length; i++) row.push('');
+                rows.push(row);
+            } else {
+                if (fanDetailsFields.some(f => f.label === rowDef.label)) return;
+                const row = [rowDef.label];
+                for (let i = 0; i < fans.length; i++) {
+                    const found = fanSections[i].find(x => x.type === 'row' && x.label === rowDef.label);
+                    row.push(found ? found.value : '');
+                }
+                rows.push(row);
+            }
+        });
+        const totalsRow = ['TOTALS'];
+        for (let i = 0; i < fans.length; i++) totalsRow.push('');
+        rows.push(totalsRow);
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        // --- STYLING ---
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        const sectionHeaderColor = '4A90E2';
+        const fanDetailsBg = 'E3F0FF';
+        const altRowColor = 'F7F7F7';
+        const totalsBg = 'FFF3CD';
+        const borderStyle = {style: 'thin', color: {rgb: 'CCCCCC'}};
+        let inFanDetails = false;
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            // Detect Fan Details section
+            if (rows[R][0] === 'Fan Details') inFanDetails = true;
+            if (rows[R][0] && rows[R][0] !== 'Fan Details' && fanDetailsFields.some(f => f.label === rows[R][0])) {
+                // Still in Fan Details
+            } else if (inFanDetails && (!rows[R][0] || !fanDetailsFields.some(f => f.label === rows[R][0]))) {
+                inFanDetails = false;
+            }
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cell = ws[XLSX.utils.encode_cell({r: R, c: C})];
+                if (!cell) continue;
+                // Header row
+                if (R === 0) {
+                    cell.s = {
+                        font: {bold: true, color: {rgb: 'FFFFFF'}},
+                        fill: {fgColor: {rgb: sectionHeaderColor}},
+                        alignment: {horizontal: 'center'},
+                        border: {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle}
+                    };
+                }
+                // Section header (first col, not header row)
+                else if (C === 0 && rows[R][0] && rows[R].slice(1).every(x => x === '')) {
+                    cell.s = {
+                        font: {bold: true, color: {rgb: 'FFFFFF'}},
+                        fill: {fgColor: {rgb: sectionHeaderColor}},
+                        alignment: {horizontal: 'left'},
+                        border: {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle}
+                    };
+                }
+                // Fan Details section
+                else if (inFanDetails && R !== 0 && rows[R][0] !== 'Fan Details') {
+                    cell.s = {
+                        fill: {fgColor: {rgb: fanDetailsBg}},
+                        border: {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle}
+                    };
+                }
+                // Alternating data rows (not section headers, not fan details, not totals)
+                else if (R > 0 && !rows[R][0].toUpperCase().includes('TOTAL') && C > 0 && !inFanDetails && (R % 2 === 0)) {
+                    cell.s = {
+                        fill: {fgColor: {rgb: altRowColor}},
+                        border: {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle}
+                    };
+                } else {
+                    // Default border for all
+                    cell.s = cell.s || {};
+                    cell.s.border = {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle};
+                }
+                // Totals row
+                if (rows[R][0] && rows[R][0].toUpperCase().includes('TOTAL')) {
+                    cell.s = {
+                        font: {bold: true},
+                        fill: {fgColor: {rgb: totalsBg}},
+                        border: {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle}
+                    };
+                }
+            }
+        }
+        ws['!cols'] = header.map(() => ({wch: 28}));
+        XLSX.writeFile({SheetNames:['Summary'], Sheets:{Summary:ws}}, `${window.enquiryNumber || 'Project'}_summary.xlsx`);
+    });
+}
+
+function addExportToExcelButtonWYSIWYG() {
+    const summary = document.getElementById('project-summary');
+    if (!summary) return;
+    // Remove any old export-to-backend button if present
+    const oldBtn = document.getElementById('export-to-excel-btn');
+    if (oldBtn) oldBtn.remove();
+    // Add only the SheetJS export button
+    const btn = document.createElement('button');
+    btn.id = 'export-to-excel-btn';
+    btn.textContent = 'Export to Excel';
+    btn.className = 'action-button export-btn';
+    btn.style = 'margin-left: 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; padding: 10px 24px; font-size: 1.1em; font-weight: 700; box-shadow: 0 2px 8px rgba(67,97,238,0.08);';
+    btn.onclick = exportProjectSummaryToExcelWYSIWYG;
+    const btnGroup = summary.querySelector('.button-group');
+    if (btnGroup) {
+        btnGroup.appendChild(btn);
+    } else {
+        summary.appendChild(btn);
+    }
+}
+// Patch showProjectSummary to add the export button
+const originalShowProjectSummaryWYSIWYG = window.showProjectSummary;
+window.showProjectSummary = function() {
+    originalShowProjectSummaryWYSIWYG.apply(this, arguments);
+    setTimeout(addExportToExcelButtonWYSIWYG, 500);
+};
+// --- END: SheetJS WYSIWYG Export ---
+
+// --- BEGIN: ExcelJS WYSIWYG Export ---
+function ensureExcelJSLoaded(callback) {
+    if (window.ExcelJS) {
+        callback();
+        return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js';
+    script.onload = callback;
+    document.head.appendChild(script);
+}
+
+function exportProjectSummaryToExcelWYSIWYG() {
+    ensureExcelJSLoaded(() => {
+        const summary = document.getElementById('project-summary');
+        if (!summary) return alert('Project summary not found!');
+        const fans = window.fanData || [];
+        const fanCards = summary.querySelectorAll('.fan-card');
+        const rows = [];
+        const header = ['Field'];
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            header.push(`${fan.fan_model || ''} ${fan.fan_size ? '- ' + fan.fan_size : ''}`.trim() || `Fan ${i+1}`);
+        }
+        rows.push(header);
+        // --- FAN DETAILS SECTION ---
+        const fanDetailsFields = [
+            {label: 'Class', key: fan => fan.class_ || fan.class || ''},
+            {label: 'Arrangement', key: fan => fan.arrangement || ''},
+            {label: 'Material', key: fan => fan.material || ''},
+            {label: 'Vendor', key: fan => fan.vendor || ''},
+            {label: 'Shaft Diameter (mm)', key: fan => fan.custom_shaft_diameter || fan.shaft_diameter || ''},
+            {label: 'No. of Isolators', key: fan => fan.custom_no_of_isolators || fan.no_of_isolators || ''},
+            {label: 'Isolator Brand/Type', key: fan => fan.vibration_isolators || ''},
+            {label: 'Bearing Brand', key: fan => fan.bearing_brand || ''},
+            {label: 'Drive Pack kW', key: fan => fan.drive_pack_kw || fan.drive_pack || ''},
+            {label: 'Motor Brand', key: fan => fan.motor_brand || ''},
+            {label: 'Motor kW', key: fan => fan.motor_kw || ''},
+            {label: 'Pole', key: fan => fan.pole || ''},
+            {label: 'Efficiency', key: fan => fan.efficiency || ''},
+            {label: 'Motor Discount (%)', key: fan => fan.motor_discount || ''}
+        ];
+        rows.push(['Fan Details', ...Array(fans.length).fill('')]);
+        fanDetailsFields.forEach(field => {
+            const row = [field.label];
+            for (let i = 0; i < fans.length; i++) {
+                row.push(field.key(fans[i]));
+            }
+            rows.push(row);
+        });
+        // --- END FAN DETAILS SECTION ---
+        let maxRows = 0;
+        const fanSections = [];
+        fanCards.forEach(fanCard => {
+            const section = [];
+            let currentSection = '';
+            fanCard.querySelectorAll('h3, .detail-item').forEach(item => {
+                if (item.tagName === 'H3') {
+                    currentSection = item.textContent.trim();
+                    section.push({type: 'section', label: currentSection});
+                } else {
+                    const spans = item.querySelectorAll('span, input');
+                    let label = spans[0]?.textContent?.trim() || '';
+                    let value = '';
+                    if (spans[1]) {
+                        value = spans[1].tagName === 'INPUT' ? spans[1].value : spans[1].textContent.trim();
+                    } else if (spans[0] && spans[0].tagName === 'INPUT') {
+                        value = spans[0].value;
+                    }
+                    section.push({type: 'row', label, value});
+                }
+            });
+            fanSections.push(section);
+            if (section.length > maxRows) maxRows = section.length;
+        });
+        const masterRows = [];
+        fanSections[0].forEach(item => {
+            if (item.type === 'section') {
+                masterRows.push({type: 'section', label: item.label});
+            } else {
+                masterRows.push({type: 'row', label: item.label});
+            }
+        });
+        masterRows.forEach(rowDef => {
+            if (rowDef.type === 'section') {
+                if (rowDef.label === 'Fan Details') return;
+                const row = [rowDef.label];
+                for (let i = 0; i < fans.length; i++) row.push('');
+                rows.push(row);
+            } else {
+                if (fanDetailsFields.some(f => f.label === rowDef.label)) return;
+                const row = [rowDef.label];
+                for (let i = 0; i < fans.length; i++) {
+                    const found = fanSections[i].find(x => x.type === 'row' && x.label === rowDef.label);
+                    row.push(found ? found.value : '');
+                }
+                rows.push(row);
+            }
+        });
+        const totalsRow = ['TOTALS'];
+        for (let i = 0; i < fans.length; i++) totalsRow.push('');
+        rows.push(totalsRow);
+        // --- ExcelJS workbook creation ---
+        const wb = new window.ExcelJS.Workbook();
+        const ws = wb.addWorksheet('Summary');
+        // Add all rows
+        rows.forEach(r => ws.addRow(r));
+        // Styling
+        const sectionHeaderColor = '4A90E2';
+        const fanDetailsBg = 'E3F0FF';
+        const altRowColor = 'F7F7F7';
+        const totalsBg = 'FFF3CD';
+        // Set column widths
+        ws.columns.forEach(col => { col.width = 28; });
+        // Borders helper
+        function setAllBorders(cell) {
+            cell.border = {
+                top: {style: 'thin', color: {argb: 'CCCCCC'}},
+                left: {style: 'thin', color: {argb: 'CCCCCC'}},
+                bottom: {style: 'thin', color: {argb: 'CCCCCC'}},
+                right: {style: 'thin', color: {argb: 'CCCCCC'}}
+            };
+        }
+        let inFanDetails = false;
+        for (let r = 1; r <= ws.rowCount; ++r) {
+            const row = ws.getRow(r);
+            // Detect Fan Details section
+            if (rows[r-1][0] === 'Fan Details') inFanDetails = true;
+            if (rows[r-1][0] && rows[r-1][0] !== 'Fan Details' && fanDetailsFields.some(f => f.label === rows[r-1][0])) {
+                // Still in Fan Details
+            } else if (inFanDetails && (!rows[r-1][0] || !fanDetailsFields.some(f => f.label === rows[r-1][0]))) {
+                inFanDetails = false;
+            }
+            for (let c = 1; c <= ws.columnCount; ++c) {
+                const cell = row.getCell(c);
+                // Header row
+                if (r === 1) {
+                    cell.font = {bold: true, color: {argb: 'FFFFFFFF'}};
+                    cell.fill = {type: 'pattern', pattern: 'solid', fgColor: {argb: sectionHeaderColor}};
+                    cell.alignment = {horizontal: 'center'};
+                    setAllBorders(cell);
+                }
+                // Section header (first col, not header row)
+                else if (c === 1 && rows[r-1][0] && rows[r-1].slice(1).every(x => x === '')) {
+                    cell.font = {bold: true, color: {argb: 'FFFFFFFF'}};
+                    cell.fill = {type: 'pattern', pattern: 'solid', fgColor: {argb: sectionHeaderColor}};
+                    cell.alignment = {horizontal: 'left'};
+                    setAllBorders(cell);
+                }
+                // Fan Details section
+                else if (inFanDetails && r !== 1 && rows[r-1][0] !== 'Fan Details') {
+                    cell.fill = {type: 'pattern', pattern: 'solid', fgColor: {argb: fanDetailsBg}};
+                    setAllBorders(cell);
+                }
+                // Alternating data rows (not section headers, not fan details, not totals)
+                else if (r > 1 && !rows[r-1][0].toUpperCase().includes('TOTAL') && c > 1 && !inFanDetails && (r % 2 === 0)) {
+                    cell.fill = {type: 'pattern', pattern: 'solid', fgColor: {argb: altRowColor}};
+                    setAllBorders(cell);
+                } else {
+                    setAllBorders(cell);
+                }
+                // Totals row
+                if (rows[r-1][0] && rows[r-1][0].toUpperCase().includes('TOTAL')) {
+                    cell.font = {bold: true};
+                    cell.fill = {type: 'pattern', pattern: 'solid', fgColor: {argb: totalsBg}};
+                    setAllBorders(cell);
+                }
+            }
+        }
+        // Download
+        wb.xlsx.writeBuffer().then(buffer => {
+            const blob = new Blob([buffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${window.enquiryNumber || 'Project'}_summary.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        });
+    });
+}
+// ... existing code ...
+

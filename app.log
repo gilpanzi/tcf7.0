@@ -2285,3 +2285,41 @@ sqlite3.OperationalError: table Projects has no column named sales_engineer
 2025-03-23 18:22:16,049 - __main__ - INFO - Synced 2 rows from efficiency to motor_efficiency
 2025-03-23 18:22:16,060 - __main__ - INFO - Successfully synchronized column data in main database
 2025-03-23 18:22:16,060 - __main__ - INFO - Successfully updated both databases and synchronized data
+2025-05-13 11:23:05,895 - __main__ - INFO - Using central database at: data\central_database\all_projects.db
+2025-05-13 11:23:05,895 - __main__ - INFO - Existing columns in ProjectFans: {'bought_out_selling_price', 'class', 'fabrication_cost', 'total_selling_price', 'drive_pack_kw', 'motor_brand', 'bare_fan_weight', 'vibration_isolators', 'accessory_weight', 'total_weight', 'motor_cost', 'size', 'shaft_diameter', 'flex_connectors_cost', 'motor_pole', 'enquiry_number', 'id', 'accessories', 'fan_model', 'material', 'drive_pack_cost', 'optional_items_cost', 'bearing_brand', 'vendor', 'bearing_cost', 'vibration_isolators_cost', 'bought_out_cost', 'motor_kw', 'bought_out_weight', 'motor_discount_rate', 'motor_efficiency', 'total_cost', 'custom_option_items', 'arrangement', 'fan_number', 'custom_accessories', 'optional_items', 'total_job_margin', 'fabrication_selling_price', 'fabrication_weight'}
+2025-05-13 11:23:05,906 - __main__ - INFO - Column vibration_isolators already exists in ProjectFans table
+2025-05-13 11:23:05,907 - __main__ - INFO - Column drive_pack_kw already exists in ProjectFans table
+2025-05-13 11:23:05,908 - __main__ - INFO - Column custom_accessories already exists in ProjectFans table
+2025-05-13 11:23:05,909 - __main__ - INFO - Column optional_items already exists in ProjectFans table
+2025-05-13 11:23:05,910 - __main__ - INFO - Column custom_option_items already exists in ProjectFans table
+2025-05-13 11:23:05,911 - __main__ - INFO - Column motor_kw already exists in ProjectFans table
+2025-05-13 11:23:05,912 - __main__ - INFO - Column motor_brand already exists in ProjectFans table
+2025-05-13 11:23:05,913 - __main__ - INFO - Column motor_pole already exists in ProjectFans table
+2025-05-13 11:23:05,914 - __main__ - INFO - Column motor_efficiency already exists in ProjectFans table
+2025-05-13 11:23:05,914 - __main__ - INFO - Column motor_discount_rate already exists in ProjectFans table
+2025-05-13 11:23:05,916 - __main__ - INFO - Column bearing_brand already exists in ProjectFans table
+2025-05-13 11:23:05,917 - __main__ - INFO - Successfully updated ProjectFans table with new columns
+2025-05-13 11:23:05,919 - __main__ - INFO - Using main database at: fan_pricing.db
+2025-05-13 11:23:05,923 - __main__ - INFO - Existing columns in ProjectFans (main DB): {'bought_out_selling_price', 'class', 'fabrication_cost', 'total_selling_price', 'material_name_2', 'drive_pack_kw', 'material_name_3', 'motor_brand', 'bare_fan_weight', 'vibration_isolators', 'total_weight', 'fabrication_selling_price', 'material_weight_1', 'shaft_diameter', 'motor_pole', 'accessory_weights', 'id', 'accessories', 'fan_model', 'material_name_0', 'material_name_1', 'material', 'material_name_4', 'material_rate_4', 'fabrication_margin', 'bearing_brand', 'vendor', 'fan_size', 'pole', 'bought_out_margin', 'project_id', 'bought_out_cost', 'motor_kw', 'motor_discount_rate', 'motor_efficiency', 'material_rate_2', 'total_cost', 'material_weight_3', 'material_weight_0', 'material_rate_0', 'material_rate_3', 'material_weight_4', 'custom_option_items', 'material_rate_1', 'material_weight_2', 'arrangement', 'fan_number', 'optional_items', 'custom_accessories', 'no_of_isolators', 'total_job_margin', 'efficiency', 'created_at'}
+2025-05-13 11:23:05,927 - __main__ - INFO - Column vibration_isolators already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,929 - __main__ - INFO - Column drive_pack_kw already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,929 - __main__ - INFO - Column custom_accessories already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,929 - __main__ - INFO - Column optional_items already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,929 - __main__ - INFO - Column custom_option_items already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,929 - __main__ - INFO - Column motor_kw already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,935 - __main__ - INFO - Column motor_brand already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,935 - __main__ - INFO - Column motor_pole already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,936 - __main__ - INFO - Column motor_efficiency already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,936 - __main__ - INFO - Column motor_discount_rate already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,936 - __main__ - INFO - Column bearing_brand already exists in ProjectFans table (main DB)
+2025-05-13 11:23:05,938 - __main__ - INFO - Successfully updated ProjectFans table with new columns in main DB
+2025-05-13 11:23:05,939 - __main__ - INFO - Synchronizing column data in main database at: fan_pricing.db
+2025-05-13 11:23:05,948 - __main__ - INFO - Syncing data from 'pole' to 'motor_pole'
+2025-05-13 11:23:05,949 - __main__ - INFO - Synced 0 rows from pole to motor_pole
+2025-05-13 11:23:05,950 - __main__ - INFO - Syncing data from 'efficiency' to 'motor_efficiency'
+2025-05-13 11:23:05,954 - __main__ - INFO - Synced 2 rows from efficiency to motor_efficiency
+2025-05-13 11:23:05,961 - __main__ - INFO - Successfully synchronized column data in main database
+2025-05-13 11:23:05,970 - root - INFO - Adding column no_of_isolators to ProjectFans
+2025-05-13 11:23:05,983 - root - INFO - Adding column fabrication_margin to ProjectFans
+2025-05-13 11:23:05,991 - root - INFO - Adding column bought_out_margin to ProjectFans
+2025-05-13 11:23:05,996 - __main__ - ERROR - Failed to update one or both databases or synchronize data

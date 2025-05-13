@@ -19,4 +19,21 @@
                 <button id="export_ui_excel" class="btn btn-primary">Export to Excel</button>
             </div>
         </div>
-        // ... existing code ... 
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Existing export from UI button
+            document.getElementById('export_from_ui').addEventListener('click', function() {
+                // Existing functionality (if any)
+                // This button is preserved for any existing functionality
+            });
+            
+            // New export to Excel button with improved formatting
+            document.getElementById('export_ui_excel').addEventListener('click', function() {
+                // Use the server-side Excel generation for better formatting
+                window.location.href = '/export_summary_excel';
+            });
+        });
+    </script>
+{% endblock %} 

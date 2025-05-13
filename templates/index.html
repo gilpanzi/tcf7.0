@@ -599,6 +599,13 @@
                     {% endfor %}
                 </select>
 
+                <!-- Add per kg rate field -->
+                <div class="vendor-rate-section mt-2 mb-2">
+                    <label for="vendor_rate">Per kg Rate (₹):</label>
+                    <input type="number" id="vendor_rate" name="vendor_rate" min="0" step="0.01" class="form-control">
+                    <small class="form-text text-muted">This rate will be used for fabrication cost calculations</small>
+                </div>
+
                 <label for="moc">Material of Construction:</label>
                 <select id="moc" name="moc" required>
                     <option value="ms">Complete Fan in MS</option>
@@ -623,6 +630,15 @@
                             </div>
                         </div>
                         {% endfor %}
+                    </div>
+                    <!-- Add fields for no_of_isolators and shaft_diameter -->
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label for="custom_no_of_isolators">No. of Isolators:</label>
+                        <input type="number" id="custom_no_of_isolators" name="custom_no_of_isolators" class="form-control" min="0" step="1" placeholder="Enter number of isolators">
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="custom_shaft_diameter">Shaft Diameter (mm):</label>
+                        <input type="number" id="custom_shaft_diameter" name="custom_shaft_diameter" class="form-control" min="0" step="0.01" placeholder="Enter shaft diameter">
                     </div>
                 </div>
 
@@ -1162,19 +1178,7 @@
             // Create an array to store all fans' data
             const fansDataArray = allFansData.map((fanData, index) => {
                 if (!fanData) return null;
-                
-                const customMaterials = {};
-                if (fanData.material === 'others') {
-                    for (let i = 0; i < 5; i++) {
-                        const weight = parseFloat(document.querySelector(`input[name="material_weight_${i}"]`).value) || 0;
-                        const cost = parseFloat(document.querySelector(`input[name="material_cost_${i}"]`).value) || 0;
-                        if (weight > 0 && cost > 0) {
-                            customMaterials[`material_weight_${i}`] = weight;
-                            customMaterials[`material_cost_${i}`] = cost;
-                        }
-                    }
-                }
-
+                // Use the fanData object as-is, including any custom material fields already present
                 return {
                     fan_number: index + 1,
                     // Basic Specifications
@@ -1192,7 +1196,7 @@
 
                     // Weight Details
                     fan_weight: (fanData.bare_fan_weight || fanData.fan_weight || '0').toString().replace(/[^\d.]/g, ''),
-                    accessory_weight: (fanData.accessory_weight || '0').toString().replace(/[^\d.]/g, ''),
+                    accessory_weight: (fanData.accessory_weight || fanData.accessory_weights || '0').toString().replace(/[^\d.]/g, ''),
                     total_weight: (fanData.total_weight || '0').toString().replace(/[^\d.]/g, ''),
 
                     // Cost Breakdown
@@ -1210,10 +1214,10 @@
                     fabrication_selling_price: (fanData.fabrication_selling_price || '0').toString().replace(/[^\d.]/g, ''),
                     bought_out_selling_price: (fanData.bought_out_selling_price || '0').toString().replace(/[^\d.]/g, ''),
                     selling_price: (fanData.total_selling_price || fanData.total_cost || '0').toString().replace(/[^\d.]/g, ''),
-                    margin: (fanData.margin || '0').toString().replace(/[^\d.]/g, ''),
+                    margin: (fanData.margin || fanData.total_job_margin || '0').toString().replace(/[^\d.]/g, ''),
 
-                    // Custom Materials
-                    custom_materials: customMaterials
+                    // Custom Materials: include all custom material fields if present
+                    ...Object.keys(fanData).filter(k => k.startsWith('material_name_') || k.startsWith('material_weight_') || k.startsWith('material_rate_') || k.startsWith('custom_no_of_isolators') || k.startsWith('custom_shaft_diameter')).reduce((obj, k) => { obj[k] = fanData[k]; return obj; }, {})
                 };
             }).filter(fan => fan !== null);
 
@@ -1249,6 +1253,32 @@
                     console.error('Error:', error);
                 });
         }
+
+        function fetchVendorRate() {
+            const vendor = document.getElementById('vendor').value;
+            const material = document.getElementById('moc').value;
+            // Try to get total weight if available, else use 1
+            let totalWeight = 1;
+            const twElem = document.getElementById('total_weight');
+            if (twElem && twElem.textContent) {
+                const parsed = parseFloat(twElem.textContent.replace(/[^\d.]/g, ''));
+                if (!isNaN(parsed) && parsed > 0) totalWeight = parsed;
+            }
+            fetch(`/get_vendor_rate?vendor=${encodeURIComponent(vendor)}&material=${encodeURIComponent(material)}&weight=${totalWeight}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.rate !== undefined && data.rate !== null) {
+                        document.getElementById('vendor_rate').value = data.rate;
+                    } else {
+                        document.getElementById('vendor_rate').value = '';
+                    }
+                });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('vendor').addEventListener('change', fetchVendorRate);
+            document.getElementById('moc').addEventListener('change', fetchVendorRate);
+            fetchVendorRate(); // Set initial value
+        });
     </script>
 </body>
 </html> 

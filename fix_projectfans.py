@@ -16,6 +16,16 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+DB_PATH = 'data/central_database/all_projects.db'
+
+# List of columns to ensure exist in ProjectFans, matching the insert in /save_project_to_database
+COLUMNS_TO_ENSURE = [
+    ('no_of_isolators', 'INTEGER DEFAULT 0'),
+    ('fabrication_margin', 'REAL DEFAULT 0'),
+    ('bought_out_margin', 'REAL DEFAULT 0'),
+    # Add more columns here if needed to match the insert statement
+]
+
 def add_missing_columns():
     """Add missing columns to the ProjectFans table in the database."""
     try:
@@ -202,12 +212,26 @@ def sync_column_data():
         logger.error(f"Error synchronizing column data: {str(e)}", exc_info=True)
         return False
 
+def add_missing_columns_to_ensure():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(ProjectFans)")
+    existing_columns = [row[1] for row in cursor.fetchall()]
+    for col, coltype in COLUMNS_TO_ENSURE:
+        if col not in existing_columns:
+            logging.info(f"Adding column {col} to ProjectFans")
+            cursor.execute(f"ALTER TABLE ProjectFans ADD COLUMN {col} {coltype}")
+    conn.commit()
+    conn.close()
+    print("All required columns ensured in ProjectFans.")
+
 if __name__ == "__main__":
     success_central = add_missing_columns()
     success_main = add_missing_columns_to_main_db()
     success_sync = sync_column_data()
+    success_ensure = add_missing_columns_to_ensure()
     
-    if success_central and success_main and success_sync:
+    if success_central and success_main and success_sync and success_ensure:
         logger.info("Successfully updated both databases and synchronized data")
         sys.exit(0)
     else:

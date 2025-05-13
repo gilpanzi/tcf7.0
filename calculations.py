@@ -131,6 +131,49 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
             return fabrication_cost, total_weight, custom_weights, None
         
         # For standard materials (MS, SS304, mixed)
+        # Check if custom vendor_rate is provided
+        custom_vendor_rate = fan_data.get('vendor_rate')
+        if custom_vendor_rate is not None:
+            try:
+                # Use the custom vendor rate instead of database lookup
+                custom_vendor_rate = float(custom_vendor_rate)
+                logger.info(f"Using custom vendor rate: {custom_vendor_rate} per kg")
+                
+                if material == 'ms':
+                    fabrication_cost = total_weight * custom_vendor_rate
+                elif material == 'ss304':
+                    # For SS304, we apply a multiplier to the base rate (typically 2-3x higher than MS)
+                    ss_multiplier = 2.5
+                    fabrication_cost = total_weight * (custom_vendor_rate * ss_multiplier)
+                elif material == 'mixed':
+                    ms_percentage = float(fan_data.get('ms_percentage', 0))
+                    if ms_percentage <= 0 or ms_percentage > 100:
+                        logger.error(f"Invalid MS percentage for mixed construction: {ms_percentage}")
+                        return None, None, None, {
+                            'error': 'Invalid MS percentage for mixed construction',
+                            'details': {
+                                'ms_percentage': ms_percentage
+                            }
+                        }
+                    
+                    # Calculate weights based on percentages
+                    ms_weight = total_weight * (ms_percentage / 100)
+                    ss_weight = total_weight * ((100 - ms_percentage) / 100)
+                    
+                    # Use custom rate with appropriate multipliers
+                    ss_multiplier = 2.5
+                    fabrication_cost = (ms_weight * custom_vendor_rate) + (ss_weight * (custom_vendor_rate * ss_multiplier))
+                else:
+                    fabrication_cost = total_weight * custom_vendor_rate
+                
+                logger.info(f"Fabrication cost calculated with custom rate: {fabrication_cost}")
+                return fabrication_cost, total_weight, {}, None
+                
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Error using custom vendor rate ({custom_vendor_rate}): {str(e)}. Falling back to database lookup.")
+                # Continue with database lookup
+        
+        # Standard database lookup for vendor rates
         logger.info(f"Looking up rate for vendor: {vendor}, weight: {total_weight}")
         cursor.execute('''
             SELECT MSPrice, SS304Price FROM VendorWeightDetails
@@ -207,12 +250,18 @@ def calculate_bought_out_components(cursor, fan_data, no_of_isolators, shaft_dia
             elif fan_data['vibration_isolators'] == 'dunlop':
                 vibration_isolators_price = no_of_isolators * 2000 if no_of_isolators else 0
         
+        # Check for arrangement, handling string or numeric types
+        arrangement = fan_data.get('Arrangement', fan_data.get('arrangement', ''))
+        # Convert to string for comparison
+        arrangement_str = str(arrangement)
+        
         # Get bearing price from frontend data if available
+        # Only process if arrangement isn't 4 and we have shaft diameter
         if 'bearing_price' in fan_data and fan_data['bearing_price']:
             bearing_price = float(fan_data['bearing_price'])
-            if fan_data['Arrangement'] != 4:
+            if arrangement_str != '4':
                 bearing_price = bearing_price * 2
-        elif fan_data['Arrangement'] != 4 and shaft_diameter:
+        elif arrangement_str != '4' and shaft_diameter:
             cursor.execute('''
                 SELECT * FROM BearingLookup
                 WHERE Brand = ? AND ShaftDiameter = ?
@@ -232,12 +281,12 @@ def calculate_bought_out_components(cursor, fan_data, no_of_isolators, shaft_dia
                 columns = [description[0] for description in cursor.description]
                 bearing_dict = dict(zip(columns, bearing_row))
                 bearing_price = bearing_dict.get('Total', 0)
-                if fan_data['Arrangement'] != 4:
+                if arrangement_str != '4':
                     bearing_price = bearing_price * 2
         
         # Calculate Drive Pack cost
         drive_pack_kw = fan_data.get('drive_pack') or fan_data.get('drive_pack_kw')
-        if drive_pack_kw and fan_data['Arrangement'] != '4':  # Only calculate if not arrangement 4
+        if drive_pack_kw and arrangement_str != '4':  # Only calculate if not arrangement 4
             try:
                 # Convert to float and ensure proper format
                 drive_pack_kw = float(drive_pack_kw)
