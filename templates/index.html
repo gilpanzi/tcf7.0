@@ -854,73 +854,13 @@
 
                 <!-- Optional Items -->
                 <h3>Optional Items</h3>
-                <div class="optional-items-container">
-                    <div class="optional-item-group">
-                        <label for="flex_connectors">Flex Connectors:</label>
-                        <select id="flex_connectors" name="flex_connectors" class="optional-item" onchange="handleOptionalItemChange(this)">
-                            <option value="not_required">Not Required</option>
-                            <option value="required">Required</option>
-                        </select>
-                        <input type="number" class="price-input" data-item="flex_connectors" placeholder="Enter price" min="0" max="1000000" 
-                               onchange="validateOptionalItemPrice(this)">
-                    </div>
-
-                    <div class="optional-item-group">
-                        <label for="silencer">Silencer:</label>
-                        <select id="silencer" name="silencer" class="optional-item" onchange="handleOptionalItemChange(this)">
-                            <option value="not_required">Not Required</option>
-                            <option value="required">Required</option>
-                        </select>
-                        <input type="number" class="price-input" data-item="silencer" placeholder="Enter price" min="0" max="1000000" 
-                               onchange="validateOptionalItemPrice(this)">
-                    </div>
-
-                    <div class="optional-item-group">
-                        <label for="testing_charges">Testing Charges:</label>
-                        <select id="testing_charges" name="testing_charges" class="optional-item" onchange="handleOptionalItemChange(this)">
-                            <option value="not_required">Not Required</option>
-                            <option value="required">Required</option>
-                        </select>
-                        <input type="number" class="price-input" data-item="testing_charges" placeholder="Enter price" min="0" max="1000000" 
-                               onchange="validateOptionalItemPrice(this)">
-                    </div>
-
-                    <div class="optional-item-group">
-                        <label for="freight_charges">Freight Charges:</label>
-                        <select id="freight_charges" name="freight_charges" class="optional-item" onchange="handleOptionalItemChange(this)">
-                            <option value="not_required">Not Required</option>
-                            <option value="required">Required</option>
-                        </select>
-                        <input type="number" class="price-input" data-item="freight_charges" placeholder="Enter price" min="0" max="1000000" 
-                               onchange="validateOptionalItemPrice(this)">
-                    </div>
-
-                    <div class="optional-item-group">
-                        <label for="warranty_charges">Warranty Charges:</label>
-                        <select id="warranty_charges" name="warranty_charges" class="optional-item" onchange="handleOptionalItemChange(this)">
-                            <option value="not_required">Not Required</option>
-                            <option value="required">Required</option>
-                        </select>
-                        <input type="number" class="price-input" data-item="warranty_charges" placeholder="Enter price" min="0" max="1000000" 
-                               onchange="validateOptionalItemPrice(this)">
-                    </div>
-
-                    <div class="optional-item-group">
-                        <label for="packing_charges">Packing Charges:</label>
-                        <select id="packing_charges" name="packing_charges" class="optional-item" onchange="handleOptionalItemChange(this)">
-                            <option value="not_required">Not Required</option>
-                            <option value="required">Required</option>
-                        </select>
-                        <input type="number" class="price-input" data-item="packing_charges" placeholder="Enter price" min="0" max="1000000" 
-                               onchange="validateOptionalItemPrice(this)">
-                    </div>
+                <div id="standard-optional-items-container" class="optional-items-container">
+                    <!-- Standard optional items will be dynamically generated here -->
                 </div>
 
-                <div id="custom-optional-items-container" style="margin-top: 10px;">
-                    <!-- Custom optional items will be added here -->
+                <div class="button-row" style="margin-top: 10px;">
+                    <button type="button" id="add-standard-optional-item-btn" class="btn btn-secondary" onclick="openStandardOptionalItemModal()">Add Optional Item</button>
                 </div>
-                
-                <button type="button" id="add-custom-optional-item-btn" class="btn btn-primary" style="margin-top: 10px;" onclick="openCustomOptionalItemModal()">Add Custom Optional Item</button>
 
                 <!-- Optional Items Costs Display -->
                 <div id="optional_items_costs" class="optional-items-section" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
@@ -963,17 +903,34 @@
         </div>
     </div>
 
-    <!-- Custom Optional Item Modal -->
-    <div id="customOptionalItemModal" class="modal">
+    <!-- Standard Optional Item Modal -->
+    <div id="standardOptionalItemModal" class="modal">
         <div class="modal-content">
-            <h3>Add Custom Optional Item</h3>
-            <label for="customOptionalItemName">Item Name:</label>
-            <input type="text" id="customOptionalItemName" placeholder="Enter item name">
-            <label for="customOptionalItemPrice">Price (₹):</label>
-            <input type="number" id="customOptionalItemPrice" step="0.01" min="0" placeholder="Enter price">
+            <h3>Add Optional Item</h3>
+            <label for="standardOptionalItemSelect">Select Item:</label>
+            <select id="standardOptionalItemSelect" onchange="handleOptionalItemTypeChange()">
+                <option value="">-- Select an item --</option>
+                <option value="flex_connectors">Flex Connectors</option>
+                <option value="silencer">Silencer</option>
+                <option value="testing_charges">Testing Charges</option>
+                <option value="freight_charges">Freight Charges</option>
+                <option value="warranty_charges">Warranty Charges</option>
+                <option value="packing_charges">Packing Charges</option>
+                <option value="amca_sparkproof">AMCA Type C Spark Proof Construction</option>
+                <option value="accessories_assembly">Accessories Assembly Charges</option>
+                <option value="paint_specification">Special Paint Specification</option>
+                <option value="documentation">Special Documentation</option>
+                <option value="custom">Custom Item (Enter name below)</option>
+            </select>
+            <div id="custom-item-name-container" style="display: none; margin-top: 10px;">
+                <label for="customItemName">Custom Item Name:</label>
+                <input type="text" id="customItemName" placeholder="Enter custom item name">
+            </div>
+            <label for="standardOptionalItemPrice">Price (₹):</label>
+            <input type="number" id="standardOptionalItemPrice" step="0.01" min="0" placeholder="Enter price">
             <div class="modal-buttons">
-                <button onclick="saveCustomOptionalItem()">Save</button>
-                <button onclick="closeCustomOptionalItemModal()">Cancel</button>
+                <button id="saveStandardOptionalItemBtn" onclick="saveStandardOptionalItem()">Save</button>
+                <button onclick="closeStandardOptionalItemModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -1178,6 +1135,28 @@
             // Create an array to store all fans' data
             const fansDataArray = allFansData.map((fanData, index) => {
                 if (!fanData) return null;
+                
+                // Process optional items
+                const optionalItems = {};
+                if (fanData.optional_items && Object.keys(fanData.optional_items).length > 0) {
+                    Object.keys(fanData.optional_items).forEach(key => {
+                        const price = parseFloat(fanData.optional_items[key]);
+                        if (price > 0) {
+                            optionalItems[key] = price;
+                        }
+                    });
+                }
+                
+                // Process accessories
+                const accessories = {};
+                if (fanData.accessories && Object.keys(fanData.accessories).length > 0) {
+                    Object.keys(fanData.accessories).forEach(key => {
+                        if (fanData.accessories[key] === true) {
+                            accessories[key] = true;
+                        }
+                    });
+                }
+                
                 // Use the fanData object as-is, including any custom material fields already present
                 return {
                     fan_number: index + 1,
@@ -1216,8 +1195,23 @@
                     selling_price: (fanData.total_selling_price || fanData.total_cost || '0').toString().replace(/[^\d.]/g, ''),
                     margin: (fanData.margin || fanData.total_job_margin || '0').toString().replace(/[^\d.]/g, ''),
 
+                    // Optional Items - include all optional items with their prices
+                    optional_items: optionalItems,
+                    
+                    // Accessories - include all accessories
+                    accessories: accessories,
+                    
+                    // Vibration isolators and bearings
+                    vibration_isolators: fanData.vibration_isolators || '',
+                    bearing_brand: fanData.bearing_brand || '',
+                    
+                    // Custom accessories
+                    custom_shaft_diameter: fanData.custom_shaft_diameter || '',
+                    custom_no_of_isolators: fanData.custom_no_of_isolators || '',
+                    custom_accessories: fanData.custom_accessories || '',
+
                     // Custom Materials: include all custom material fields if present
-                    ...Object.keys(fanData).filter(k => k.startsWith('material_name_') || k.startsWith('material_weight_') || k.startsWith('material_rate_') || k.startsWith('custom_no_of_isolators') || k.startsWith('custom_shaft_diameter')).reduce((obj, k) => { obj[k] = fanData[k]; return obj; }, {})
+                    ...Object.keys(fanData).filter(k => k.startsWith('material_name_') || k.startsWith('material_weight_') || k.startsWith('material_rate_')).reduce((obj, k) => { obj[k] = fanData[k]; return obj; }, {})
                 };
             }).filter(fan => fan !== null);
 
@@ -1257,6 +1251,10 @@
         function fetchVendorRate() {
             const vendor = document.getElementById('vendor').value;
             const material = document.getElementById('moc').value;
+            if (!vendor || !material) {
+                document.getElementById('vendor_rate').value = '';
+                return;
+            }
             // Try to get total weight if available, else use 1
             let totalWeight = 1;
             const twElem = document.getElementById('total_weight');

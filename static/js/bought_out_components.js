@@ -40,7 +40,7 @@ function updateBoughtOutComponentsDisplay(components) {
             if (price > 0) {
                 hasOptionalItems = true;
                 const margin = parseFloat(document.getElementById('bought_out_margin').value) || 0;
-                const sellingPrice = price * (1 + margin / 100);
+                const sellingPrice = price / (1 - margin / 100);
                 
                 html += `
                     <div class="component-item">
@@ -60,7 +60,7 @@ function updateBoughtOutComponentsDisplay(components) {
                 hasOptionalItems = true;
                 const displayName = name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                 const margin = parseFloat(document.getElementById('bought_out_margin').value) || 0;
-                const sellingPrice = price * (1 + margin / 100);
+                const sellingPrice = price / (1 - margin / 100);
                 
                 html += `
                     <div class="component-item">
@@ -92,4 +92,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-}); 
+});
+
+// --- MIGRATION: Normalize custom optional items for legacy data ---
+function normalizeCustomOptionalItems(fanData) {
+    if (fanData["custom_optional_items[]"]) {
+        if (!fanData.custom_optional_items) fanData.custom_optional_items = {};
+        const name = fanData["custom_optional_items[]"];
+        const id = name.toLowerCase().replace(/\s+/g, '_');
+        fanData.custom_optional_items[id] = fanData.optional_items && fanData.optional_items[id] ? fanData.optional_items[id] : 0;
+        delete fanData["custom_optional_items[]"];
+    }
+    if (Array.isArray(fanData.custom_optional_items)) {
+        const obj = {};
+        fanData.custom_optional_items.forEach(item => {
+            if (typeof item === 'string') {
+                const id = item.toLowerCase().replace(/\s+/g, '_');
+                obj[id] = 0;
+            } else if (item && item.name) {
+                const id = item.name.toLowerCase().replace(/\s+/g, '_');
+                obj[id] = item.price || 0;
+            }
+        });
+        fanData.custom_optional_items = obj;
+    }
+    if (fanData.custom_optional_items && typeof fanData.custom_optional_items === 'object') {
+        fanData.optional_items = { ...(fanData.optional_items || {}), ...fanData.custom_optional_items };
+    }
+} 

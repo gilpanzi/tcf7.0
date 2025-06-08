@@ -883,6 +883,9 @@ function saveFanData(fanNumber) {
     
     // Store the data
     window.fanData[fanNumber - 1] = data;
+    
+    // Normalize custom optional items
+    normalizeCustomOptionalItems(data);
 }
 
 // Load fan data into form
@@ -925,6 +928,9 @@ function loadFanData(data) {
             element.dispatchEvent(event);
         }
     });
+    
+    // Normalize custom optional items
+    normalizeCustomOptionalItems(data);
 }
 
 // Reset the fan form
@@ -1034,18 +1040,12 @@ function showProjectSummary() {
     let totalProjectCost = 0;
     
     // Generate fan cards for each fan
-    for (let i = 1; i <= window.totalFans; i++) {
-        // Check if we have data for this fan (using 0-based index)
-        const fanKey = i - 1;
-        const fanData = window.fanData[fanKey];
-        
-        console.log(`Processing fan ${i}, key=${fanKey}, data=`, fanData);
-        
-        // Create fan card
-        const fanCard = createFanSummaryCard(i, fanData);
+    for (let i = 0; i < window.totalFans; i++) {
+        const fanData = window.fanData[i];
+        if (!fanData) continue;
+        normalizeCustomOptionalItems(fanData);
+        const fanCard = createFanSummaryCard(i + 1, fanData);
         fansContainer.appendChild(fanCard);
-        
-        // Update total project cost
         if (fanData) {
             hasFans = true;
             const fanCost = parseFloat(fanData.total_cost || fanData.fabrication_selling_price || 0);
@@ -1200,6 +1200,32 @@ function createFanSummaryCard(fanNumber, fanData) {
         });
     }
     
+    // Merge all bought out items (vibration isolators, standard optional, custom optional)
+    let boughtOutItemsHtml = '<div class="bought-out-items"><strong>Bought Out Items:</strong><ul>';
+    let hasBoughtOut = false;
+    // Vibration isolators
+    if (fanData.vibration_isolators && fanData.vibration_isolators !== 'not_required' && fanData.vibration_isolators_cost > 0) {
+        boughtOutItemsHtml += `<li>Vibration Isolators (${fanData.vibration_isolators}): ₹${parseFloat(fanData.vibration_isolators_cost).toLocaleString('en-IN')}</li>`;
+        hasBoughtOut = true;
+    }
+    // All optional items (standard + custom)
+    const allOptionalItems = {
+        ...(fanData.optional_items || {}),
+        ...(fanData.custom_optional_items || {})
+    };
+    for (const [item, cost] of Object.entries(allOptionalItems)) {
+        if (cost > 0) {
+            const displayName = item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            boughtOutItemsHtml += `<li>${displayName}: ₹${cost.toLocaleString('en-IN')}</li>`;
+            hasBoughtOut = true;
+        }
+    }
+    if (!hasBoughtOut) {
+        boughtOutItemsHtml += '<li>No bought out items selected</li>';
+    }
+    boughtOutItemsHtml += '</ul></div>';
+    fanCard.innerHTML += boughtOutItemsHtml;
+    
     return fanCard;
 }
 
@@ -1301,3 +1327,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the application
     initializeApp();
 });
+
+// --- MIGRATION: Normalize custom optional items for legacy data ---
+function normalizeCustomOptionalItems(fanData) {
+    if (fanData["custom_optional_items[]"]) {
+        if (!fanData.custom_optional_items) fanData.custom_optional_items = {};
+        const name = fanData["custom_optional_items[]"];
+        const id = name.toLowerCase().replace(/\s+/g, '_');
+        let price = 0;
+        if (fanData.optional_items && fanData.optional_items[id]) price = fanData.optional_items[id];
+        fanData.custom_optional_items[id] = price;
+        delete fanData["custom_optional_items[]"];
+    }
+    if (Array.isArray(fanData.custom_optional_items)) {
+        const obj = {};
+        fanData.custom_optional_items.forEach(item => {
+            if (typeof item === 'string') {
+                const id = item.toLowerCase().replace(/\s+/g, '_');
+                obj[id] = 0;
+            } else if (item && item.name) {
+                const id = item.name.toLowerCase().replace(/\s+/g, '_');
+                obj[id] = item.price || 0;
+            }
+        });
+        fanData.custom_optional_items = obj;
+    }
+    if (fanData.custom_optional_items && typeof fanData.custom_optional_items === 'object') {
+        fanData.optional_items = { ...(fanData.optional_items || {}), ...fanData.custom_optional_items };
+    }
+}

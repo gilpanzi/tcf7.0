@@ -105,6 +105,23 @@ def migrate_database():
                 no_of_isolators INTEGER,
                 fabrication_margin REAL,
                 bought_out_margin REAL,
+                material_name_0 TEXT,
+                material_weight_0 REAL,
+                material_rate_0 REAL,
+                material_name_1 TEXT,
+                material_weight_1 REAL,
+                material_rate_1 REAL,
+                material_name_2 TEXT,
+                material_weight_2 REAL,
+                material_rate_2 REAL,
+                material_name_3 TEXT,
+                material_weight_3 REAL,
+                material_rate_3 REAL,
+                material_name_4 TEXT,
+                material_weight_4 REAL,
+                material_rate_4 REAL,
+                custom_no_of_isolators INTEGER,
+                custom_shaft_diameter REAL,
                 FOREIGN KEY (enquiry_number) REFERENCES Projects(enquiry_number)
             )
         ''')
@@ -284,14 +301,15 @@ def register_routes(app):
                 bought_out_cost += optional_items_cost
                 
                 # Calculate total costs and margins
-                fabrication_selling_price = fabrication_cost * (1 + fan_data['fabrication_margin'] / 100)
-                bought_out_selling_price = bought_out_cost * (1 + fan_data['bought_out_margin'] / 100)
+                fabrication_selling_price = fabrication_cost / (1 - fan_data['fabrication_margin'] / 100)
+                bought_out_selling_price = bought_out_cost / (1 - fan_data['bought_out_margin'] / 100)
                 total_selling_price = fabrication_selling_price + bought_out_selling_price + optional_items_cost
                 
                 # Calculate total job margin
                 total_raw_cost = fabrication_cost + bought_out_cost
                 if total_raw_cost > 0:
-                    total_job_margin = ((total_selling_price - total_raw_cost) / total_raw_cost * 100)
+                    # Calculate the effective margin percentage
+                    total_job_margin = (1 - (total_raw_cost / total_selling_price)) * 100
                 else:
                     total_job_margin = 0
                 
@@ -849,6 +867,20 @@ def register_routes(app):
                 'shaft_diameter': float(data.get('shaft_diameter', 0) or 0)
             }
             
+            # Add custom material fields
+            for i in range(5):
+                name_key = f'material_name_{i}'
+                weight_key = f'material_weight_{i}'
+                rate_key = f'material_rate_{i}'
+                
+                fan_data[name_key] = data.get(name_key, '')
+                fan_data[weight_key] = float(data.get(weight_key, 0) or 0)
+                fan_data[rate_key] = float(data.get(rate_key, 0) or 0)
+            
+            # Add custom shaft diameter and isolators
+            fan_data['custom_no_of_isolators'] = int(data.get('custom_no_of_isolators', data.get('no_of_isolators', 0)) or 0)
+            fan_data['custom_shaft_diameter'] = float(data.get('custom_shaft_diameter', data.get('shaft_diameter', 0)) or 0)
+            
             # Create properly nested structure for session storage
             session_fan_data = {
                 'specifications': {
@@ -894,6 +926,20 @@ def register_routes(app):
                 }
             }
             
+            # Add custom material fields to session data
+            for i in range(5):
+                name_key = f'material_name_{i}'
+                weight_key = f'material_weight_{i}'
+                rate_key = f'material_rate_{i}'
+                
+                session_fan_data[name_key] = fan_data[name_key]
+                session_fan_data[weight_key] = fan_data[weight_key]
+                session_fan_data[rate_key] = fan_data[rate_key]
+            
+            # Add custom shaft diameter and isolators to session data
+            session_fan_data['custom_no_of_isolators'] = fan_data['custom_no_of_isolators']
+            session_fan_data['custom_shaft_diameter'] = fan_data['custom_shaft_diameter']
+            
             # Process accessories
             accessories = data.get('accessories', {})
             for key in list(accessories.keys()):
@@ -921,9 +967,21 @@ def register_routes(app):
             session_fan_data['specifications']['custom_accessories'] = custom_accessories
             fan_data['custom_accessories'] = json.dumps(custom_accessories)
             
+            # Process custom optional items
             custom_option_items = data.get('custom_option_items', {})
+            custom_optional_items = data.get('custom_optional_items', {})
+            
+            # Use custom_optional_items if available, otherwise fallback to custom_option_items
+            if custom_optional_items and not custom_option_items:
+                custom_option_items = custom_optional_items
+            elif custom_option_items and not custom_optional_items:
+                custom_optional_items = custom_option_items
+                
+            # Store both for backward compatibility
             session_fan_data['specifications']['custom_option_items'] = custom_option_items
+            session_fan_data['specifications']['custom_optional_items'] = custom_optional_items
             fan_data['custom_option_items'] = json.dumps(custom_option_items)
+            fan_data['custom_optional_items'] = json.dumps(custom_optional_items)
             
             # If editing, update the existing fan in session
             if editing_fan_index is not None and 'fans' in session and editing_fan_index < len(session['fans']):
@@ -969,22 +1027,27 @@ def register_routes(app):
                     logger.info(f"Created new project with ID: {project_id}")
                 
                 # Insert fan data with correct parameter count
-                cursor.execute('''
-                    INSERT INTO ProjectFans (
-                        project_id, fan_number, fan_model, fan_size, class, arrangement, 
-                        vendor, material, accessories, bare_fan_weight, accessory_weight,
-                        total_weight, fabrication_cost, bought_out_cost, total_cost,
-                        fabrication_selling_price, bought_out_selling_price, total_selling_price,
-                        vibration_isolators, drive_pack_kw, custom_accessories, optional_items,
-                        custom_option_items, motor_kw, motor_brand, motor_pole, motor_efficiency,
-                        motor_discount_rate, bearing_brand, shaft_diameter, vibration_isolators_cost,
-                        drive_pack_cost, bearing_cost, motor_cost, fabrication_weight, bought_out_weight,
-                        optional_items_cost, flex_connectors_cost, total_job_margin,
-                        no_of_isolators, fabrication_margin, bought_out_margin,
-                        NULL  -- Extra parameter to match the 42 placeholders
-                        no_of_isolators, fabrication_margin, bought_out_margin
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
+                # Use dynamic SQL generation to avoid column/value mismatches
+                fan_data_columns = [
+                    'project_id', 'fan_number', 'fan_model', 'fan_size', 'class', 'arrangement', 
+                    'vendor', 'material', 'accessories', 'bare_fan_weight', 'accessory_weight',
+                    'total_weight', 'fabrication_cost', 'bought_out_cost', 'total_cost',
+                    'fabrication_selling_price', 'bought_out_selling_price', 'total_selling_price',
+                    'vibration_isolators', 'drive_pack_kw', 'custom_accessories', 'optional_items',
+                    'custom_option_items', 'motor_kw', 'motor_brand', 'motor_pole', 'motor_efficiency',
+                    'motor_discount_rate', 'bearing_brand', 'shaft_diameter', 'vibration_isolators_cost',
+                    'drive_pack_cost', 'bearing_cost', 'motor_cost', 'fabrication_weight', 'bought_out_weight',
+                    'optional_items_cost', 'flex_connectors_cost', 'total_job_margin',
+                    'no_of_isolators', 'fabrication_margin', 'bought_out_margin',
+                    'material_name_0', 'material_weight_0', 'material_rate_0',
+                    'material_name_1', 'material_weight_1', 'material_rate_1',
+                    'material_name_2', 'material_weight_2', 'material_rate_2',
+                    'material_name_3', 'material_weight_3', 'material_rate_3',
+                    'material_name_4', 'material_weight_4', 'material_rate_4',
+                    'custom_no_of_isolators', 'custom_shaft_diameter'
+                ]
+                
+                fan_data_values = [
                     project_id,
                     current_fan_number,
                     fan_data['fan_model'],
@@ -1027,8 +1090,35 @@ def register_routes(app):
                     fan_data['no_of_isolators'],
                     fan_data['fabrication_margin'],
                     fan_data['bought_out_margin'],
-                    None  # Extra parameter for 42nd value
-                ))
+                    fan_data['material_name_0'],
+                    fan_data['material_weight_0'],
+                    fan_data['material_rate_0'],
+                    fan_data['material_name_1'],
+                    fan_data['material_weight_1'],
+                    fan_data['material_rate_1'],
+                    fan_data['material_name_2'],
+                    fan_data['material_weight_2'],
+                    fan_data['material_rate_2'],
+                    fan_data['material_name_3'],
+                    fan_data['material_weight_3'],
+                    fan_data['material_rate_3'],
+                    fan_data['material_name_4'],
+                    fan_data['material_weight_4'],
+                    fan_data['material_rate_4'],
+                    fan_data['custom_no_of_isolators'],
+                    fan_data['custom_shaft_diameter']
+                ]
+                
+                # Create the SQL dynamically to ensure column count matches value count
+                placeholders = ', '.join(['?' for _ in fan_data_values])
+                columns = ', '.join(fan_data_columns)
+                sql = f"INSERT INTO ProjectFans ({columns}) VALUES ({placeholders})"
+                
+                # Log the SQL before execution for debugging
+                logger.info(f"Executing SQL with {len(fan_data_values)} values for {len(fan_data_columns)} columns")
+                
+                # Execute with the values
+                cursor.execute(sql, fan_data_values)
                 
                 conn.commit()
                 
@@ -1134,7 +1224,28 @@ def register_routes(app):
                         'efficiency': fan_dict.get('motor_efficiency', ''),
                         'discount_rate': float(fan_dict.get('motor_discount_rate', 0) or 0),
                     },
-                    # Add direct access to cost fields for frontend compatibility
+                    'fabrication_margin': float(fan_dict.get('fabrication_margin', 0) or 0),
+                    'bought_out_margin': float(fan_dict.get('bought_out_margin', 0) or 0),
+                    'discounted_motor_price': float(fan_dict.get('motor_cost', 0) or 0),
+                    'total_bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0)
+                }
+                
+                # Add raw data for compatibility
+                fan_data.update({
+                    'fan_number': fan_dict.get('fan_number', 0),
+                    'enquiry_number': fan_dict.get('enquiry_number', ''),
+                    'fan_model': fan_dict.get('fan_model', ''),
+                    'fan_size': fan_dict.get('size', ''),
+                    'class_': fan_dict.get('class', ''),
+                    'arrangement': fan_dict.get('arrangement', ''),
+                    'vendor': fan_dict.get('vendor', ''),
+                    'material': fan_dict.get('material', ''),
+                    'vibration_isolators': fan_dict.get('vibration_isolators', ''),
+                    'bare_fan_weight': float(fan_dict.get('bare_fan_weight', 0) or 0),
+                    'accessory_weights': float(fan_dict.get('accessory_weight', 0) or 0),
+                    'total_weight': float(fan_dict.get('total_weight', 0) or 0),
+                    'fabrication_weight': float(fan_dict.get('fabrication_weight', 0) or 0),
+                    'bought_out_weight': float(fan_dict.get('bought_out_weight', 0) or 0),
                     'fabrication_cost': float(fan_dict.get('fabrication_cost', 0) or 0),
                     'motor_cost': float(fan_dict.get('motor_cost', 0) or 0),
                     'vibration_isolators_cost': float(fan_dict.get('vibration_isolators_cost', 0) or 0),
@@ -1148,6 +1259,14 @@ def register_routes(app):
                     'bought_out_selling_price': float(fan_dict.get('bought_out_selling_price', 0) or 0),
                     'total_selling_price': float(fan_dict.get('total_selling_price', 0) or 0),
                     'total_job_margin': float(fan_dict.get('total_job_margin', 0) or 0),
+                    'motor_kw': float(fan_dict.get('motor_kw', 0) or 0),
+                    'motor_brand': fan_dict.get('motor_brand', ''),
+                    'motor_pole': int(float(fan_dict.get('motor_pole', 0) or 0)),
+                    'motor_efficiency': fan_dict.get('motor_efficiency', ''),
+                    'motor_discount_rate': float(fan_dict.get('motor_discount_rate', 0) or 0),
+                    'bearing_brand': fan_dict.get('bearing_brand', ''),
+                    'shaft_diameter': float(fan_dict.get('shaft_diameter', 0) or 0),
+                    'drive_pack_kw': float(fan_dict.get('drive_pack_kw', 0) or 0),
                     
                     # Include additional fields to ensure correct pricing display
                     'vibration_isolators_price': float(fan_dict.get('vibration_isolators_cost', 0) or 0),
@@ -1155,7 +1274,33 @@ def register_routes(app):
                     'drive_pack_price': float(fan_dict.get('drive_pack_cost', 0) or 0),
                     'discounted_motor_price': float(fan_dict.get('motor_cost', 0) or 0),
                     'total_bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0)
-                }
+                })
+                
+                # Add custom material fields from database for materials 0-4
+                for i in range(5):
+                    name_key = f'material_name_{i}'
+                    weight_key = f'material_weight_{i}'
+                    rate_key = f'material_rate_{i}'
+                    
+                    if name_key in fan_dict:
+                        fan_data[name_key] = fan_dict.get(name_key, '')
+                    if weight_key in fan_dict:
+                        fan_data[weight_key] = float(fan_dict.get(weight_key, 0) or 0)
+                    if rate_key in fan_dict:
+                        fan_data[rate_key] = float(fan_dict.get(rate_key, 0) or 0)
+                
+                # Add custom no_of_isolators and shaft_diameter if available
+                if 'custom_no_of_isolators' in fan_dict:
+                    fan_data['custom_no_of_isolators'] = int(fan_dict.get('custom_no_of_isolators', 0) or 0)
+                else:
+                    # Fallback: Use the regular no_of_isolators field
+                    fan_data['custom_no_of_isolators'] = int(fan_dict.get('no_of_isolators', 0) or 0)
+                    
+                if 'custom_shaft_diameter' in fan_dict:
+                    fan_data['custom_shaft_diameter'] = float(fan_dict.get('custom_shaft_diameter', 0) or 0)
+                else:
+                    # Fallback: Use the regular shaft_diameter field
+                    fan_data['custom_shaft_diameter'] = float(fan_dict.get('shaft_diameter', 0) or 0)
                 
                 # Parse JSON fields
                 for json_field, spec_field in [
@@ -1585,7 +1730,8 @@ def register_routes(app):
                 'total_fabrication_cost': total_fabrication_cost,
                 'total_bought_out_cost': total_bought_out_cost,
                 'total_cost': total_cost,
-                'total_selling_price': total_cost,
+                'total_selling_price': total_fabrication_cost * (1 + project_data.get('fabrication_margin', 0) / 100) + 
+                                    total_bought_out_cost * (1 + project_data.get('bought_out_margin', 0) / 100),
                 'total_job_margin': total_job_margin
             }
             
@@ -1652,6 +1798,23 @@ def register_routes(app):
                         no_of_isolators INTEGER,
                         fabrication_margin REAL,
                         bought_out_margin REAL,
+                        material_name_0 TEXT,
+                        material_weight_0 REAL,
+                        material_rate_0 REAL,
+                        material_name_1 TEXT,
+                        material_weight_1 REAL,
+                        material_rate_1 REAL,
+                        material_name_2 TEXT,
+                        material_weight_2 REAL,
+                        material_rate_2 REAL,
+                        material_name_3 TEXT,
+                        material_weight_3 REAL,
+                        material_rate_3 REAL,
+                        material_name_4 TEXT,
+                        material_weight_4 REAL,
+                        material_rate_4 REAL,
+                        custom_no_of_isolators INTEGER,
+                        custom_shaft_diameter REAL,
                         FOREIGN KEY (enquiry_number) REFERENCES Projects(enquiry_number)
                     )
                 ''')
@@ -1672,7 +1835,7 @@ def register_routes(app):
                         project_db_data['customer_name'], project_db_data['total_fans'],
                         project_db_data['sales_engineer'], project_db_data['total_weight'],
                         project_db_data['total_fabrication_cost'], project_db_data['total_bought_out_cost'],
-                        project_db_data['total_cost'], project_db_data['total_cost'], project_db_data['total_job_margin'], enquiry_number
+                        project_db_data['total_cost'], project_db_data['total_selling_price'], project_db_data['total_job_margin'], enquiry_number
                     ))
                     
                     # Delete existing fans
@@ -1691,7 +1854,7 @@ def register_routes(app):
                         project_db_data['total_fans'], project_db_data['sales_engineer'],
                         project_db_data['total_weight'], project_db_data['total_fabrication_cost'],
                         project_db_data['total_bought_out_cost'], project_db_data['total_cost'],
-                        project_db_data['total_cost'], project_db_data['total_job_margin']
+                        project_db_data['total_selling_price'], project_db_data['total_job_margin']
                     ))
                     logger.info(f"Inserted new project {enquiry_number}")
                 
@@ -1703,6 +1866,28 @@ def register_routes(app):
                     weights = fan.get('weights', {})
                     costs = fan.get('costs', {})
                     motor = fan.get('motor', {})
+                    
+                    # Initialize a fan_data dictionary with default values for all custom material fields
+                    # This ensures these fields exist even if they're not in the original data
+                    fan_data = {
+                        'material_name_0': fan.get('material_name_0', ''),
+                        'material_weight_0': fan.get('material_weight_0', 0),
+                        'material_rate_0': fan.get('material_rate_0', 0),
+                        'material_name_1': fan.get('material_name_1', ''),
+                        'material_weight_1': fan.get('material_weight_1', 0),
+                        'material_rate_1': fan.get('material_rate_1', 0),
+                        'material_name_2': fan.get('material_name_2', ''),
+                        'material_weight_2': fan.get('material_weight_2', 0),
+                        'material_rate_2': fan.get('material_rate_2', 0),
+                        'material_name_3': fan.get('material_name_3', ''),
+                        'material_weight_3': fan.get('material_weight_3', 0),
+                        'material_rate_3': fan.get('material_rate_3', 0),
+                        'material_name_4': fan.get('material_name_4', ''),
+                        'material_weight_4': fan.get('material_weight_4', 0),
+                        'material_rate_4': fan.get('material_rate_4', 0),
+                        'custom_no_of_isolators': fan.get('custom_no_of_isolators', specs.get('no_of_isolators', 0)),
+                        'custom_shaft_diameter': fan.get('custom_shaft_diameter', specs.get('shaft_diameter', 0))
+                    }
                     
                     # Get the individual bought out costs from nested structure or top level
                     vibration_isolators_cost = costs.get('vibration_isolators_cost', 
@@ -1763,23 +1948,29 @@ def register_routes(app):
                     
                     custom_option_items = json.dumps(specs.get('custom_option_items', {}))
                     
-                    # Insert fan data with consistent field names
-                    cursor.execute('''
-                        INSERT INTO ProjectFans (
-                            enquiry_number, fan_number, fan_model, size, class, arrangement,
-                            vendor, material, accessories, bare_fan_weight, accessory_weight,
-                            total_weight, fabrication_weight, bought_out_weight,
-                            fabrication_cost, motor_cost, vibration_isolators_cost,
-                            drive_pack_cost, bearing_cost, optional_items_cost,
-                            flex_connectors_cost, bought_out_cost, total_cost,
-                            fabrication_selling_price, bought_out_selling_price,
-                            total_selling_price, total_job_margin, vibration_isolators,
-                            drive_pack_kw, custom_accessories, optional_items,
-                            custom_option_items, motor_kw, motor_brand, motor_pole,
-                            motor_efficiency, motor_discount_rate, bearing_brand, shaft_diameter,
-                            no_of_isolators, fabrication_margin, bought_out_margin
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
+                    # Insert fan data with consistent field names - use dynamic SQL to avoid mismatches
+                    fan_data_columns = [
+                        'enquiry_number', 'fan_number', 'fan_model', 'size', 'class', 'arrangement',
+                        'vendor', 'material', 'accessories', 'bare_fan_weight', 'accessory_weight',
+                        'total_weight', 'fabrication_weight', 'bought_out_weight',
+                        'fabrication_cost', 'motor_cost', 'vibration_isolators_cost',
+                        'drive_pack_cost', 'bearing_cost', 'optional_items_cost',
+                        'flex_connectors_cost', 'bought_out_cost', 'total_cost',
+                        'fabrication_selling_price', 'bought_out_selling_price',
+                        'total_selling_price', 'total_job_margin', 'vibration_isolators',
+                        'drive_pack_kw', 'custom_accessories', 'optional_items',
+                        'custom_option_items', 'motor_kw', 'motor_brand', 'motor_pole',
+                        'motor_efficiency', 'motor_discount_rate', 'bearing_brand', 'shaft_diameter',
+                        'no_of_isolators', 'fabrication_margin', 'bought_out_margin',
+                        'material_name_0', 'material_weight_0', 'material_rate_0',
+                        'material_name_1', 'material_weight_1', 'material_rate_1',
+                        'material_name_2', 'material_weight_2', 'material_rate_2',
+                        'material_name_3', 'material_weight_3', 'material_rate_3',
+                        'material_name_4', 'material_weight_4', 'material_rate_4',
+                        'custom_no_of_isolators', 'custom_shaft_diameter'
+                    ]
+                    
+                    fan_data_values = [
                         enquiry_number,
                         i,  # fan_number
                         specs.get('fan_model', ''),
@@ -1822,8 +2013,35 @@ def register_routes(app):
                         specs.get('no_of_isolators', fan.get('no_of_isolators', 0)),
                         fan.get('fabrication_margin', costs.get('fabrication_margin', 0)),
                         fan.get('bought_out_margin', costs.get('bought_out_margin', 0)),
-                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # created_at
-                    ))
+                        fan_data['material_name_0'],
+                        fan_data['material_weight_0'],
+                        fan_data['material_rate_0'],
+                        fan_data['material_name_1'],
+                        fan_data['material_weight_1'],
+                        fan_data['material_rate_1'],
+                        fan_data['material_name_2'],
+                        fan_data['material_weight_2'],
+                        fan_data['material_rate_2'],
+                        fan_data['material_name_3'],
+                        fan_data['material_weight_3'],
+                        fan_data['material_rate_3'],
+                        fan_data['material_name_4'],
+                        fan_data['material_weight_4'],
+                        fan_data['material_rate_4'],
+                        fan_data['custom_no_of_isolators'],
+                        fan_data['custom_shaft_diameter']
+                    ]
+                    
+                    # Create the SQL dynamically to ensure column count matches value count
+                    placeholders = ', '.join(['?' for _ in fan_data_values])
+                    columns = ', '.join(fan_data_columns)
+                    sql = f"INSERT INTO ProjectFans ({columns}) VALUES ({placeholders})"
+                    
+                    # Log the SQL before execution for debugging
+                    logger.info(f"Executing SQL with {len(fan_data_values)} values for {len(fan_data_columns)} columns")
+                    
+                    # Execute with the values
+                    cursor.execute(sql, fan_data_values)
                     logger.info(f"Inserted fan {i} for project {enquiry_number}")
                 
                 conn.commit()
@@ -2019,54 +2237,31 @@ def register_routes(app):
                         'pole': int(float(fan_dict.get('motor_pole', 0) or 0)),
                         'efficiency': fan_dict.get('motor_efficiency', ''),
                         'discount_rate': float(fan_dict.get('motor_discount_rate', 0) or 0),
-                    }
-                }
-                
-                # Add raw data for compatibility
-                fan_data.update({
-                    'fan_number': fan_dict.get('fan_number', 0),
-                    'enquiry_number': fan_dict.get('enquiry_number', ''),
-                    'fan_model': fan_dict.get('fan_model', ''),
-                    'fan_size': fan_dict.get('size', ''),
-                    'class_': fan_dict.get('class', ''),
-                    'arrangement': fan_dict.get('arrangement', ''),
-                    'vendor': fan_dict.get('vendor', ''),
-                    'material': fan_dict.get('material', ''),
-                    'vibration_isolators': fan_dict.get('vibration_isolators', ''),
-                    'bare_fan_weight': float(fan_dict.get('bare_fan_weight', 0) or 0),
-                    'accessory_weights': float(fan_dict.get('accessory_weight', 0) or 0),
-                    'total_weight': float(fan_dict.get('total_weight', 0) or 0),
-                    'fabrication_weight': float(fan_dict.get('fabrication_weight', 0) or 0),
-                    'bought_out_weight': float(fan_dict.get('bought_out_weight', 0) or 0),
-                    'fabrication_cost': float(fan_dict.get('fabrication_cost', 0) or 0),
-                    'motor_cost': float(fan_dict.get('motor_cost', 0) or 0),
-                    'vibration_isolators_cost': float(fan_dict.get('vibration_isolators_cost', 0) or 0),
-                    'drive_pack_cost': float(fan_dict.get('drive_pack_cost', 0) or 0),
-                    'bearing_cost': float(fan_dict.get('bearing_cost', 0) or 0),
-                    'optional_items_cost': float(fan_dict.get('optional_items_cost', 0) or 0),
-                    'flex_connectors_cost': float(fan_dict.get('flex_connectors_cost', 0) or 0),
-                    'bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0),
-                    'total_cost': float(fan_dict.get('total_cost', 0) or 0),
-                    'fabrication_selling_price': float(fan_dict.get('fabrication_selling_price', 0) or 0),
-                    'bought_out_selling_price': float(fan_dict.get('bought_out_selling_price', 0) or 0),
-                    'total_selling_price': float(fan_dict.get('total_selling_price', 0) or 0),
-                    'total_job_margin': float(fan_dict.get('total_job_margin', 0) or 0),
-                    'motor_kw': float(fan_dict.get('motor_kw', 0) or 0),
-                    'motor_brand': fan_dict.get('motor_brand', ''),
-                    'motor_pole': int(float(fan_dict.get('motor_pole', 0) or 0)),
-                    'motor_efficiency': fan_dict.get('motor_efficiency', ''),
-                    'motor_discount_rate': float(fan_dict.get('motor_discount_rate', 0) or 0),
-                    'bearing_brand': fan_dict.get('bearing_brand', ''),
-                    'shaft_diameter': float(fan_dict.get('shaft_diameter', 0) or 0),
-                    'drive_pack_kw': float(fan_dict.get('drive_pack_kw', 0) or 0),
-                    
-                    # Include additional fields to ensure correct pricing display
-                    'vibration_isolators_price': float(fan_dict.get('vibration_isolators_cost', 0) or 0),
-                    'bearing_price': float(fan_dict.get('bearing_cost', 0) or 0),
-                    'drive_pack_price': float(fan_dict.get('drive_pack_cost', 0) or 0),
+                    },
+                    'fabrication_margin': float(fan_dict.get('fabrication_margin', 0) or 0),
+                    'bought_out_margin': float(fan_dict.get('bought_out_margin', 0) or 0),
                     'discounted_motor_price': float(fan_dict.get('motor_cost', 0) or 0),
                     'total_bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0)
-                })
+                }
+                
+                # Add custom material fields from database for materials 0-4
+                for i in range(5):
+                    name_key = f'material_name_{i}'
+                    weight_key = f'material_weight_{i}'
+                    rate_key = f'material_rate_{i}'
+                    
+                    if name_key in fan_dict:
+                        fan_data[name_key] = fan_dict.get(name_key, '')
+                    if weight_key in fan_dict:
+                        fan_data[weight_key] = float(fan_dict.get(weight_key, 0) or 0)
+                    if rate_key in fan_dict:
+                        fan_data[rate_key] = float(fan_dict.get(rate_key, 0) or 0)
+                
+                # Add custom fields for no_of_isolators and shaft_diameter
+                if 'custom_no_of_isolators' in fan_dict:
+                    fan_data['custom_no_of_isolators'] = int(fan_dict.get('custom_no_of_isolators', 0) or 0)
+                if 'custom_shaft_diameter' in fan_dict:
+                    fan_data['custom_shaft_diameter'] = float(fan_dict.get('custom_shaft_diameter', 0) or 0)
                 
                 # Parse JSON fields
                 for json_field, spec_field in [
@@ -2108,9 +2303,9 @@ def register_routes(app):
                         fan_data[spec_field] = {}
                 
                 # Log reconstructed fan data for debugging
-                logger.info(f"Reconstructed fan data with bought out costs: vibration_isolators_cost={fan_data['vibration_isolators_cost']}, " +
-                           f"bearing_cost={fan_data['bearing_cost']}, drive_pack_cost={fan_data['drive_pack_cost']}, " +
-                           f"motor_cost={fan_data['motor_cost']}, optional_items_cost={fan_data['optional_items_cost']}")
+                logger.info(f"Reconstructed fan data with bought out costs: vibration_isolators_cost={fan_data.get('vibration_isolators_cost', 0)}, " +
+                           f"bearing_cost={fan_data.get('bearing_cost', 0)}, drive_pack_cost={fan_data.get('drive_pack_cost', 0)}, " +
+                           f"motor_cost={fan_data.get('motor_cost', 0)}, optional_items_cost={fan_data.get('optional_items_cost', 0)}")
                 
                 # Add the fan to the list
                 fans.append(fan_data)
@@ -2182,6 +2377,21 @@ def register_routes(app):
                     logger.warning(f"Fan {i} is missing specifications, creating empty structure")
                     fan['specifications'] = {}
                 
+                # Handle custom optional items for consistency
+                if 'specifications' in fan:
+                    # Ensure both naming formats exist for backward compatibility
+                    if 'custom_option_items' in fan['specifications'] and 'custom_optional_items' not in fan['specifications']:
+                        logger.info(f"Fan {i} has custom_option_items but not custom_optional_items, copying data for consistency")
+                        fan['specifications']['custom_optional_items'] = fan['specifications']['custom_option_items']
+                    elif 'custom_optional_items' in fan['specifications'] and 'custom_option_items' not in fan['specifications']:
+                        logger.info(f"Fan {i} has custom_optional_items but not custom_option_items, copying data for consistency")
+                        fan['specifications']['custom_option_items'] = fan['specifications']['custom_optional_items']
+                    
+                    # Initialize if neither exists
+                    if 'custom_optional_items' not in fan['specifications'] and 'custom_option_items' not in fan['specifications']:
+                        fan['specifications']['custom_optional_items'] = {}
+                        fan['specifications']['custom_option_items'] = {}
+
                 if 'weights' not in fan:
                     logger.warning(f"Fan {i} is missing weights, creating empty structure")
                     fan['weights'] = {'total_weight': 0, 'bare_fan_weight': 0, 'accessory_weight': 0, 'fabrication_weight': 0, 'bought_out_weight': 0}
@@ -2239,16 +2449,7 @@ def register_routes(app):
                         )
                     ) or 0
                 )
-                fan['costs']['motor_cost'] = float(
-                    fan.get('motor_cost',
-                        fan['costs'].get('motor_cost',
-                            fan.get('discounted_motor_price',
-                                fan['costs'].get('discounted_motor_price', 0)
-                            )
-                        )
-                    ) or 0
-                )
-                # --- END PATCH ---
+                fan['costs']['motor_cost'] = float(                    fan.get('motor_cost',                        fan['costs'].get('motor_cost',                            fan.get('discounted_motor_price',                                fan['costs'].get('discounted_motor_price', 0)                            )                        )                    ) or 0                )                # --- END PATCH ---
                 
                 validated_fans.append(fan)
             

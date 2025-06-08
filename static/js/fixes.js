@@ -851,18 +851,25 @@ function saveFanData(fanNumber) {
         
         // Add optional items cost
         data.optional_items_cost = Object.values(data.optional_items).reduce((sum, price) => sum + price, 0);
+        
+        // Add custom optional items cost
+        if (window.customOptionalItems) {
+            data.optional_items_cost += Object.values(window.customOptionalItems).reduce((sum, price) => sum + price, 0);
+        }
+        
+        // Add total optional items cost to bought out cost
         data.bought_out_cost += data.optional_items_cost;
         
         // Calculate selling price with margin
         const boughtOutMargin = parseFloat(data.bought_out_margin) || 0;
-        data.bought_out_selling_price = data.bought_out_cost * (1 + boughtOutMargin / 100);
+        data.bought_out_selling_price = data.bought_out_cost / (1 - boughtOutMargin / 100);
         
         // Calculate total cost and selling price
         data.total_cost = data.fabrication_cost + data.bought_out_cost;
         data.total_selling_price = data.fabrication_selling_price + data.bought_out_selling_price;
         
         // Calculate total job margin
-        data.total_job_margin = ((data.total_selling_price - data.total_cost) / data.total_cost) * 100;
+        data.total_job_margin = (1 - (data.total_cost / data.total_selling_price)) * 100;
         
         // Log extracted values for debugging
         console.log("Extracted calculation results:", {
@@ -1499,7 +1506,7 @@ function showProjectSummary() {
             for (let i = 0; i < window.fanData.length; i++) {
                 if (window.fanData[i] === null) continue;
                 window.fanData[i].fabrication_margin = val;
-                window.fanData[i].fabrication_selling_price = window.fanData[i].fabrication_cost * (1 + val / 100);
+                window.fanData[i].fabrication_selling_price = window.fanData[i].fabrication_cost / (1 - val / 100);
                 window.fanData[i].total_selling_price = window.fanData[i].fabrication_selling_price + window.fanData[i].bought_out_selling_price;
                 const totalCost = window.fanData[i].fabrication_cost + window.fanData[i].bought_out_cost;
                 window.fanData[i].total_job_margin = totalCost > 0 ? ((window.fanData[i].total_selling_price - totalCost) / totalCost * 100) : 0;
@@ -1513,7 +1520,7 @@ function showProjectSummary() {
             for (let i = 0; i < window.fanData.length; i++) {
                 if (window.fanData[i] === null) continue;
                 window.fanData[i].bought_out_margin = val;
-                window.fanData[i].bought_out_selling_price = window.fanData[i].bought_out_cost * (1 + val / 100);
+                window.fanData[i].bought_out_selling_price = window.fanData[i].bought_out_cost / (1 - val / 100);
                 window.fanData[i].total_selling_price = window.fanData[i].fabrication_selling_price + window.fanData[i].bought_out_selling_price;
                 const totalCost = window.fanData[i].fabrication_cost + window.fanData[i].bought_out_cost;
                 window.fanData[i].total_job_margin = totalCost > 0 ? ((window.fanData[i].total_selling_price - totalCost) / totalCost * 100) : 0;
@@ -1526,6 +1533,7 @@ function showProjectSummary() {
     // --- END: Project Summary Export to Excel ---
 }
 
+// Replace the entire createFanCard function with this improved version
 function createFanCard(fanNumber, fanData) {
     const card = document.createElement('div');
     card.className = 'fan-card';
@@ -1576,238 +1584,190 @@ function createFanCard(fanNumber, fanData) {
             <div class="detail-item"><span>Accessory Weight:</span><span>${parseFloat(accessoryWeight || 0).toFixed(2)} kg</span></div>
             <div class="detail-item"><span>Total Weight:</span><span>${parseFloat(fanData.total_weight || 0).toFixed(2)} kg</span></div>
         </div>
-        <div class="cost-summary-section">
-            <h3>Cost Summary</h3>
+        <div class="costs-section">
+            <h3>Costs</h3>
             <div class="detail-item"><span>Fabrication Cost:</span><span>₹${parseFloat(fanData.fabrication_cost || 0).toLocaleString('en-IN')}</span></div>
-            <div class="detail-item"><span>Fabrication Margin (%):</span><input type="number" class="margin-input" data-fan="${fanNumber}" data-type="fabrication" value="${parseFloat(fanData.fabrication_margin || 0).toFixed(2)}" step="0.01" min="0" max="100"></div>
-            <div class="detail-item"><span>Fabrication Selling Price:</span><span class="fabrication-selling-price">₹${parseFloat(fanData.fabrication_selling_price || 0).toLocaleString('en-IN')}</span></div>
             <div class="detail-item"><span>Bought Out Cost:</span><span>₹${parseFloat(fanData.bought_out_cost || 0).toLocaleString('en-IN')}</span></div>
-            <div class="detail-item"><span>Bought Out Margin (%):</span><input type="number" class="margin-input" data-fan="${fanNumber}" data-type="bought_out" value="${parseFloat(fanData.bought_out_margin || 0).toFixed(2)}" step="0.01" min="0" max="100"></div>
+            <div class="detail-item total"><span>Total Cost:</span><span>₹${parseFloat(fanData.total_cost || 0).toLocaleString('en-IN')}</span></div>
+        </div>
+        <div class="margin-section">
+            <h3>Margins</h3>
+            <div class="margin-item">
+                <label>Fabrication Margin (%):</label>
+                <input type="number" class="margin-input fabrication-margin" value="${parseFloat(fanData.fabrication_margin || 0).toFixed(2)}" min="0" max="100" step="0.01" 
+                       onchange="updateFanPricing(${fanNumber}, 'fabrication', parseFloat(this.value))">
+            </div>
+            <div class="margin-item">
+                <label>Bought Out Margin (%):</label>
+                <input type="number" class="margin-input bought-out-margin" value="${parseFloat(fanData.bought_out_margin || 0).toFixed(2)}" min="0" max="100" step="0.01"
+                       onchange="updateFanPricing(${fanNumber}, 'bought_out', parseFloat(this.value))">
+            </div>
+            <div class="detail-item"><span>Fabrication Selling Price:</span><span class="fabrication-selling-price">₹${parseFloat(fanData.fabrication_selling_price || 0).toLocaleString('en-IN')}</span></div>
             <div class="detail-item"><span>Bought Out Selling Price:</span><span class="bought-out-selling-price">₹${parseFloat(fanData.bought_out_selling_price || 0).toLocaleString('en-IN')}</span></div>
-            <div class="detail-item total-cost"><span>Total Cost:</span><span>₹${parseFloat(fanData.total_cost || 0).toLocaleString('en-IN')}</span></div>
-            <div class="detail-item total-selling-price"><span>Total Selling Price:</span><span class="total-selling-price-value">₹${parseFloat(fanData.total_selling_price || 0).toLocaleString('en-IN')}</span></div>
-            <div class="detail-item job-margin"><span>Job Margin:</span><span class="job-margin-value">${parseFloat(fanData.total_job_margin || 0).toFixed(2)}%</span></div>
+            <div class="detail-item total"><span>Total Selling Price:</span><span class="total-selling-price-value">₹${parseFloat(fanData.total_selling_price || 0).toLocaleString('en-IN')}</span></div>
+            <div class="detail-item total"><span>Job Margin:</span><span class="job-margin-value">${parseFloat(fanData.total_job_margin || 0).toFixed(2)}%</span></div>
         </div>
     `;
-    // Bought Out Items Section
-    let boughtOutHtml = '';
-    if ((fanData.vibration_isolators_cost && fanData.vibration_isolators_cost > 0) || (fanData.bearing_cost && fanData.bearing_cost > 0) || (fanData.drive_pack_cost && fanData.drive_pack_cost > 0) || (fanData.motor_cost && fanData.motor_cost > 0)) {
-        boughtOutHtml += '<div class="bought-out-section"><h3>Bought Out Items</h3>';
-        if (fanData.vibration_isolators_cost && fanData.vibration_isolators_cost > 0) {
-            boughtOutHtml += `<div class="detail-item"><span>Vibration Isolators:</span><span>₹${parseFloat(fanData.vibration_isolators_cost).toLocaleString('en-IN')}</span></div>`;
+    
+    // Add accessories section
+    const accessoriesSection = document.createElement('div');
+    accessoriesSection.className = 'accessories-section';
+    accessoriesSection.innerHTML = '<h3>Accessories</h3>';
+    
+    // Gather accessories from different possible sources
+    const accessories = fanData.accessories || 
+                        (fanData.specifications && fanData.specifications.accessories) || 
+                        {};
+    
+    // Add custom accessories if present
+    if (fanData.custom_accessories) {
+        if (typeof fanData.custom_accessories === 'string') {
+            accessories[fanData.custom_accessories] = true;
+        } else if (Array.isArray(fanData.custom_accessories)) {
+            fanData.custom_accessories.forEach(acc => {
+                if (typeof acc === 'object' && acc.name) {
+                    accessories[acc.name] = true;
+                } else if (typeof acc === 'string') {
+                    accessories[acc] = true;
+                }
+            });
         }
-        if (fanData.bearing_cost && fanData.bearing_cost > 0) {
-            boughtOutHtml += `<div class="detail-item"><span>Bearings:</span><span>₹${parseFloat(fanData.bearing_cost).toLocaleString('en-IN')}</span></div>`;
-        }
-        if (fanData.drive_pack_cost && fanData.drive_pack_cost > 0) {
-            boughtOutHtml += `<div class="detail-item"><span>Drive Pack:</span><span>₹${parseFloat(fanData.drive_pack_cost).toLocaleString('en-IN')}</span></div>`;
-        }
-        if (fanData.motor_cost && fanData.motor_cost > 0) {
-            boughtOutHtml += `<div class="detail-item"><span>Motor:</span><span>₹${parseFloat(fanData.motor_cost).toLocaleString('en-IN')}</span></div>`;
-        }
-        boughtOutHtml += '</div>';
     }
-    card.innerHTML += boughtOutHtml;
-    // Accessories Section
-    let accessoriesHtml = '';
-    if (fanData.accessories && Object.keys(fanData.accessories).length > 0) {
-        accessoriesHtml += '<div class="accessories-section"><h3>Accessories</h3>';
-        for (const [key, value] of Object.entries(fanData.accessories)) {
+    
+    if (Object.keys(accessories).filter(key => accessories[key]).length > 0) {
+        const accessoriesList = document.createElement('ul');
+        accessoriesList.className = 'accessories-list';
+        
+        for (const [key, value] of Object.entries(accessories)) {
             if (value) {
-                accessoriesHtml += `<div class="detail-item"><span>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span><span>Included</span></div>`;
+                const item = document.createElement('li');
+                item.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                accessoriesList.appendChild(item);
             }
         }
-        accessoriesHtml += '</div>';
+        accessoriesSection.appendChild(accessoriesList);
+    } else {
+        const noAccessories = document.createElement('p');
+        noAccessories.textContent = 'No accessories selected';
+        accessoriesSection.appendChild(noAccessories);
     }
-    card.innerHTML += accessoriesHtml;
-    // Optional Items Section
-    let optionalHtml = '';
-    if (fanData.optional_items && Object.keys(fanData.optional_items).length > 0) {
-        optionalHtml += '<div class="bought-out-section"><h3>Optional Items</h3>';
-        for (const [key, value] of Object.entries(fanData.optional_items)) {
+    
+    card.appendChild(accessoriesSection);
+    
+    // Add optional items section
+    const optionalItemsSection = document.createElement('div');
+    optionalItemsSection.className = 'optional-items-section';
+    optionalItemsSection.innerHTML = '<h3>Optional Items</h3>';
+    
+    // Standard optional item names mapping
+    const optionalItemNames = {
+        'flex_connectors': 'Flex Connectors',
+        'silencer': 'Silencer',
+        'testing_charges': 'Testing Charges',
+        'freight_charges': 'Freight Charges',
+        'warranty_charges': 'Warranty Charges',
+        'packing_charges': 'Packing Charges',
+        'amca_sparkproof': 'AMCA Type C Spark Proof Construction',
+        'accessories_assembly': 'Accessories Assembly Charges',
+        'paint_specification': 'Special Paint Specification',
+        'documentation': 'Special Documentation'
+    };
+    
+    // Create optional items object by combining multiple sources
+    let optionalItems = {};
+    
+    // First try standard optional_items object
+    if (fanData.optional_items && typeof fanData.optional_items === 'object') {
+        optionalItems = {...fanData.optional_items};
+    }
+    
+    // Check for standard_optional_items[] field
+    if (fanData["standard_optional_items[]"]) {
+        const itemName = fanData["standard_optional_items[]"];
+        if (itemName) {
+            // Add this item to our optional items list
+            optionalItems[itemName] = 0;  // Default to 0 cost
+        }
+    }
+    
+    // Check for custom_optional_items
+    if (fanData.custom_optional_items) {
+        if (typeof fanData.custom_optional_items === 'object' && !Array.isArray(fanData.custom_optional_items)) {
+            // Merge object
+            optionalItems = {...optionalItems, ...fanData.custom_optional_items};
+        } else if (Array.isArray(fanData.custom_optional_items)) {
+            // Handle array of custom items
+            fanData.custom_optional_items.forEach(item => {
+                if (typeof item === 'object' && item.name) {
+                    optionalItems[item.name] = item.price || 0;
+                } else if (typeof item === 'string') {
+                    optionalItems[item] = 0;
+                }
+            });
+        } else if (typeof fanData.custom_optional_items === 'string') {
+            // Single string item
+            optionalItems[fanData.custom_optional_items] = 0;
+        }
+    }
+    
+    if (Object.keys(optionalItems).length > 0) {
+        const optionalItemsList = document.createElement('ul');
+        optionalItemsList.className = 'optional-items-list';
+        
+        for (const [key, value] of Object.entries(optionalItems)) {
+            const item = document.createElement('li');
+            
+            // Format display name based on key
+            let displayName;
+            if (optionalItemNames[key]) {
+                // Use the mapping for standard items
+                displayName = optionalItemNames[key];
+            } else if (key.startsWith('custom_')) {
+                // For custom items, extract just the name part
+                const nameParts = key.replace('custom_', '').split('_');
+                // If the last part is numeric (timestamp), remove it
+                if (nameParts.length > 0 && /^\d+$/.test(nameParts[nameParts.length - 1])) {
+                    nameParts.pop();
+                }
+                displayName = nameParts.join(' ').replace(/\b\w/g, c => c.toUpperCase());
+            } else {
+                // For other items, just format the key
+                displayName = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            }
+            
             if (value && parseFloat(value) > 0) {
-                optionalHtml += `<div class="detail-item"><span>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span><span>₹${parseFloat(value).toLocaleString('en-IN')}</span></div>`;
+                item.innerHTML = `${displayName}: <strong>₹${parseFloat(value).toLocaleString('en-IN')}</strong>`;
+            } else {
+                item.innerHTML = `${displayName}: <strong>Included</strong>`;
             }
+            optionalItemsList.appendChild(item);
         }
-        optionalHtml += '</div>';
-    }
-    card.innerHTML += optionalHtml;
-    // --- Custom Materials Section ---
-    if (fanData.material === 'others' || fanData.moc === 'others') {
-        let customMatHtml = '<div class="custom-materials-section" style="margin:18px 32px 0 32px;padding:18px 22px;background:#f8f9fa;border-radius:14px;box-shadow:0 1.5px 6px rgba(67,97,238,0.04);margin-bottom:18px;"><h3 style="color:#f72585;font-size:1.15rem;font-weight:700;margin-bottom:12px;letter-spacing:0.5px;">Custom Materials</h3>';
-        customMatHtml += '<ul style="padding-left:18px;">';
-        for (let j = 0; j < 5; j++) {
-            const name = fanData[`material_name_${j}`];
-            const weight = fanData[`material_weight_${j}`];
-            const rate = fanData[`material_rate_${j}`];
-            if (name && weight && rate) {
-                const cost = (parseFloat(weight) * parseFloat(rate)).toFixed(2);
-                customMatHtml += `<li>${name}: ${weight} kg × ₹${rate}/kg = <strong>₹${cost}</strong></li>`;
-            }
+        
+        if (optionalItemsList.children.length > 0) {
+            optionalItemsSection.appendChild(optionalItemsList);
+        } else {
+            const noOptionalItems = document.createElement('p');
+            noOptionalItems.textContent = 'No optional items selected';
+            optionalItemsSection.appendChild(noOptionalItems);
         }
-        customMatHtml += '</ul></div>';
-        card.innerHTML += customMatHtml;
+    } else {
+        const noOptionalItems = document.createElement('p');
+        noOptionalItems.textContent = 'No optional items selected';
+        optionalItemsSection.appendChild(noOptionalItems);
     }
-    // Add event listeners for margin inputs
-    const marginInputs = card.querySelectorAll('.margin-input');
-    marginInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            updateFanPricing(fanNumber, this.dataset.type, parseFloat(this.value));
-        });
-    });
-    // Add Edit Fan button at the bottom of the card
+    
+    card.appendChild(optionalItemsSection);
+    
+    // Add edit button
     const editBtn = document.createElement('button');
-    editBtn.className = 'edit-fan-btn';
-    editBtn.textContent = `Edit Fan ${fanNumber}`;
+    editBtn.textContent = 'Edit Fan';
+    editBtn.className = 'edit-btn';
     editBtn.style = 'margin-top: 18px; padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600;';
     editBtn.addEventListener('click', function() {
         editFan(fanNumber);
     });
     card.appendChild(editBtn);
     return card;
-}
-
-// Add new function to update fan pricing when margins change
-function updateFanPricing(fanNumber, marginType, marginValue) {
-    const fanData = window.fanData[fanNumber - 1];
-    if (!fanData) return;
-
-    // Update the margin in fanData
-    if (marginType === 'fabrication') {
-        fanData.fabrication_margin = marginValue;
-        fanData.fabrication_selling_price = fanData.fabrication_cost * (1 + marginValue / 100);
-    } else if (marginType === 'bought_out') {
-        fanData.bought_out_margin = marginValue;
-        fanData.bought_out_selling_price = fanData.bought_out_cost * (1 + marginValue / 100);
-    }
-
-    // Update total selling price
-    fanData.total_selling_price = fanData.fabrication_selling_price + fanData.bought_out_selling_price;
-
-    // Calculate new job margin
-    const totalCost = fanData.fabrication_cost + fanData.bought_out_cost;
-    fanData.total_job_margin = totalCost > 0 ? ((fanData.total_selling_price - totalCost) / totalCost * 100) : 0;
-
-    // Update the display
-    const fanCard = document.querySelector(`.fan-card:nth-child(${fanNumber})`);
-    if (fanCard) {
-        fanCard.querySelector('.fabrication-selling-price').textContent = 
-            `₹${fanData.fabrication_selling_price.toLocaleString('en-IN')}`;
-        fanCard.querySelector('.bought-out-selling-price').textContent = 
-            `₹${fanData.bought_out_selling_price.toLocaleString('en-IN')}`;
-        fanCard.querySelector('.total-selling-price-value').textContent = 
-            `₹${fanData.total_selling_price.toLocaleString('en-IN')}`;
-        fanCard.querySelector('.job-margin-value').textContent = 
-            `${fanData.total_job_margin.toFixed(2)}%`;
-    }
-
-    // Update project totals
-    updateProjectTotals();
-}
-
-// Add function to update project totals
-function updateProjectTotals() {
-    let totalProjectWeight = 0;
-    let totalFabricationCost = 0;
-    let totalBoughtOutCost = 0;
-    let totalProjectCost = 0;
-    let totalJobMarginSum = 0;
-    let fanCount = 0;
-
-    for (let i = 0; i < window.totalFans; i++) {
-        const fanData = window.fanData[i];
-        if (fanData) {
-            totalProjectWeight += parseFloat(fanData.total_weight) || 0;
-            totalFabricationCost += parseFloat(fanData.fabrication_cost) || 0;
-            totalBoughtOutCost += parseFloat(fanData.bought_out_cost) || 0;
-            totalProjectCost += parseFloat(fanData.total_cost) || 0;
-            totalJobMarginSum += parseFloat(fanData.total_job_margin) || 0;
-            fanCount++;
-        }
-    }
-
-    // Update project total elements
-    const updateElement = (id, value) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
-    };
-
-    updateElement('project-total-weight', `${totalProjectWeight.toFixed(2)} kg`);
-    updateElement('project-total-fabrication', `₹${totalFabricationCost.toLocaleString('en-IN')}`);
-    updateElement('project-total-bought-out', `₹${totalBoughtOutCost.toLocaleString('en-IN')}`);
-    updateElement('project-total-cost', `₹${totalProjectCost.toLocaleString('en-IN')}`);
-
-    // Calculate and update project margin
-    const averageJobMargin = fanCount > 0 ? parseFloat((totalJobMarginSum / fanCount).toFixed(2)) : 0;
-    updateElement('project-total-margin', `${averageJobMargin}%`);
-}
-
-function generateAccessoriesRows(fanData) {
-    let rows = '';
-    const accessories = fanData.accessories || {};
-    
-    // Map of accessory keys to display names
-    const accessoryNames = {
-        unitary_base_frame: 'Unitary Base Frame',
-        outlet_companion_flange: 'Outlet Companion Flange',
-        inlet_companion_flange: 'Inlet Companion Flange',
-        inlet_box_damper: 'Inlet Box Damper',
-        inlet_cone: 'Inlet Cone',
-        shaft_seal: 'Shaft Seal',
-        shaft_cooling: 'Shaft Cooling',
-        shaft_grounding: 'Shaft Grounding'
-    };
-
-    // Add rows for standard accessories
-    for (const [key, displayName] of Object.entries(accessoryNames)) {
-        if (accessories[key]) {
-            rows += `
-                <div class="result-row">
-                    <span class="label">${displayName}</span>
-                    <span class="value">Included</span>
-                </div>
-            `;
-        }
-    }
-
-    // Add custom accessories if any
-    if (fanData.custom_accessories) {
-        rows += '<h6 class="sub-section">Custom Accessories</h6>';
-        
-        // Handle string format
-        if (typeof fanData.custom_accessories === 'string') {
-            rows += `
-                <div class="result-row">
-                    <span class="label">${fanData.custom_accessories}</span>
-                    <span class="value">Included</span>
-                </div>
-            `;
-        }
-        // Handle array format
-        else if (Array.isArray(fanData.custom_accessories)) {
-        fanData.custom_accessories.forEach(acc => {
-                if (typeof acc === 'object' && acc.name) {
-            rows += `
-                <div class="result-row">
-                    <span class="label">${acc.name}</span>
-                            <span class="value">${acc.weight ? acc.weight + ' kg' : 'Included'}</span>
-                </div>
-            `;
-                } else if (typeof acc === 'string') {
-                    rows += `
-                        <div class="result-row">
-                            <span class="label">${acc}</span>
-                            <span class="value">Included</span>
-                        </div>
-                    `;
-                }
-        });
-        }
-    }
-
-    return rows || '<div class="no-items">No accessories selected</div>';
 }
 
 function generateBoughtOutRows(fanData) {
@@ -3607,6 +3567,173 @@ function exportProjectSummaryToExcelWYSIWYG() {
             rows.push(row);
         });
         // --- END FAN DETAILS SECTION ---
+
+        // --- OPTIONAL ITEMS SECTION ---
+        rows.push(['Optional Items', ...Array(fans.length).fill('')]);
+        // Get all unique optional item keys across all fans
+        const optionalItemKeys = new Set();
+        fans.forEach(fan => {
+            if (fan.optional_items) {
+                Object.keys(fan.optional_items).forEach(key => {
+                    if (parseFloat(fan.optional_items[key]) > 0) {
+                        optionalItemKeys.add(key);
+                    }
+                });
+            }
+        });
+        
+        // Standard optional item names mapping
+        const optionalItemNames = {
+            'flex_connectors': 'Flex Connectors',
+            'silencer': 'Silencer',
+            'testing_charges': 'Testing Charges',
+            'freight_charges': 'Freight Charges',
+            'warranty_charges': 'Warranty Charges',
+            'packing_charges': 'Packing Charges',
+            'amca_sparkproof': 'AMCA Type C Spark Proof Construction',
+            'accessories_assembly': 'Accessories Assembly Charges',
+            'paint_specification': 'Special Paint Specification',
+            'documentation': 'Special Documentation'
+        };
+
+        // Add each optional item as a row
+        Array.from(optionalItemKeys).sort().forEach(key => {
+            let displayName;
+            
+            // For custom items, extract just the name part
+            if (key.startsWith('custom_')) {
+                // Extract the custom name without the timestamp
+                const nameParts = key.replace('custom_', '').split('_');
+                // If the last part is numeric (timestamp), remove it
+                if (nameParts.length > 0 && /^\d+$/.test(nameParts[nameParts.length - 1])) {
+                    nameParts.pop();
+                }
+                displayName = nameParts.join(' ').toUpperCase();
+            } else {
+                displayName = optionalItemNames[key] || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            }
+            
+            const row = [displayName];
+            for (let i = 0; i < fans.length; i++) {
+                const fan = fans[i];
+                const price = fan.optional_items && fan.optional_items[key] ? 
+                    parseFloat(fan.optional_items[key]) : '';
+                row.push(price !== '' ? `₹${price.toLocaleString('en-IN')}` : '');
+            }
+            rows.push(row);
+        });
+
+        // Add optional items total
+        const optionalItemsTotal = ['Optional Items Total'];
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            const total = fan.optional_items_cost || 0;
+            optionalItemsTotal.push(total > 0 ? `₹${parseFloat(total).toLocaleString('en-IN')}` : '');
+        }
+        rows.push(optionalItemsTotal);
+        // --- END OPTIONAL ITEMS SECTION ---
+
+        // --- ACCESSORIES SECTION ---
+        rows.push(['Accessories', ...Array(fans.length).fill('')]);
+        // Get all unique accessory keys across all fans
+        const accessoryKeys = new Set();
+        fans.forEach(fan => {
+            if (fan.accessories) {
+                Object.keys(fan.accessories).forEach(key => {
+                    if (fan.accessories[key] === true) {
+                        accessoryKeys.add(key);
+                    }
+                });
+            }
+        });
+        
+        // Standard accessory names mapping
+        const accessoryNames = {
+            'unitary_base_frame': 'Unitary Base Frame',
+            'inlet_guard': 'Inlet Guard',
+            'outlet_guard': 'Outlet Guard',
+            'inlet_flange': 'Inlet Flange',
+            'outlet_flange': 'Outlet Flange',
+            'outlet_companion_flange': 'Outlet Companion Flange',
+            'inlet_bell': 'Inlet Bell',
+            'inlet_cone': 'Inlet Cone',
+            'drain_plug': 'Drain Plug',
+            'companion_flanges': 'Companion Flanges',
+            'access_door': 'Access Door',
+            'shaft_extension': 'Shaft Extension',
+            'custom_paintwork': 'Custom Paintwork',
+            'mounting_feet': 'Mounting Feet',
+            'flexible_connector': 'Flexible Connector',
+            'inlet_silencer': 'Inlet Silencer',
+            'outlet_silencer': 'Outlet Silencer',
+            'anti_vibration_mounts': 'Anti-Vibration Mounts',
+            'weather_cover': 'Weather Cover',
+            'shaft_seal': 'Shaft Seal',
+            'spark_resistant_construction': 'Spark Resistant Construction',
+            'inspection_door': 'Inspection Door',
+            'roof_curb': 'Roof Curb',
+            'backdraft_damper': 'Backdraft Damper',
+            'cooling_wheel': 'Cooling Wheel',
+            'belt_guard': 'Belt Guard',
+            'extended_lubrication': 'Extended Lubrication',
+            'special_coating': 'Special Coating'
+        };
+
+        // Add each accessory as a row
+        Array.from(accessoryKeys).sort().forEach(key => {
+            const displayName = accessoryNames[key] || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            const row = [displayName];
+            for (let i = 0; i < fans.length; i++) {
+                const fan = fans[i];
+                row.push(fan.accessories && fan.accessories[key] === true ? 'Included' : '');
+            }
+            rows.push(row);
+        });
+
+        // Add vibration isolators, bearing brand and drive pack rows
+        const vibrIsolRow = ['Vibration Isolators'];
+        const bearingRow = ['Bearing Brand'];
+        const drivePackRow = ['Drive Pack'];
+
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            vibrIsolRow.push(fan.vibration_isolators || '');
+            bearingRow.push(fan.bearing_brand || '');
+            drivePackRow.push(fan.drive_pack_kw ? `${fan.drive_pack_kw} kW` : '');
+        }
+
+        rows.push(vibrIsolRow);
+        rows.push(bearingRow);
+        rows.push(drivePackRow);
+
+        // Add custom shaft diameter and no of isolators
+        const shaftDiameterRow = ['Custom Shaft Diameter'];
+        const isolatorsRow = ['Custom No. of Isolators'];
+
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            shaftDiameterRow.push(fan.custom_shaft_diameter || fan.shaft_diameter || '');
+            isolatorsRow.push(fan.custom_no_of_isolators || fan.no_of_isolators || '');
+        }
+
+        rows.push(shaftDiameterRow);
+        rows.push(isolatorsRow);
+
+        // Add custom accessories
+        fans.forEach((fan, index) => {
+            if (fan.custom_accessories) {
+                const rowExists = rows.find(row => row[0] === 'Custom Accessories');
+                if (rowExists) {
+                    rowExists[index + 1] = fan.custom_accessories;
+                } else {
+                    const row = ['Custom Accessories', ...Array(fans.length).fill('')];
+                    row[index + 1] = fan.custom_accessories;
+                    rows.push(row);
+                }
+            }
+        });
+        // --- END ACCESSORIES SECTION ---
+        
         let maxRows = 0;
         const fanSections = [];
         fanCards.forEach(fanCard => {
@@ -3633,15 +3760,15 @@ function exportProjectSummaryToExcelWYSIWYG() {
         });
         const masterRows = [];
         fanSections[0].forEach(item => {
-            if (item.type === 'section') {
+            if (item.type === 'section' && item.label !== 'Optional Items' && item.label !== 'Accessories') {
                 masterRows.push({type: 'section', label: item.label});
-            } else {
+            } else if (item.type === 'row') {
                 masterRows.push({type: 'row', label: item.label});
             }
         });
         masterRows.forEach(rowDef => {
             if (rowDef.type === 'section') {
-                if (rowDef.label === 'Fan Details') return;
+                if (rowDef.label === 'Fan Details' || rowDef.label === 'Optional Items' || rowDef.label === 'Accessories') return;
                 const row = [rowDef.label];
                 for (let i = 0; i < fans.length; i++) row.push('');
                 rows.push(row);
@@ -3663,18 +3790,32 @@ function exportProjectSummaryToExcelWYSIWYG() {
         const range = XLSX.utils.decode_range(ws['!ref']);
         const sectionHeaderColor = '4A90E2';
         const fanDetailsBg = 'E3F0FF';
+        const optionalItemsBg = 'F0EAF7';
+        const accessoriesBg = 'E8F5E9';
         const altRowColor = 'F7F7F7';
         const totalsBg = 'FFF3CD';
         const borderStyle = {style: 'thin', color: {rgb: 'CCCCCC'}};
         let inFanDetails = false;
+        let inOptionalItems = false;
+        let inAccessories = false;
         for (let R = range.s.r; R <= range.e.r; ++R) {
-            // Detect Fan Details section
+            // Detect sections
             if (rows[R][0] === 'Fan Details') inFanDetails = true;
-            if (rows[R][0] && rows[R][0] !== 'Fan Details' && fanDetailsFields.some(f => f.label === rows[R][0])) {
-                // Still in Fan Details
-            } else if (inFanDetails && (!rows[R][0] || !fanDetailsFields.some(f => f.label === rows[R][0]))) {
+            else if (rows[R][0] === 'Optional Items') {
                 inFanDetails = false;
+                inOptionalItems = true;
             }
+            else if (rows[R][0] === 'Accessories') {
+                inOptionalItems = false;
+                inAccessories = true;
+            }
+            else if (rows[R][0] && !fanDetailsFields.some(f => f.label === rows[R][0]) && 
+                     rows[R][0] !== 'Optional Items Total' && rows[R][0] !== 'Custom Accessories') {
+                inFanDetails = false;
+                inOptionalItems = false;
+                inAccessories = false;
+            }
+            
             for (let C = range.s.c; C <= range.e.c; ++C) {
                 const cell = ws[XLSX.utils.encode_cell({r: R, c: C})];
                 if (!cell) continue;
@@ -3703,8 +3844,27 @@ function exportProjectSummaryToExcelWYSIWYG() {
                         border: {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle}
                     };
                 }
-                // Alternating data rows (not section headers, not fan details, not totals)
-                else if (R > 0 && !rows[R][0].toUpperCase().includes('TOTAL') && C > 0 && !inFanDetails && (R % 2 === 0)) {
+                // Optional Items section
+                else if (inOptionalItems && R !== 0 && rows[R][0] !== 'Optional Items') {
+                    cell.s = {
+                        fill: {fgColor: {rgb: optionalItemsBg}},
+                        border: {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle}
+                    };
+                    // Bold for the total row
+                    if (rows[R][0] === 'Optional Items Total') {
+                        cell.s.font = {bold: true};
+                    }
+                }
+                // Accessories section
+                else if (inAccessories && R !== 0 && rows[R][0] !== 'Accessories') {
+                    cell.s = {
+                        fill: {fgColor: {rgb: accessoriesBg}},
+                        border: {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle}
+                    };
+                }
+                // Alternating data rows (not section headers, not in special sections)
+                else if (R > 0 && !rows[R][0].toUpperCase().includes('TOTAL') && C > 0 && 
+                         !inFanDetails && !inOptionalItems && !inAccessories && (R % 2 === 0)) {
                     cell.s = {
                         fill: {fgColor: {rgb: altRowColor}},
                         border: {top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle}
@@ -3941,4 +4101,211 @@ function exportProjectSummaryToExcelWYSIWYG() {
     });
 }
 // ... existing code ...
+
+// --- MIGRATION: Normalize custom optional items for legacy data ---
+function normalizeCustomOptionalItems(fanData) {
+    if (fanData["custom_optional_items[]"]) {
+        if (!fanData.custom_optional_items) fanData.custom_optional_items = {};
+        const name = fanData["custom_optional_items[]"];
+        const id = name.toLowerCase().replace(/\s+/g, '_');
+        let price = 0;
+        if (fanData.optional_items && fanData.optional_items[id]) price = fanData.optional_items[id];
+        fanData.custom_optional_items[id] = price;
+        delete fanData["custom_optional_items[]"];
+    }
+    if (Array.isArray(fanData.custom_optional_items)) {
+        const obj = {};
+        fanData.custom_optional_items.forEach(item => {
+            if (typeof item === 'string') {
+                const id = item.toLowerCase().replace(/\s+/g, '_');
+                obj[id] = 0;
+            } else if (item && item.name) {
+                const id = item.name.toLowerCase().replace(/\s+/g, '_');
+                obj[id] = item.price || 0;
+            }
+        });
+        fanData.custom_optional_items = obj;
+    }
+    if (fanData.custom_optional_items && typeof fanData.custom_optional_items === 'object') {
+        fanData.optional_items = { ...(fanData.optional_items || {}), ...fanData.custom_optional_items };
+    }
+}
+// ... existing code ...
+// In showProjectSummary and createFanCard, before rendering each fan:
+for (let i = 0; i < window.totalFans; i++) {
+    const fanData = window.fanData[i];
+    if (fanData) normalizeCustomOptionalItems(fanData);
+    // ... rest of the rendering logic ...
+}
+// ... existing code ...
+
+// Add CSS styles for accessories and optional items
+document.addEventListener('DOMContentLoaded', function() {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+        .accessories-section, .optional-items-section {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .accessories-section h3, .optional-items-section h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #007bff;
+        }
+        
+        .accessories-list, .optional-items-list {
+            list-style-type: none;
+            padding-left: 5px;
+            margin-top: 8px;
+        }
+        
+        .accessories-list li, .optional-items-list li {
+            padding: 3px 0;
+            font-size: 14px;
+        }
+        
+        .optional-items-list li {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #dee2e6;
+            padding: 5px 0;
+        }
+    `;
+    document.head.appendChild(styleElement);
+});
+
+// Add function to update fan pricing when margins change
+function updateFanPricing(fanNumber, marginType, marginValue) {
+    const fanData = window.fanData[fanNumber - 1];
+    if (!fanData) return;
+
+    // Update the margin in fanData
+    if (marginType === 'fabrication') {
+        fanData.fabrication_margin = marginValue;
+        fanData.fabrication_selling_price = fanData.fabrication_cost / (1 - marginValue / 100);
+    } else if (marginType === 'bought_out') {
+        fanData.bought_out_margin = marginValue;
+        fanData.bought_out_selling_price = fanData.bought_out_cost / (1 - marginValue / 100);
+    }
+
+    // Update total selling price
+    fanData.total_selling_price = fanData.fabrication_selling_price + fanData.bought_out_selling_price;
+
+    // Calculate new job margin
+    const totalCost = fanData.fabrication_cost + fanData.bought_out_cost;
+    fanData.total_job_margin = totalCost > 0 ? (1 - (totalCost / fanData.total_selling_price)) * 100 : 0;
+
+    // Update the display
+    const fanCard = document.querySelector(`.fan-card:nth-child(${fanNumber})`);
+    if (fanCard) {
+        fanCard.querySelector('.fabrication-selling-price').textContent = 
+            `₹${parseFloat(fanData.fabrication_selling_price).toLocaleString('en-IN')}`;
+        fanCard.querySelector('.bought-out-selling-price').textContent = 
+            `₹${parseFloat(fanData.bought_out_selling_price).toLocaleString('en-IN')}`;
+        fanCard.querySelector('.total-selling-price-value').textContent = 
+            `₹${parseFloat(fanData.total_selling_price).toLocaleString('en-IN')}`;
+        fanCard.querySelector('.job-margin-value').textContent = 
+            `${parseFloat(fanData.total_job_margin).toFixed(2)}%`;
+    }
+
+    // Update project totals
+    updateProjectTotals();
+}
+
+// Add CSS styles for accessories, optional items, and margins
+document.addEventListener('DOMContentLoaded', function() {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+        .accessories-section, .optional-items-section, .margin-section {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .accessories-section h3, .optional-items-section h3, .margin-section h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #007bff;
+        }
+        
+        .accessories-list, .optional-items-list {
+            list-style-type: none;
+            padding-left: 5px;
+            margin-top: 8px;
+        }
+        
+        .accessories-list li, .optional-items-list li {
+            padding: 3px 0;
+            font-size: 14px;
+        }
+        
+        .optional-items-list li {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #dee2e6;
+            padding: 5px 0;
+        }
+        
+        .margin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .margin-input {
+            width: 80px;
+            padding: 4px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            text-align: right;
+        }
+    `;
+    document.head.appendChild(styleElement);
+});
+
+// Add function to update project totals
+function updateProjectTotals() {
+    let totalProjectWeight = 0;
+    let totalFabricationCost = 0;
+    let totalBoughtOutCost = 0;
+    let totalProjectCost = 0;
+    let totalJobMarginSum = 0;
+    let fanCount = 0;
+
+    for (let i = 0; i < window.totalFans; i++) {
+        const fanData = window.fanData[i];
+        if (fanData) {
+            totalProjectWeight += parseFloat(fanData.total_weight) || 0;
+            totalFabricationCost += parseFloat(fanData.fabrication_cost) || 0;
+            totalBoughtOutCost += parseFloat(fanData.bought_out_cost) || 0;
+            totalProjectCost += parseFloat(fanData.total_cost) || 0;
+            totalJobMarginSum += parseFloat(fanData.total_job_margin) || 0;
+            fanCount++;
+        }
+    }
+
+    // Update project total elements
+    const updateElement = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    };
+
+    updateElement('project-total-weight', `${totalProjectWeight.toFixed(2)} kg`);
+    updateElement('project-total-fabrication', `₹${totalFabricationCost.toLocaleString('en-IN')}`);
+    updateElement('project-total-bought-out', `₹${totalBoughtOutCost.toLocaleString('en-IN')}`);
+    updateElement('project-total-cost', `₹${totalProjectCost.toLocaleString('en-IN')}`);
+
+    // Calculate and update project margin
+    const averageJobMargin = fanCount > 0 ? parseFloat((totalJobMarginSum / fanCount).toFixed(2)) : 0;
+    updateElement('project-total-margin', `${averageJobMargin}%`);
+}
 

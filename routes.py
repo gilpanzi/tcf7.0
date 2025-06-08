@@ -15,6 +15,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.workbook import Workbook
 from openpyxl.styles.borders import Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
+from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
@@ -301,14 +302,15 @@ def register_routes(app):
                 bought_out_cost += optional_items_cost
                 
                 # Calculate total costs and margins
-                fabrication_selling_price = fabrication_cost * (1 + fan_data['fabrication_margin'] / 100)
-                bought_out_selling_price = bought_out_cost * (1 + fan_data['bought_out_margin'] / 100)
+                fabrication_selling_price = fabrication_cost / (1 - fan_data['fabrication_margin'] / 100)
+                bought_out_selling_price = bought_out_cost / (1 - fan_data['bought_out_margin'] / 100)
                 total_selling_price = fabrication_selling_price + bought_out_selling_price + optional_items_cost
                 
                 # Calculate total job margin
                 total_raw_cost = fabrication_cost + bought_out_cost
                 if total_raw_cost > 0:
-                    total_job_margin = ((total_selling_price - total_raw_cost) / total_raw_cost * 100)
+                    # Calculate the effective margin percentage
+                    total_job_margin = (1 - (total_raw_cost / total_selling_price)) * 100
                 else:
                     total_job_margin = 0
                 
@@ -811,10 +813,9 @@ def register_routes(app):
             editing_fan_index = session.get('editing_fan_index')
             
             # Validate required fields
-            required_fields = ['enquiry_number', 'customer_name', 'total_fans', 'current_fan_number']
+            required_fields = ['enquiry_number', 'customer_name', 'total_fans', 'sales_engineer']
             for field in required_fields:
-                if field not in data:
-                    logger.error(f"Missing required field: {field}")
+                if not data.get(field):
                     return jsonify({
                         'success': False,
                         'message': f'Missing required field: {field}'
@@ -824,7 +825,6 @@ def register_routes(app):
             enquiry_number = data['enquiry_number']
             customer_name = data['customer_name']
             total_fans = int(data['total_fans'])
-            current_fan_number = int(data['current_fan_number'])
             sales_engineer = data.get('sales_engineer', 'N/A')
             
             # Fan specific data with proper structure
@@ -966,9 +966,29 @@ def register_routes(app):
             session_fan_data['specifications']['custom_accessories'] = custom_accessories
             fan_data['custom_accessories'] = json.dumps(custom_accessories)
             
+            # Process custom optional items
             custom_option_items = data.get('custom_option_items', {})
+            custom_optional_items = data.get('custom_optional_items', {})
+            
+            # Use custom_optional_items if available, otherwise fallback to custom_option_items
+            if custom_optional_items and not custom_option_items:
+                custom_option_items = custom_optional_items
+            elif custom_option_items and not custom_optional_items:
+                custom_optional_items = custom_option_items
+                
+            # Store both for backward compatibility
             session_fan_data['specifications']['custom_option_items'] = custom_option_items
+            session_fan_data['specifications']['custom_optional_items'] = custom_optional_items
             fan_data['custom_option_items'] = json.dumps(custom_option_items)
+            fan_data['custom_optional_items'] = json.dumps(custom_optional_items)
+            
+            # Handle custom_optional_items[] array notation format
+            if 'custom_optional_items[]' in data:
+                # Keep this format in both fan_data and session_fan_data
+                logger.info(f"Found custom_optional_items[] in data: {data['custom_optional_items[]']}")
+                session_fan_data['specifications']['custom_optional_items[]'] = data['custom_optional_items[]']
+                # Also preserve it at top level for backward compatibility
+                session_fan_data['custom_optional_items[]'] = data['custom_optional_items[]']
             
             # If editing, update the existing fan in session
             if editing_fan_index is not None and 'fans' in session and editing_fan_index < len(session['fans']):
@@ -1307,30 +1327,27 @@ def register_routes(app):
                             
                             # Handle special case for optional_items
                             if json_field == 'optional_items' and isinstance(parsed_json, dict):
+                                logger.info(f"Loading optional_items for fan {fan_dict.get('fan_number')}: {parsed_json}")
+                                
                                 # If it contains items and prices structure
                                 if 'items' in parsed_json and 'prices' in parsed_json:
-                                    fan_data['optional_items'] = parsed_json['items']
-                                    fan_data['optional_item_prices'] = parsed_json['prices']
+                                    logger.info(f"Found items/prices structure - items: {parsed_json['items']}, prices: {parsed_json['prices']}")
+                                    # Merge items with their prices from the database
+                                    merged_optional_items = {}
+                                    for item_id, item_name in parsed_json['items'].items():
+                                        # Use the price from the prices structure, default to 0
+                                        price = parsed_json['prices'].get(item_id, 0)
+                                        merged_optional_items[item_id] = price
                                     
-                                    # Log the optional items for debugging
-                                    logger.info(f"Optional items structure: {parsed_json}")
-                                    logger.info(f"Items: {parsed_json['items']}, Prices: {parsed_json['prices']}")
+                                    fan_data['optional_items'] = merged_optional_items
+                                    fan_data['optional_item_prices'] = parsed_json['prices']
+                                    fan_data['specifications']['optional_items'] = merged_optional_items
+                                    logger.info(f"Merged optional items: {merged_optional_items}")
                                 # Otherwise use the structure directly if it's just key:value pairs
                                 elif not ('items' in parsed_json or 'prices' in parsed_json):
                                     fan_data['optional_items'] = parsed_json
-                                    
-                                    # Check if we need to extract the cost from the optional items
-                                    total_optional_cost = 0
-                                    for item_name, item_price in parsed_json.items():
-                                        if item_price and float(item_price) > 0:
-                                            total_optional_cost += float(item_price)
-                                    
-                                    # If we don't have optional_items_cost but calculated a value, use it
-                                    if (not fan_data['optional_items_cost'] or fan_data['optional_items_cost'] == 0) and total_optional_cost > 0:
-                                        fan_data['optional_items_cost'] = total_optional_cost
-                                        fan_data['costs']['optional_items_cost'] = total_optional_cost
-                                        logger.info(f"Extracted optional_items_cost from items: {total_optional_cost}")
-                            
+                                    fan_data['specifications']['optional_items'] = parsed_json
+                                    logger.info(f"Using direct key:value optional items: {parsed_json}")
                         except json.JSONDecodeError as e:
                             logger.warning(f"Failed to parse JSON for {json_field}: {fan_dict.get(json_field)} - Error: {str(e)}")
                             # If it's a simple string, try to use it directly
@@ -1717,7 +1734,8 @@ def register_routes(app):
                 'total_fabrication_cost': total_fabrication_cost,
                 'total_bought_out_cost': total_bought_out_cost,
                 'total_cost': total_cost,
-                'total_selling_price': total_cost,
+                'total_selling_price': total_fabrication_cost * (1 + project_data.get('fabrication_margin', 0) / 100) + 
+                                    total_bought_out_cost * (1 + project_data.get('bought_out_margin', 0) / 100),
                 'total_job_margin': total_job_margin
             }
             
@@ -1821,7 +1839,7 @@ def register_routes(app):
                         project_db_data['customer_name'], project_db_data['total_fans'],
                         project_db_data['sales_engineer'], project_db_data['total_weight'],
                         project_db_data['total_fabrication_cost'], project_db_data['total_bought_out_cost'],
-                        project_db_data['total_cost'], project_db_data['total_cost'], project_db_data['total_job_margin'], enquiry_number
+                        project_db_data['total_cost'], project_db_data['total_selling_price'], project_db_data['total_job_margin'], enquiry_number
                     ))
                     
                     # Delete existing fans
@@ -1840,7 +1858,7 @@ def register_routes(app):
                         project_db_data['total_fans'], project_db_data['sales_engineer'],
                         project_db_data['total_weight'], project_db_data['total_fabrication_cost'],
                         project_db_data['total_bought_out_cost'], project_db_data['total_cost'],
-                        project_db_data['total_cost'], project_db_data['total_job_margin']
+                        project_db_data['total_selling_price'], project_db_data['total_job_margin']
                     ))
                     logger.info(f"Inserted new project {enquiry_number}")
                 
@@ -1918,19 +1936,55 @@ def register_routes(app):
                     if not isinstance(optional_items_data, dict):
                         optional_items_data = fan.get('optional_items', {})
                     
-                    # Check if we have the items/prices structure or direct key-value
+                    # Log the optional items data for debugging
+                    logger.info(f"Fan {i} optional items data from specs: {specs.get('optional_items', {})}")
+                    logger.info(f"Fan {i} optional items data from fan root: {fan.get('optional_items', {})}")
+                    logger.info(f"Fan {i} optional_item_prices: {fan.get('optional_item_prices', {})}")
+                    logger.info(f"Fan {i} optional_items_detail: {fan.get('optional_items_detail', {})}")
+                    
+                    # Check different possible data structures and normalize them
                     if 'items' in optional_items_data and 'prices' in optional_items_data:
-                        # Already in the right format
+                        # Already in the items/prices structure
                         optional_items = json.dumps(optional_items_data)
+                        logger.info(f"Fan {i} using existing items/prices structure: {optional_items}")
+                    elif fan.get('optional_items') and isinstance(fan.get('optional_items'), dict) and any(isinstance(v, (int, float)) for v in fan.get('optional_items').values()):
+                        # We have optional_items as direct key:price mapping
+                        optional_items_dict = fan.get('optional_items')
+                        
+                        # Create items and prices structure
+                        items_dict = {}
+                        prices_dict = {}
+                        
+                        for item_id, price in optional_items_dict.items():
+                            # Use the item_id as both key and display name for now
+                            # In future, we could use optional_item_names if available
+                            display_name = item_id.replace('_', ' ').title()
+                            if fan.get('optional_item_names') and item_id in fan.get('optional_item_names'):
+                                display_name = fan.get('optional_item_names')[item_id]
+                            
+                            items_dict[item_id] = display_name
+                            prices_dict[item_id] = price
+                        
+                        optional_items = json.dumps({
+                            'items': items_dict,
+                            'prices': prices_dict
+                        })
+                        logger.info(f"Fan {i} created items/prices from direct mapping: {optional_items}")
                     elif fan.get('optional_items') and fan.get('optional_item_prices'):
                         # We have separate items and prices
                         optional_items = json.dumps({
                             'items': fan.get('optional_items', {}),
                             'prices': fan.get('optional_item_prices', {})
                         })
+                        logger.info(f"Fan {i} merging separate items and prices: {optional_items}")
                     else:
-                        # Just use what we have
-                        optional_items = json.dumps(optional_items_data)
+                        # Just use what we have as direct key:value if it's a dict, otherwise empty
+                        if isinstance(optional_items_data, dict) and optional_items_data:
+                            optional_items = json.dumps(optional_items_data)
+                            logger.info(f"Fan {i} using direct optional_items_data: {optional_items}")
+                        else:
+                            optional_items = json.dumps({})
+                            logger.info(f"Fan {i} no valid optional items found, using empty dict")
                     
                     custom_option_items = json.dumps(specs.get('custom_option_items', {}))
                     
@@ -2267,13 +2321,27 @@ def register_routes(app):
                             
                             # Handle special case for optional_items
                             if json_field == 'optional_items' and isinstance(parsed_json, dict):
+                                logger.info(f"Loading optional_items for fan {fan_dict.get('fan_number')}: {parsed_json}")
+                                
                                 # If it contains items and prices structure
                                 if 'items' in parsed_json and 'prices' in parsed_json:
-                                    fan_data['optional_items'] = parsed_json['items']
+                                    logger.info(f"Found items/prices structure - items: {parsed_json['items']}, prices: {parsed_json['prices']}")
+                                    # Merge items with their prices from the database
+                                    merged_optional_items = {}
+                                    for item_id, item_name in parsed_json['items'].items():
+                                        # Use the price from the prices structure, default to 0
+                                        price = parsed_json['prices'].get(item_id, 0)
+                                        merged_optional_items[item_id] = price
+                                    
+                                    fan_data['optional_items'] = merged_optional_items
                                     fan_data['optional_item_prices'] = parsed_json['prices']
+                                    fan_data['specifications']['optional_items'] = merged_optional_items
+                                    logger.info(f"Merged optional items: {merged_optional_items}")
                                 # Otherwise use the structure directly if it's just key:value pairs
                                 elif not ('items' in parsed_json or 'prices' in parsed_json):
                                     fan_data['optional_items'] = parsed_json
+                                    fan_data['specifications']['optional_items'] = parsed_json
+                                    logger.info(f"Using direct key:value optional items: {parsed_json}")
                             
                         except json.JSONDecodeError as e:
                             logger.warning(f"Failed to parse JSON for {json_field}: {fan_dict.get(json_field)} - Error: {str(e)}")
@@ -2324,142 +2392,176 @@ def register_routes(app):
 
     @app.route('/summary')
     def summary():
-        """Render the project summary page."""
+        """Display the project summary of all entered fans."""
         try:
-            # Get data from session
-            enquiry_number = session.get('enquiry_number')
-            customer_name = session.get('customer_name')
-            total_fans = session.get('total_fans')
+            # Get session data
+            enquiry_number = session.get('enquiry_number', 'Unknown')
+            customer_name = session.get('customer_name', 'Unknown')
+            sales_engineer = session.get('sales_engineer', 'Unknown')
+            total_fans = session.get('total_fans', 0)
             fans = session.get('fans', [])
-            sales_engineer = session.get('sales_engineer')
             
-            # Log session data for debugging
-            logger.info(f"Session data for summary: enquiry_number={enquiry_number}, "
-                       f"customer_name={customer_name}, total_fans={total_fans}, "
-                       f"sales_engineer={sales_engineer}, fans_count={len(fans)}")
+            logger.info(f"Rendering summary for {enquiry_number} with {len(fans)} fans")
             
-            # Check if we have all required data
-            if not all([enquiry_number, customer_name, total_fans, fans, sales_engineer]):
-                missing_data = []
-                if not enquiry_number: missing_data.append("enquiry_number")
-                if not customer_name: missing_data.append("customer_name")
-                if not total_fans: missing_data.append("total_fans")
-                if not fans: missing_data.append("fans")
-                if not sales_engineer: missing_data.append("sales_engineer")
-                
-                logger.error(f"Missing required session data for summary page: {', '.join(missing_data)}")
-                flash("Missing required data for summary page. Please start a new enquiry.", "error")
-                return redirect(url_for('index'))
-            
-            # Check and fix fan data structure
-            validated_fans = []
+            # DIAGNOSTIC: Check fan data for custom_optional_items
             for i, fan in enumerate(fans):
                 if not isinstance(fan, dict):
-                    logger.error(f"Fan {i} is not a dictionary: {type(fan)}")
+                    continue
+                    
+                logger.info(f"Checking fan {i+1} for custom_optional_items")
+                
+                # Check for all formats of custom optional items
+                formats_found = []
+                if 'custom_optional_items[]' in fan:
+                    formats_found.append(f"custom_optional_items[]: {fan['custom_optional_items[]']}")
+                
+                if 'specifications' in fan and 'custom_optional_items[]' in fan['specifications']:
+                    formats_found.append(f"specifications.custom_optional_items[]: {fan['specifications']['custom_optional_items[]']}")
+                
+                if 'custom_optional_items' in fan and isinstance(fan['custom_optional_items'], dict):
+                    formats_found.append(f"custom_optional_items dict: {fan['custom_optional_items']}")
+                
+                if 'specifications' in fan and 'custom_optional_items' in fan['specifications'] and isinstance(fan['specifications']['custom_optional_items'], dict):
+                    formats_found.append(f"specifications.custom_optional_items dict: {fan['specifications']['custom_optional_items']}")
+                
+                if 'specifications' in fan and 'custom_option_items' in fan['specifications']:
+                    formats_found.append(f"specifications.custom_option_items: {fan['specifications']['custom_option_items']}")
+                
+                if 'custom_optional_items_display_name' in fan:
+                    formats_found.append(f"custom_optional_items_display_name: {fan['custom_optional_items_display_name']}")
+                
+                if 'specifications' in fan and 'custom_optional_items_display_name' in fan['specifications']:
+                    formats_found.append(f"specifications.custom_optional_items_display_name: {fan['specifications']['custom_optional_items_display_name']}")
+                
+                if 'optional_items' in fan and fan['optional_items'] and isinstance(fan['optional_items'], dict):
+                    if 'amca_type_c_spark_proof_construction' in fan['optional_items']:
+                        formats_found.append(f"optional_items.amca_type_c_spark_proof_construction: {fan['optional_items']['amca_type_c_spark_proof_construction']}")
+                
+                if formats_found:
+                    logger.info(f"Fan {i+1} has these custom optional items formats: {formats_found}")
+                else:
+                    logger.warning(f"Fan {i+1} has NO custom optional items in any format")
+                
+                # Create an alias for optional_items to show up for sure
+                if 'custom_optional_items[]' in fan and fan['custom_optional_items[]'] == 'AMCA Type C Spark Proof Construction':
+                    if 'optional_items' not in fan:
+                        fan['optional_items'] = {}
+                    fan['optional_items']['amca_type_c_spark_proof_construction'] = '0'
+                    logger.info(f"Added amca_type_c_spark_proof_construction to fan {i+1} optional_items")
+                
+                # Force display via display name if all else fails
+                if 'custom_optional_items[]' in fan and fan['custom_optional_items[]'] == 'AMCA Type C Spark Proof Construction':
+                    fan['custom_optional_items_display_name'] = fan['custom_optional_items[]']
+                    if 'specifications' not in fan:
+                        fan['specifications'] = {}
+                    fan['specifications']['custom_optional_items_display_name'] = fan['custom_optional_items[]']
+                    logger.info(f"Added display name to fan {i+1}")
+            
+            # Validate and sanitize fan data
+            validated_fans = []
+            total_weight = 0
+            total_fabrication_cost = 0
+            total_bought_out_cost = 0
+            total_cost = 0
+            
+            for i, fan in enumerate(fans):
+                # Skip if not a dictionary
+                if not isinstance(fan, dict):
+                    logger.warning(f"Fan {i} is not a dictionary, skipping")
                     continue
                 
-                # Ensure the required nested structures exist
-                if 'specifications' not in fan:
-                    logger.warning(f"Fan {i} is missing specifications, creating empty structure")
-                    fan['specifications'] = {}
+                # Fix missing structures if needed
+                for key in ['specifications', 'weights', 'costs', 'motor']:
+                    if key not in fan:
+                        fan[key] = {}
+                        
+                # IMPROVED HANDLING FOR CUSTOM OPTIONAL ITEMS - START
+                # 1. Handle custom_optional_items[] format - Make sure it exists in specifications
+                if 'custom_optional_items[]' in fan and not fan['specifications'].get('custom_optional_items[]'):
+                    logger.info(f"Fan {i}: Processing custom_optional_items[] at root level")
+                    fan['specifications']['custom_optional_items[]'] = fan['custom_optional_items[]']
+                    
+                    # Also make sure it's in the dictionary format for backward compatibility
+                    if 'custom_optional_items' not in fan['specifications']:
+                        fan['specifications']['custom_optional_items'] = {}
+                    
+                    # Convert the array notation to a dictionary entry with zero price
+                    item_name = fan['custom_optional_items[]']
+                    item_id = item_name.lower().replace(' ', '_')
+                    fan['specifications']['custom_optional_items'][item_id] = 0
+                    
+                    # DIRECT FIX: Add to optional_items directly so it's always displayed
+                    if 'optional_items' not in fan:
+                        fan['optional_items'] = {}
+                    fan['optional_items'][item_id] = 0
+                    
+                    # Also ensure it's in custom_optional_items_display_name for display
+                    fan['custom_optional_items_display_name'] = item_name
+                    fan['specifications']['custom_optional_items_display_name'] = item_name
+                    
+                    # Force it into a format that the template recognizes
+                    if 'amca' in item_name.lower() or 'spark' in item_name.lower():
+                        if 'optional_items' not in fan:
+                            fan['optional_items'] = {}
+                        fan['optional_items']['amca_type_c_spark_proof_construction'] = 0
                 
-                if 'weights' not in fan:
-                    logger.warning(f"Fan {i} is missing weights, creating empty structure")
-                    fan['weights'] = {'total_weight': 0, 'bare_fan_weight': 0, 'accessory_weight': 0, 'fabrication_weight': 0, 'bought_out_weight': 0}
+                # 2. Copy display_name if it exists
+                if 'custom_optional_items_display_name' in fan and 'custom_optional_items_display_name' not in fan['specifications']:
+                    logger.info(f"Fan {i}: Processing custom_optional_items_display_name")
+                    fan['specifications']['custom_optional_items_display_name'] = fan['custom_optional_items_display_name']
                 
-                if 'costs' not in fan:
-                    logger.warning(f"Fan {i} is missing costs, creating empty structure")
-                    fan['costs'] = {'fabrication_cost': 0, 'bought_out_cost': 0, 'total_cost': 0, 'fabrication_selling_price': 0, 'bought_out_selling_price': 0, 'total_selling_price': 0, 'total_job_margin': 0}
-                
-                if 'motor' not in fan:
-                    logger.warning(f"Fan {i} is missing motor, creating empty structure")
-                    fan['motor'] = {'kw': 0, 'brand': '', 'pole': 0, 'efficiency': 0, 'discount_rate': 0}
-                
-                # Ensure weights values are numeric
-                for weight_key in ['total_weight', 'bare_fan_weight', 'accessory_weight', 'fabrication_weight', 'bought_out_weight']:
+                # 3. Handle potential string-encoded JSON
+                if 'custom_optional_items' in fan and isinstance(fan['custom_optional_items'], str):
                     try:
-                        fan['weights'][weight_key] = float(fan['weights'].get(weight_key, 0) or 0)
-                    except (ValueError, TypeError):
-                        logger.warning(f"Fan {i} has invalid {weight_key}: {fan['weights'].get(weight_key)}, defaulting to 0")
-                        fan['weights'][weight_key] = 0
+                        # Try to parse it as JSON
+                        logger.info(f"Fan {i}: Parsing string JSON custom_optional_items")
+                        parsed_items = json.loads(fan['custom_optional_items'])
+                        fan['custom_optional_items'] = parsed_items
+                        fan['specifications']['custom_optional_items'] = parsed_items
+                    except:
+                        logger.warning(f"Fan {i}: Failed to parse string custom_optional_items")
                 
-                # Ensure costs values are numeric
-                for cost_key in ['fabrication_cost', 'bought_out_cost', 'total_cost', 'fabrication_selling_price', 'bought_out_selling_price', 'total_selling_price', 'total_job_margin']:
-                    try:
-                        fan['costs'][cost_key] = float(fan['costs'].get(cost_key, 0) or 0)
-                    except (ValueError, TypeError):
-                        logger.warning(f"Fan {i} has invalid {cost_key}: {fan['costs'].get(cost_key)}, defaulting to 0")
-                        fan['costs'][cost_key] = 0
+                # 4. Handle custom optional items for consistency
+                if 'specifications' in fan:
+                    # Ensure both naming formats exist for backward compatibility
+                    if 'custom_option_items' in fan['specifications'] and 'custom_optional_items' not in fan['specifications']:
+                        logger.info(f"Fan {i}: Converting custom_option_items to custom_optional_items")
+                        fan['specifications']['custom_optional_items'] = fan['specifications']['custom_option_items']
+                    elif 'custom_optional_items' in fan['specifications'] and 'custom_option_items' not in fan['specifications']:
+                        logger.info(f"Fan {i}: Converting custom_optional_items to custom_option_items")
+                        fan['specifications']['custom_option_items'] = fan['specifications']['custom_optional_items']
                 
-                # --- PATCH: Ensure detailed bought out costs are present ---
-                # Try to get from fan['costs'] or fan directly, fallback to 0
-                fan['costs']['vibration_isolators_cost'] = float(
-                    fan.get('vibration_isolators_cost',
-                        fan['costs'].get('vibration_isolators_cost',
-                            fan.get('vibration_isolators_price',
-                                fan['costs'].get('vibration_isolators_price', 0)
-                            )
-                        )
-                    ) or 0
-                )
-                fan['costs']['drive_pack_cost'] = float(
-                    fan.get('drive_pack_cost',
-                        fan['costs'].get('drive_pack_cost',
-                            fan.get('drive_pack_price',
-                                fan['costs'].get('drive_pack_price', 0)
-                            )
-                        )
-                    ) or 0
-                )
-                fan['costs']['bearing_cost'] = float(
-                    fan.get('bearing_cost',
-                        fan['costs'].get('bearing_cost',
-                            fan.get('bearing_price',
-                                fan['costs'].get('bearing_price', 0)
-                            )
-                        )
-                    ) or 0
-                )
-                fan['costs']['motor_cost'] = float(
-                    fan.get('motor_cost',
-                        fan['costs'].get('motor_cost',
-                            fan.get('discounted_motor_price',
-                                fan['costs'].get('discounted_motor_price', 0)
-                            )
-                        )
-                    ) or 0
-                )
-                # --- END PATCH ---
+                # 5. Copy custom_optional_items from root to specifications if needed
+                if 'custom_optional_items' in fan and fan['custom_optional_items'] and isinstance(fan['custom_optional_items'], dict):
+                    if 'custom_optional_items' not in fan['specifications'] or not fan['specifications']['custom_optional_items']:
+                        logger.info(f"Fan {i}: Copying custom_optional_items from root to specifications")
+                        fan['specifications']['custom_optional_items'] = fan['custom_optional_items']
+                # IMPROVED HANDLING FOR CUSTOM OPTIONAL ITEMS - END
+                            
+                # Aggregate totals
+                total_weight += float(fan.get('weights', {}).get('total_weight', 0))
+                total_fabrication_cost += float(fan.get('costs', {}).get('fabrication_cost', 0))
+                total_bought_out_cost += float(fan.get('costs', {}).get('bought_out_cost', 0))
+                total_cost += float(fan.get('costs', {}).get('total_cost', 0))
                 
                 validated_fans.append(fan)
+                
+            # Replace original list with validated fans
+            fans = validated_fans
             
-            # Calculate totals with safety checks
-            total_weight = sum(fan['weights'].get('total_weight', 0) or 0 for fan in validated_fans)
-            total_fabrication_cost = sum(fan['costs'].get('fabrication_cost', 0) or 0 for fan in validated_fans)
-            total_bought_out_cost = sum(fan['costs'].get('bought_out_cost', 0) or 0 for fan in validated_fans)
-            total_cost = sum(fan['costs'].get('total_cost', 0) or 0 for fan in validated_fans)
-            
-            # Log the calculated totals
-            logger.info(f"Calculated totals: total_weight={total_weight}, "
-                       f"total_fabrication_cost={total_fabrication_cost}, "
-                       f"total_bought_out_cost={total_bought_out_cost}, "
-                       f"total_cost={total_cost}")
-            
-            return render_template('summary.html',
-                enquiry_number=enquiry_number,
-                customer_name=customer_name,
-                total_fans=total_fans,
-                fans=validated_fans,
-                sales_engineer=sales_engineer,
-                total_weight=total_weight,
-                total_fabrication_cost=total_fabrication_cost,
-                total_bought_out_cost=total_bought_out_cost,
-                total_cost=total_cost
-            )
+            return render_template('summary.html', 
+                                   fans=fans,
+                                   enquiry_number=enquiry_number,
+                                   customer_name=customer_name,
+                                   sales_engineer=sales_engineer,
+                                   total_fans=len(fans),
+                                   total_weight=total_weight,
+                                   total_fabrication_cost=total_fabrication_cost,
+                                   total_bought_out_cost=total_bought_out_cost,
+                                   total_cost=total_cost)
         except Exception as e:
-            logger.error(f"Error rendering summary page: {str(e)}", exc_info=True)
-            flash("An error occurred while displaying the summary. Please try again.", "error")
-            return redirect(url_for('index'))
+            logger.error(f"Error rendering summary: {str(e)}", exc_info=True)
+            return render_template('error.html', error=str(e))
 
     @app.route('/start_fan_entry', methods=['POST'])
     def start_fan_entry():
@@ -2906,185 +3008,277 @@ def register_routes(app):
     @app.route('/export_project', methods=['GET', 'POST'])
     @login_required
     def export_project():
+        """Export project details to Excel with fan specifications, costs, and all optional items and accessories."""
         try:
-            logger.info("Starting project export")
+            # Get parameters from request
+            enquiry_number = request.args.get('enquiry_number') or request.form.get('enquiry_number')
+            customer_name = request.args.get('customer_name') or request.form.get('customer_name')
+            total_fans = request.args.get('total_fans') or request.form.get('total_fans')
+            fans_data_json = request.args.get('fans_data') or request.form.get('fans_data')
             
-            # Handle both GET and POST requests
-            if request.method == 'POST':
-                data = request.get_json()
-                fans_data = [data]  # Single fan case
-            else:  # GET request
-                # Parse the fans_data from URL parameter
-                fans_data = json.loads(request.args.get('fans_data', '[]'))
-                if not fans_data:
-                    return jsonify({'error': 'No fan data provided'}), 400
-
-            logger.info(f"Processing {len(fans_data)} fans")
-
-            # Helper function to clean and convert numeric values
+            if not enquiry_number or not fans_data_json:
+                return jsonify({'error': 'Missing required parameters'}), 400
+            
+            # Helper function to clean numbers for Excel
             def clean_number(value):
-                if value is None or value == '':
-                    return 0
                 if isinstance(value, (int, float)):
-                    return float(value)
-                cleaned = str(value).replace('₹', '').replace(',', '').replace(' ', '').replace('%', '')
+                    return value
                 try:
-                    return float(cleaned)
-                except ValueError:
-                    logger.error(f"Failed to convert value to float: {value}")
+                    # Remove non-numeric characters (except decimal point)
+                    if isinstance(value, str):
+                        value = value.replace('₹', '').replace(',', '').strip()
+                    return float(value)
+                except (ValueError, TypeError):
                     return 0
-
+                    
+            # Parse fans data JSON
+            fans_data = json.loads(fans_data_json)
+            
+            # Helper function to build exportable fan data
             def build_exportable_fan(fan):
-                return {
-                    "Fan Number": fan.get("fan_number"),
-                    "Model": fan.get("model") or fan.get("fan_model", ""),
-                    "Size": fan.get("size") or fan.get("fan_size", ""),
-                    "Class": fan.get("class"),
-                    "Arrangement": fan.get("arrangement"),
-                    "Material": fan.get("material") or fan.get("moc", ""),
-                    "Motor Brand": fan.get("motor_brand", ""),
-                    "Motor Power": fan.get("motor_power", ""),
-                    "Poles": fan.get("poles") or fan.get("pole", ""),
-                    "Efficiency": fan.get("efficiency", ""),
-
-                    "Bare Fan Weight (kg)": fan.get("fan_weight") or fan.get("bare_fan_weight", 0),
-                    "Accessory Weight (kg)": fan.get("accessory_weight") or fan.get("accessory_weights", 0),
-                    "Total Weight (kg)": fan.get("total_weight", 0),
-
-                    "Fabrication Cost (₹)": float(fan.get("fabrication_cost", 0)),
-                    "Motor Cost (₹)": float(fan.get("motor_cost", 0)),
-                    "Vibration Isolators (₹)": float(fan.get("vibration_isolators_cost", 0)),
-                    "Drive Pack (₹)": float(fan.get("drive_pack_cost", 0)),
-                    "Bearing Cost (₹)": float(fan.get("bearing_cost", 0)),
-                    "Optional Items (₹)": float(fan.get("optional_items_cost", 0)),
-                    "Flex Connectors (₹)": float(fan.get("flex_connectors_cost", 0)),
-
-                    "Total Bought Out Cost (₹)": float(fan.get("bought_out_cost", 0)),
-                    "Total Cost (₹)": float(fan.get("total_cost", 0)),
-
-                    "Fabrication Selling Price (₹)": float(fan.get("fabrication_selling_price", 0)),
-                    "Bought Out Selling Price (₹)": float(fan.get("bought_out_selling_price", 0)),
-
-                    "Total Selling Price (₹)": float(fan.get("total_selling_price") or
-                                                 fan.get("selling_price") or
-                                                 float(fan.get("fabrication_selling_price", 0)) +
-                                                 float(fan.get("bought_out_selling_price", 0))),
-
-                    "Margin (%)": float(fan.get("margin") or (
-                        ((float(fan.get("total_selling_price", 0)) - float(fan.get("total_cost", 0))) / float(fan.get("total_cost", 1))) * 100
-                    ))
+                # Basic specifications
+                result = {
+                    'Fan Number': fan.get('fan_number', ''),
+                    'Model': fan.get('model', ''),
+                    'Size': fan.get('size', ''),
+                    'Class': fan.get('class', ''),
+                    'Arrangement': fan.get('arrangement', ''),
+                    'Material': fan.get('material', ''),
+                    'Custom Shaft Diameter': fan.get('custom_shaft_diameter', ''),
+                    'Custom No. of Isolators': fan.get('custom_no_of_isolators', ''),
+                    'Vibration Isolators': fan.get('vibration_isolators', ''),
+                    'Bearing Brand': fan.get('bearing_brand', ''),
                 }
-
-            # Debug: Log the raw fan data before transformation
-            logger.info("\nDEBUG: Raw fan data before transformation:")
-            logger.info(json.dumps(fans_data, indent=2, default=str))
-
-            # Transform fans into exportable format
-            export_rows = [build_exportable_fan(fan) for fan in fans_data]
-
-            # Debug: Log the transformed data
-            logger.info("\nDEBUG: Transformed fan data for export:")
-            logger.info(json.dumps(export_rows, indent=2, default=str))
-
-            # Create DataFrame and transpose
-            df = pd.DataFrame(export_rows).T
-            df.columns = [f"Fan {i+1}" for i in range(len(export_rows))]
-            df.insert(0, "Field", df.index)
-            df.reset_index(drop=True, inplace=True)
-
-            # Add totals row
-            totals = ["TOTALS"]
-            for col in df.columns[1:]:
-                col_total = 0
-                for val in df[col]:
-                    if isinstance(val, (int, float)):
-                        col_total += val
-                totals.append(col_total)
-            df.loc[len(df)] = totals
-
-            # Create Excel file
-            filename = f"{request.args.get('enquiry_number', 'Project')}_{datetime.now().strftime('%Y%m%d')}.xlsx"
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "Fan Summary"
-
-            # Add project details
-            ws['A1'] = 'Project Details'
-            ws['A2'] = f"Enquiry Number: {request.args.get('enquiry_number', '')}"
-            ws['C2'] = f"Customer Name: {request.args.get('customer_name', '')}"
-            ws['E2'] = f"Date: {datetime.now().strftime('%d-%m-%Y')}"
-
-            # Write DataFrame to Excel
-            for row in dataframe_to_rows(df, index=False, header=True):
-                ws.append(row)
-
-            # Style the worksheet
-            bold_font = Font(bold=True)
-            header_fill = PatternFill(start_color='4a90e2', end_color='4a90e2', fill_type='solid')
-            header_font = Font(bold=True, color='FFFFFF')
-            header_alignment = Alignment(horizontal='center')
-
-            # Style headers and totals
-            for cell in ws[5]:  # Headers row
-                cell.font = header_font
-                cell.fill = header_fill
-                cell.alignment = header_alignment
-
-            for cell in ws[ws.max_row]:  # Totals row
-                cell.font = bold_font
-
-            # Apply number formatting
-            for row in ws.iter_rows(min_row=6, max_row=ws.max_row-1):
-                for cell in row[1:]:  # Skip first column (Field names)
-                    if isinstance(cell.value, (int, float)):
-                        # Get the field name from column A
-                        field_name = ws.cell(row=cell.row, column=1).value
-                        if 'Cost' in field_name or 'Price' in field_name:
-                            cell.number_format = '₹#,##0.00'
-                        elif 'Weight' in field_name:
-                            cell.number_format = '#,##0.00" kg"'
-                        elif 'Margin' in field_name:
-                            cell.number_format = '#,##0.00"%"'
-                        else:
-                            cell.number_format = '#,##0.00'
-
-            # Add borders
-            thin_border = Border(
-                left=Side(style='thin'),
-                right=Side(style='thin'),
-                top=Side(style='thin'),
-                bottom=Side(style='thin')
-            )
-            for row in ws.iter_rows(min_row=5, max_row=ws.max_row):
-                for cell in row:
-                    cell.border = thin_border
-
-            # Auto-fit column widths
-            for column in ws.columns:
-                max_length = 0
-                column = list(column)
-                for cell in column:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
-                    except:
-                        pass
-                adjusted_width = (max_length + 2)
-                ws.column_dimensions[column[0].column_letter].width = adjusted_width
-
-            # Save the file
-            wb.save(filename)
+                
+                # Motor details
+                result.update({
+                    'Motor Brand': fan.get('motor_brand', ''),
+                    'Motor Power (kW)': fan.get('motor_power', ''),
+                    'Poles': fan.get('poles', ''),
+                    'Efficiency': fan.get('efficiency', ''),
+                })
+                
+                # Weight details
+                result.update({
+                    'Fan Weight (kg)': clean_number(fan.get('fan_weight', 0)),
+                    'Accessory Weight (kg)': clean_number(fan.get('accessory_weight', 0)),
+                    'Total Weight (kg)': clean_number(fan.get('total_weight', 0)),
+                })
+                
+                # Cost breakdown
+                result.update({
+                    'Fabrication Cost (₹)': clean_number(fan.get('fabrication_cost', 0)),
+                    'Fabrication Selling Price (₹)': clean_number(fan.get('fabrication_selling_price', 0)),
+                    'Motor Cost (₹)': clean_number(fan.get('motor_cost', 0)),
+                    'Vibration Isolators Cost (₹)': clean_number(fan.get('vibration_isolators_cost', 0)),
+                    'Drive Pack Cost (₹)': clean_number(fan.get('drive_pack_cost', 0)),
+                    'Bearing Cost (₹)': clean_number(fan.get('bearing_cost', 0)),
+                    'Optional Items Cost (₹)': clean_number(fan.get('optional_items_cost', 0)),
+                    'Bought Out Cost (₹)': clean_number(fan.get('bought_out_cost', 0)),
+                    'Bought Out Selling Price (₹)': clean_number(fan.get('bought_out_selling_price', 0)),
+                    'Total Cost (₹)': clean_number(fan.get('total_cost', 0)),
+                    'Selling Price (₹)': clean_number(fan.get('selling_price', 0)),
+                    'Margin (%)': clean_number(fan.get('margin', 0)),
+                })
+                
+                # Add custom accessories if present
+                if fan.get('custom_accessories'):
+                    result['Custom Accessories'] = fan.get('custom_accessories')
+                    
+                # Process accessories section - mark as 'Included' if present
+                accessories = fan.get('accessories', {})
+                if accessories:
+                    # Standard accessory names mapping
+                    accessory_names = {
+                        'unitary_base_frame': 'Unitary Base Frame',
+                        'isolation_base_frame': 'Isolation Base Frame',
+                        'split_casing': 'Split Casing',
+                        'inlet_guard': 'Inlet Guard',
+                        'outlet_guard': 'Outlet Guard',
+                        'inlet_flange': 'Inlet Flange',
+                        'outlet_flange': 'Outlet Flange',
+                        'outlet_companion_flange': 'Outlet Companion Flange',
+                        'inlet_butterfly_damper': 'Inlet Butterfly Damper',
+                        'inlet_bell': 'Inlet Bell',
+                        'inlet_cone': 'Inlet Cone',
+                        'drain_plug': 'Drain Plug',
+                        'companion_flanges': 'Companion Flanges',
+                        'access_door': 'Access Door',
+                        'shaft_extension': 'Shaft Extension',
+                        'custom_paintwork': 'Custom Paintwork',
+                        'mounting_feet': 'Mounting Feet',
+                        'flexible_connector': 'Flexible Connector',
+                        'inlet_silencer': 'Inlet Silencer',
+                        'outlet_silencer': 'Outlet Silencer',
+                        'anti_vibration_mounts': 'Anti-Vibration Mounts',
+                        'weather_cover': 'Weather Cover',
+                        'shaft_seal': 'Shaft Seal',
+                        'spark_resistant_construction': 'Spark Resistant Construction',
+                        'inspection_door': 'Inspection Door',
+                        'roof_curb': 'Roof Curb',
+                        'backdraft_damper': 'Backdraft Damper',
+                        'cooling_wheel': 'Cooling Wheel',
+                        'belt_guard': 'Belt Guard',
+                        'extended_lubrication': 'Extended Lubrication',
+                        'special_coating': 'Special Coating'
+                    }
+                    
+                    for key, value in accessories.items():
+                        if value:
+                            display_name = accessory_names.get(key, key.replace('_', ' ').title())
+                            result[f"Accessory: {display_name}"] = "Included"
+                
+                # Process optional items section - include the cost
+                optional_items = fan.get('optional_items', {})
+                if optional_items:
+                    # Standard optional item names mapping
+                    optional_item_names = {
+                        'flex_connectors': 'Flex Connectors',
+                        'silencer': 'Silencer',
+                        'testing_charges': 'Testing Charges',
+                        'freight_charges': 'Freight Charges',
+                        'warranty_charges': 'Warranty Charges',
+                        'packing_charges': 'Packing Charges',
+                        'amca_sparkproof': 'AMCA Type C Spark Proof Construction',
+                        'accessories_assembly': 'Accessories Assembly Charges',
+                        'paint_specification': 'Special Paint Specification',
+                        'documentation': 'Special Documentation'
+                    }
+                    
+                    for key, price in optional_items.items():
+                        price = clean_number(price)
+                        if price > 0:
+                            # For custom items, extract just the name part
+                            if key.startswith('custom_'):
+                                # Extract the custom name without the timestamp
+                                name_parts = key.replace('custom_', '').split('_')
+                                # If the last part is numeric (timestamp), remove it
+                                if name_parts and name_parts[-1].isdigit():
+                                    name_parts.pop()
+                                display_name = ' '.join(name_parts).title()
+                            else:
+                                display_name = optional_item_names.get(key, key.replace('_', ' ').title())
+                            
+                            result[f"Optional Item: {display_name}"] = price
+                
+                # Also check standard_optional_items[] format
+                if fan.get("standard_optional_items[]"):
+                    items = fan.get("standard_optional_items[]")
+                    if not isinstance(items, list):
+                        items = [items]
+                        
+                    for item in items:
+                        # Get the price from optionalItemPrices if not already in optional_items
+                        if not optional_items.get(item) and fan.get("optionalItemPrices", {}).get(item):
+                            price = clean_number(fan["optionalItemPrices"][item])
+                            if price > 0:
+                                display_name = optional_item_names.get(item, item.replace('_', ' ').title())
+                                result[f"Optional Item: {display_name}"] = price
+                
+                # Process custom materials if present
+                for i in range(5):  # Assuming maximum 5 custom materials
+                    name_key = f'material_name_{i}'
+                    weight_key = f'material_weight_{i}'
+                    rate_key = f'material_rate_{i}'
+                    
+                    if fan.get(name_key) and fan.get(weight_key) and fan.get(rate_key):
+                        result[f"Custom Material {i+1}: Name"] = fan.get(name_key)
+                        result[f"Custom Material {i+1}: Weight"] = clean_number(fan.get(weight_key))
+                        result[f"Custom Material {i+1}: Rate"] = clean_number(fan.get(rate_key))
+                
+                return result
+            
+            # Build exportable data for all fans
+            exportable_fans = [build_exportable_fan(fan) for fan in fans_data]
+            
+            # Create a DataFrame with all fans data
+            df = pd.DataFrame(exportable_fans)
+            
+            # Create Excel file in memory
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                # Write Fan Specifications to Excel
+                df.to_excel(writer, sheet_name='Fan Specifications', index=False)
+                
+                # Get the worksheet to apply formatting
+                workbook = writer.book
+                worksheet = writer.sheets['Fan Specifications']
+                
+                # Add formats
+                header_format = workbook.add_format({
+                    'bold': True, 
+                    'font_color': 'white',
+                    'bg_color': '#4a90e2',
+                    'border': 1,
+                    'text_wrap': True,
+                    'valign': 'vcenter',
+                    'align': 'center'
+                })
+                
+                # Format for currency cells
+                currency_format = workbook.add_format({
+                    'num_format': '₹#,##0.00',
+                    'border': 1
+                })
+                
+                # Format for weight cells
+                weight_format = workbook.add_format({
+                    'num_format': '#,##0.00" kg"',
+                    'border': 1
+                })
+                
+                # Format for percentage cells
+                percent_format = workbook.add_format({
+                    'num_format': '0.00"%"',
+                    'border': 1
+                })
+                
+                # Format for regular cells
+                regular_format = workbook.add_format({
+                    'border': 1
+                })
+                
+                # Format header row
+                for col_num, value in enumerate(df.columns.values):
+                    worksheet.write(0, col_num, value, header_format)
+                    # Set column width based on content type
+                    if 'Cost' in value or 'Price' in value:
+                        worksheet.set_column(col_num, col_num, 20, currency_format)
+                    elif 'Weight' in value:
+                        worksheet.set_column(col_num, col_num, 18, weight_format)
+                    elif 'Margin' in value:
+                        worksheet.set_column(col_num, col_num, 15, percent_format)
+                    elif 'Optional Item:' in value:
+                        worksheet.set_column(col_num, col_num, 22, currency_format)
+                    else:
+                        worksheet.set_column(col_num, col_num, 20, regular_format)
+                
+                # Add project information sheet
+                info_sheet = workbook.add_worksheet('Project Information')
+                info_sheet.write(0, 0, 'Project Details', header_format)
+                info_sheet.merge_range('A1:B1', 'Project Details', header_format)
+                
+                # Add project details
+                info_sheet.write(2, 0, 'Enquiry Number:', regular_format)
+                info_sheet.write(2, 1, enquiry_number, regular_format)
+                info_sheet.write(3, 0, 'Customer Name:', regular_format)
+                info_sheet.write(3, 1, customer_name, regular_format)
+                info_sheet.write(4, 0, 'Total Fans:', regular_format)
+                info_sheet.write(4, 1, total_fans, regular_format)
+                info_sheet.write(5, 0, 'Export Date:', regular_format)
+                info_sheet.write(5, 1, datetime.now().strftime('%d-%m-%Y'), regular_format)
+                
+                # Set column width
+                info_sheet.set_column(0, 0, 20)
+                info_sheet.set_column(1, 1, 30)
+            
+            # Save to file and send to user
+            output.seek(0)
+            filename = f"{enquiry_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
             
             logger.info(f"Excel file created successfully: {filename}")
-            
-            # Send the file
-            return send_file(
-                filename,
-                as_attachment=True,
-                download_name=filename,
-                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-                
+            return send_file(output, as_attachment=True, download_name=filename, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        
         except Exception as e:
             logger.error(f"Error exporting project: {str(e)}", exc_info=True)
             return jsonify({'error': str(e)}), 500

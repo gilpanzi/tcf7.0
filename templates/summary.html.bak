@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block title %}Project Summary{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Project Summary</h2>
+    
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Project Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Enquiry Number:</strong> {{ enquiry_number }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Customer Name:</strong> {{ customer_name }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Total Fans:</strong> {{ total_fans }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Sales Engineer:</strong> {{ sales_engineer }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Project Totals</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Total Weight:</strong> {{ total_weight|round(2) }} kg
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Total Fabrication Cost:</strong> ₹{{ total_fabrication_cost|round(2)|commas }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Total Bought Out Cost:</strong> ₹{{ total_bought_out_cost|round(2)|commas }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Total Cost:</strong> ₹{{ total_cost|round(2)|commas }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <button id="export_summary" class="btn btn-success">Export Summary</button>
+                    <button id="export_excel" class="btn btn-primary ml-2">Export to Excel</button>
+                    <button id="save_project" class="btn btn-info ml-2">Save Project</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% for fan in fans %}
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        {% if fan.specifications.fan_model and fan.specifications.size %}
+                            {{ fan.specifications.fan_model }} - Size {{ fan.specifications.size }}
+                        {% elif fan.fan_model and fan.fan_size %}
+                            {{ fan.fan_model }} - Size {{ fan.fan_size }}
+                        {% else %}
+                            Fan {{ loop.index }}
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Specifications</h6>
+                            <table class="table table-sm table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th>Class:</th>
+                                        <td>{{ fan.specifications.class or fan.class_ }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Arrangement:</th>
+                                        <td>{{ fan.specifications.arrangement or fan.arrangement }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Material:</th>
+                                        <td>{{ fan.specifications.material or fan.material }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Vendor:</th>
+                                        <td>{{ fan.specifications.vendor or fan.vendor }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Shaft Diameter (mm):</th>
+                                        <td>{{ fan.specifications.shaft_diameter or fan.shaft_diameter }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>No. of Isolators:</th>
+                                        <td>{{ fan.specifications.no_of_isolators or fan.no_of_isolators }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Isolator Brand/Type:</th>
+                                        <td>{{ fan.specifications.vibration_isolators or fan.vibration_isolators }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Bearing Brand:</th>
+                                        <td>{{ fan.specifications.bearing_brand or fan.bearing_brand }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Drive Pack kW:</th>
+                                        <td>{{ fan.specifications.drive_pack_kw or fan.drive_pack_kw }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <h6 class="text-primary mt-3">Motor Details</h6>
+                            <table class="table table-sm table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th>Motor Brand:</th>
+                                        <td>{{ fan.motor.brand or fan.motor_brand }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Motor kW:</th>
+                                        <td>{{ fan.motor.kw or fan.motor_kw }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Pole:</th>
+                                        <td>{{ fan.motor.pole or fan.pole }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Efficiency:</th>
+                                        <td>{{ fan.motor.efficiency or fan.efficiency }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Motor Discount (%):</th>
+                                        <td>{{ fan.motor.discount_rate or fan.motor_discount }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Weights</h6>
+                            <table class="table table-sm table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th>Bare Fan Weight:</th>
+                                        <td>{{ fan.weights.bare_fan_weight or fan.bare_fan_weight }} kg</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Accessory Weight:</th>
+                                        <td>{{ fan.weights.accessory_weight or fan.accessory_weights }} kg</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Weight:</th>
+                                        <td>{{ fan.weights.total_weight or fan.total_weight }} kg</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <h6 class="text-primary mt-3">Cost Summary</h6>
+                            <table class="table table-sm table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th>Fabrication Cost:</th>
+                                        <td>₹{{ (fan.costs.fabrication_cost or fan.fabrication_cost)|round(2)|commas }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fabrication Margin (%):</th>
+                                        <td>{{ (fan.costs.fabrication_margin or fan.fabrication_margin or 0)|round(2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fabrication Selling Price:</th>
+                                        <td>₹{{ (fan.costs.fabrication_selling_price or fan.fabrication_selling_price)|round(2)|commas }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Bought Out Cost:</th>
+                                        <td>₹{{ (fan.costs.bought_out_cost or fan.bought_out_cost)|round(2)|commas }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Bought Out Margin (%):</th>
+                                        <td>{{ (fan.costs.bought_out_margin or fan.bought_out_margin or 0)|round(2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Bought Out Selling Price:</th>
+                                        <td>₹{{ (fan.costs.bought_out_selling_price or fan.bought_out_selling_price)|round(2)|commas }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Cost:</th>
+                                        <td>₹{{ (fan.costs.total_cost or fan.total_cost)|round(2)|commas }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Selling Price:</th>
+                                        <td>₹{{ (fan.costs.total_selling_price or fan.total_selling_price)|round(2)|commas }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Job Margin:</th>
+                                        <td>{{ (fan.costs.total_job_margin or fan.total_job_margin)|round(2) }}%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Bought Out Items:</h6>
+                            <ul class="list-group">
+                                {% if fan.vibration_isolators_cost or fan.costs.vibration_isolators_cost %}
+                                <li class="list-group-item">
+                                    <strong>Vibration Isolators{% if fan.vibration_isolators or fan.specifications.vibration_isolators %} ({{ fan.vibration_isolators or fan.specifications.vibration_isolators }}){% endif %}:</strong> 
+                                    ₹{{ (fan.vibration_isolators_cost or fan.costs.vibration_isolators_cost)|round(2)|commas }}
+                                </li>
+                                {% endif %}
+                                
+                                {% if fan.bearing_cost or fan.costs.bearing_cost %}
+                                <li class="list-group-item">
+                                    <strong>Bearings{% if fan.bearing_brand or fan.specifications.bearing_brand %} ({{ fan.bearing_brand or fan.specifications.bearing_brand }}){% endif %}:</strong> 
+                                    ₹{{ (fan.bearing_cost or fan.costs.bearing_cost)|round(2)|commas }}
+                                </li>
+                                {% endif %}
+                                
+                                {% if fan.drive_pack_cost or fan.costs.drive_pack_cost %}
+                                <li class="list-group-item">
+                                    <strong>Drive Pack{% if fan.drive_pack_kw or fan.specifications.drive_pack_kw %} ({{ fan.drive_pack_kw or fan.specifications.drive_pack_kw }} kW){% endif %}:</strong> 
+                                    ₹{{ (fan.drive_pack_cost or fan.costs.drive_pack_cost)|round(2)|commas }}
+                                </li>
+                                {% endif %}
+                                
+                                {% if fan.motor_cost or fan.costs.motor_cost %}
+                                <li class="list-group-item">
+                                    <strong>Motor{% if fan.motor_brand or fan.motor.brand %} ({{ fan.motor_brand or fan.motor.brand }}){% endif %}:</strong> 
+                                    ₹{{ (fan.motor_cost or fan.costs.motor_cost)|round(2)|commas }}
+                                </li>
+                                {% endif %}
+                                
+                                {% if fan.flex_connectors_cost or fan.costs.flex_connectors_cost %}
+                                <li class="list-group-item">
+                                    <strong>Flex Connectors:</strong> 
+                                    ₹{{ (fan.flex_connectors_cost or fan.costs.flex_connectors_cost)|round(2)|commas }}
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Accessories:</h6>
+                            <ul class="list-group">
+                                {% if fan.accessories %}
+                                    {% for acc_name, acc_value in fan.accessories.items() %}
+                                        {% if acc_value %}
+                                        <li class="list-group-item">
+                                            <strong>{{ acc_name|replace('_', ' ')|title }}</strong>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% elif fan.specifications.accessories %}
+                                    {% for acc_name, acc_value in fan.specifications.accessories.items() %}
+                                        {% if acc_value %}
+                                        <li class="list-group-item">
+                                            <strong>{{ acc_name|replace('_', ' ')|title }}</strong>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <li class="list-group-item">No accessories selected</li>
+                                {% endif %}
+                            </ul>
+                            
+                            <h6 class="text-primary mt-3">Optional Items:</h6>
+                            <ul class="list-group">
+                                {% if fan.optional_items %}
+                                    {% for opt_name, opt_price in fan.optional_items.items() %}
+                                        {% if opt_price and opt_price != 0 and opt_price != "0" %}
+                                        <li class="list-group-item">
+                                            <strong>{{ opt_name|replace('_', ' ')|title }}:</strong> ₹{{ opt_price|round(2)|commas }}
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% elif fan.specifications.optional_items %}
+                                    {% for opt_name, opt_price in fan.specifications.optional_items.items() %}
+                                        {% if opt_price and opt_price != 0 and opt_price != "0" %}
+                                        <li class="list-group-item">
+                                            <strong>{{ opt_name|replace('_', ' ')|title }}:</strong> ₹{{ opt_price|round(2)|commas }}
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <!-- CUSTOM OPTIONAL ITEMS SECTION -->
+                                <!-- Check for all formats of custom optional items -->
+                                
+                                <!-- Handle format 1: Array notation at root level -->
+                                {% if fan.get('custom_optional_items[]') %}
+                                <li class="list-group-item">
+                                    <strong>{{ fan.get('custom_optional_items[]') }}</strong>
+                                </li>
+                                {% endif %}
+                                
+                                <!-- Handle format 2: Array notation in specifications -->
+                                {% if fan.specifications.get('custom_optional_items[]') %}
+                                <li class="list-group-item">
+                                    <strong>{{ fan.specifications.get('custom_optional_items[]') }}</strong>
+                                </li>
+                                {% endif %}
+                                
+                                <!-- Handle format 3: Dictionary at root level -->
+                                {% if fan.custom_optional_items is mapping %}
+                                    {% for item_id, price in fan.custom_optional_items.items() %}
+                                    <li class="list-group-item">
+                                        <strong>{{ item_id|replace('_', ' ')|title }}</strong>
+                                        {% if price and price != 0 %}
+                                            : ₹{{ price|round(2)|commas }}
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <!-- Handle format 4: Dictionary in specifications -->
+                                {% if fan.specifications.custom_optional_items is mapping %}
+                                    {% for item_id, price in fan.specifications.custom_optional_items.items() %}
+                                    <li class="list-group-item">
+                                        <strong>{{ item_id|replace('_', ' ')|title }}</strong>
+                                        {% if price and price != 0 %}
+                                            : ₹{{ price|round(2)|commas }}
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <!-- Handle format 5: Legacy format (custom_option_items) -->
+                                {% if fan.specifications.custom_option_items is mapping and not fan.specifications.custom_optional_items is defined %}
+                                    {% for item_id, price in fan.specifications.custom_option_items.items() %}
+                                    <li class="list-group-item">
+                                        <strong>{{ item_id|replace('_', ' ')|title }}</strong>
+                                        {% if price and price != 0 %}
+                                            : ₹{{ price|round(2)|commas }}
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <!-- Handle format 6: Display name format -->
+                                {% if fan.custom_optional_items_display_name is defined %}
+                                <li class="list-group-item">
+                                    <strong>{{ fan.custom_optional_items_display_name }}</strong>
+                                </li>
+                                {% endif %}
+                                
+                                {% if fan.specifications.custom_optional_items_display_name is defined %}
+                                <li class="list-group-item">
+                                    <strong>{{ fan.specifications.custom_optional_items_display_name }}</strong>
+                                </li>
+                                {% endif %}
+                                
+                                <!-- If no optional items found -->
+                                {% if not fan.optional_items and not fan.specifications.optional_items and 
+                                     not fan.get('custom_optional_items[]') and not fan.specifications.get('custom_optional_items[]') and
+                                     not (fan.custom_optional_items is mapping) and not (fan.specifications.custom_optional_items is mapping) and
+                                     not (fan.specifications.custom_option_items is mapping) and
+                                     not fan.custom_optional_items_display_name is defined and
+                                     not fan.specifications.custom_optional_items_display_name is defined %}
+                                <li class="list-group-item">No optional items selected</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-12 text-right">
+                            <a href="{{ url_for('edit_fan', fan_index=loop.index0) }}" class="btn btn-warning">Edit This Fan</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <div class="row my-4">
+        <div class="col-12">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Add Another Fan</a>
+            <a href="{{ url_for('get_all_projects') }}" class="btn btn-primary ml-2">Back to Projects</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Export to Excel
+        document.getElementById('export_excel').addEventListener('click', function() {
+            window.location.href = '/export_summary_excel';
+        });
+        
+        // Save project
+        document.getElementById('save_project').addEventListener('click', function() {
+            const projectData = {
+                enquiry_number: "{{ enquiry_number }}",
+                customer_name: "{{ customer_name }}",
+                total_fans: {{ total_fans }},
+                fans: JSON.parse('{{ fans|tojson }}'),
+                sales_engineer: "{{ sales_engineer }}"
+            };
+            
+            fetch('/save_project_to_database/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(projectData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Project saved successfully!');
+                } else {
+                    alert('Error saving project: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
+        });
+        
+        // Export summary
+        document.getElementById('export_summary').addEventListener('click', function() {
+            window.location.href = '/export_summary_excel_full';
+        });
+    });
+</script>
+{% endblock %}

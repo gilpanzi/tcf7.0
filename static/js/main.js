@@ -31,14 +31,6 @@ function saveOptionalItemsToSession() {
         } else {
             sessionStorage.removeItem('optionalItemPrices');
         }
-        
-        // Save custom optional items
-        if (window.customOptionalItems && Object.keys(window.customOptionalItems).length > 0) {
-            sessionStorage.setItem('customOptionalItems', JSON.stringify(window.customOptionalItems));
-            console.log("Saved customOptionalItems to session storage");
-        } else {
-            sessionStorage.removeItem('customOptionalItems');
-        }
     } catch (error) {
         console.error("Error saving optional items to session storage:", error);
     }
@@ -48,25 +40,19 @@ function saveOptionalItemsToSession() {
 function initializeOptionalItemsObjects() {
     // Initialize global objects
     window.optionalItemPrices = window.optionalItemPrices || {};
-    window.customOptionalItems = window.customOptionalItems || {};
     
     // Synchronize with local variables
     optionalItemPrices = optionalItemPrices || {};
-    customOptionalItems = customOptionalItems || {};
     
     // Copy any existing values from global to local
     Object.assign(optionalItemPrices, window.optionalItemPrices);
-    Object.assign(customOptionalItems, window.customOptionalItems);
     
     // Copy any existing values from local to global
     Object.assign(window.optionalItemPrices, optionalItemPrices);
-    Object.assign(window.customOptionalItems, customOptionalItems);
     
     console.log("Initialized optional items objects:");
     console.log("- window.optionalItemPrices:", window.optionalItemPrices);
-    console.log("- window.customOptionalItems:", window.customOptionalItems);
     console.log("- optionalItemPrices:", optionalItemPrices);
-    console.log("- customOptionalItems:", customOptionalItems);
 }
 
 // Initialize event listeners
@@ -100,9 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add custom accessory button to the accessories section
         addCustomAccessoryButton();
-        
-        // Add custom optional item button to the optional items section
-        addCustomOptionalItemButton();
         
         // Add total job margin display to the calculation results
         addTotalJobMarginDisplay();
@@ -1510,126 +1493,126 @@ function initializeOptionalItems() {
         // First initialize the global objects
         initializeOptionalItemsObjects();
         
-        // Check if we have any stored optional items in session storage
-        const savedOptionalItems = sessionStorage.getItem('optionalItemPrices');
-        const savedCustomOptionalItems = sessionStorage.getItem('customOptionalItems');
+        // Create containers if they don't exist
+        let standardContainer = document.getElementById('standard-optional-items-container');
+        let customContainer = document.getElementById('custom-optional-items-container');
         
-        if (savedOptionalItems) {
-            try {
-                const parsedItems = JSON.parse(savedOptionalItems);
-                console.log("Loaded optional items from session storage:", parsedItems);
-                Object.assign(window.optionalItemPrices, parsedItems);
-                Object.assign(optionalItemPrices, parsedItems);
-            } catch (e) {
-                console.error("Error parsing saved optional items:", e);
+        // Find the optional items section header
+        const optionalItemsSection = Array.from(document.querySelectorAll('h3')).find(
+            h3 => h3.textContent.includes('Optional Items')
+        );
+        
+        if (!optionalItemsSection) {
+            console.warn("Optional Items section header not found - creating containers at body level");
+            // If we can't find the section header, create containers in a safe place
+            const fallbackParent = document.querySelector('.form-container') || document.body;
+            
+            if (!standardContainer) {
+                standardContainer = document.createElement('div');
+                standardContainer.id = 'standard-optional-items-container';
+                standardContainer.className = 'optional-items-container';
+                fallbackParent.appendChild(standardContainer);
+                console.log("Created standard-optional-items-container (fallback)");
+            }
+            
+            if (!customContainer) {
+                customContainer = document.createElement('div');
+                customContainer.id = 'custom-optional-items-container';
+                customContainer.className = 'optional-items-container';
+                fallbackParent.appendChild(customContainer);
+                console.log("Created custom-optional-items-container (fallback)");
+            }
+        } else {
+            console.log("Found Optional Items section header");
+            
+            // Create standard container if needed
+            if (!standardContainer) {
+                standardContainer = document.createElement('div');
+                standardContainer.id = 'standard-optional-items-container';
+                standardContainer.className = 'optional-items-container';
+                optionalItemsSection.after(standardContainer);
+                console.log("Created standard-optional-items-container after header");
+            }
+            
+            // Create custom container if needed
+            if (!customContainer) {
+                customContainer = document.createElement('div');
+                customContainer.id = 'custom-optional-items-container';
+                customContainer.className = 'optional-items-container';
+                standardContainer.after(customContainer);
+                console.log("Created custom-optional-items-container after standard container");
             }
         }
         
-        if (savedCustomOptionalItems) {
-            try {
-                const parsedItems = JSON.parse(savedCustomOptionalItems);
-                console.log("Loaded custom optional items from session storage:", parsedItems);
-                Object.assign(window.customOptionalItems, parsedItems);
-                Object.assign(customOptionalItems, parsedItems);
+        // Create both modals
+        createCustomOptionalItemModal();
+        createStandardOptionalItemModal();
+        
+        // Load saved optional items from session storage
+        try {
+            // Load standard optional items
+            const savedOptionalItems = JSON.parse(sessionStorage.getItem('optionalItemPrices'));
+            if (savedOptionalItems) {
+                Object.assign(window.optionalItemPrices, savedOptionalItems);
+                
+                const container = document.getElementById('standard-optional-items-container');
+                if (container) {
+                    for (const [itemId, price] of Object.entries(savedOptionalItems)) {
+                        const displayName = itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        
+                        // Check if this item already exists in the UI
+                        if (!document.querySelector(`.standard-optional-item[data-item-id="${itemId}"]`)) {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'standard-optional-item optional-item-group';
+                            itemDiv.dataset.itemId = itemId;
+                            itemDiv.innerHTML = `
+                                <div style="display: flex; align-items: center; margin-bottom: 5px; padding: 5px; background-color: #f5f5f5; border-radius: 4px;">
+                                    <label style="margin-right: auto;">${displayName}: </label>
+                                    <span class="price-display">₹${parseFloat(price).toLocaleString('en-IN')}</span>
+                                    <input type="hidden" name="standard_optional_items[]" value="${itemId}" data-price="${price}">
+                                    <button type="button" class="remove-btn" onclick="removeStandardOptionalItem('${itemId}')">×</button>
+                                </div>
+                            `;
+                            container.appendChild(itemDiv);
+                        }
+                    }
+                }
+            }
+            
+            // Load custom optional items
+            const savedCustomOptionalItems = JSON.parse(sessionStorage.getItem('customOptionalItems'));
+            if (savedCustomOptionalItems) {
+                Object.assign(window.customOptionalItems, savedCustomOptionalItems);
                 
                 // Add custom optional items to the UI
                 const container = document.getElementById('custom-optional-items-container');
                 if (container) {
-                    for (const [itemId, price] of Object.entries(parsedItems)) {
+                    for (const [itemId, price] of Object.entries(savedCustomOptionalItems)) {
                         // Create a display-friendly name
-                        const displayName = itemId.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                        const displayName = itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                         
-                        const id = 'custom_opt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'custom-optional-item';
-                        itemDiv.dataset.name = displayName;
-                        itemDiv.dataset.price = price;
-                        itemDiv.dataset.itemId = itemId;
-                        itemDiv.id = id;
-                        itemDiv.innerHTML = `
-                            <div class="optional-item-group" style="display: flex; align-items: center; margin-bottom: 5px; padding: 5px; background-color: #f0f8ff; border-radius: 4px;">
-                                <label style="margin-right: auto;">${displayName}: ₹${parseFloat(price).toLocaleString('en-IN')}</label>
-                                <input type="hidden" name="custom_optional_items" value="${displayName}" data-price="${price}" data-item-id="${itemId}">
-                                <button type="button" class="remove-btn" onclick="removeCustomOptionalItem('${id}')">×</button>
-                            </div>
-                        `;
-                        container.appendChild(itemDiv);
+                        // Check if this item already exists in the UI
+                        if (!document.querySelector(`.custom-optional-item[data-item-id="${itemId}"]`)) {
+                            const id = 'custom_opt_' + itemId + '_' + Date.now();
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'custom-optional-item';
+                            itemDiv.dataset.itemId = itemId;
+                            itemDiv.id = id;
+                            itemDiv.innerHTML = `
+                                <div class="optional-item-group" style="display: flex; align-items: center; margin-bottom: 5px; padding: 5px; background-color: #e0f7fa; border-radius: 4px;">
+                                    <label style="margin-right: auto;">${displayName}: ₹${parseFloat(price).toLocaleString('en-IN')}</label>
+                                    <input type="hidden" name="custom_optional_items[]" value="${displayName}" data-price="${price}" data-item-id="${itemId}">
+                                    <button type="button" class="remove-btn" onclick="removeCustomOptionalItem('${id}', '${itemId}')">×</button>
+                                </div>
+                            `;
+                            container.appendChild(itemDiv);
+                        }
                     }
                 }
-            } catch (e) {
-                console.error("Error parsing saved custom optional items:", e);
             }
+        } catch (e) {
+            console.error("Error loading saved optional items:", e);
         }
-        
-        // Configure listeners for the optional items
-        const optionalItems = document.querySelectorAll('.optional-item');
-        optionalItems.forEach(item => {
-            item.addEventListener('change', function() {
-                const priceInput = this.parentElement?.querySelector('.price-input');
-                
-                if (this.value === 'required') {
-                    if (priceInput) {
-                        priceInput.style.display = 'inline-block';
-                        priceInput.required = true;
-                        
-                        // If the price input already has a value, update the optionalItemPrices
-                        if (priceInput.value) {
-                            const price = parseFloat(priceInput.value);
-                            if (!isNaN(price)) {
-                                window.optionalItemPrices[this.id] = price;
-                                optionalItemPrices[this.id] = price;
-                                console.log(`Updated ${this.id} in optionalItemPrices: ${price}`);
-                            }
-                        }
-                    }
-                } else {
-                    if (priceInput) {
-                        priceInput.style.display = 'none';
-                        priceInput.required = false;
-                        priceInput.value = '';
-                        
-                        // Remove from optionalItemPrices if it exists
-                        if (this.id in window.optionalItemPrices) {
-                            delete window.optionalItemPrices[this.id];
-                            delete optionalItemPrices[this.id];
-                            console.log(`Removed ${this.id} from optionalItemPrices`);
-                        }
-                    }
-                }
-                
-                // Recalculate if we have any data already
-                if (calculatedData) {
-                    calculateFanData();
-                }
-            });
-        });
-        
-        // Configure listeners for price inputs
-        const priceInputs = document.querySelectorAll('.price-input');
-        priceInputs.forEach(input => {
-            // Initially hide price inputs for "not required" items
-            const select = input.parentElement?.querySelector('.optional-item');
-            if (select && select.value !== 'required') {
-                input.style.display = 'none';
-            }
-            
-            // Add change listener
-            input.addEventListener('change', function() {
-                const itemId = this.dataset.item;
-                const price = parseFloat(this.value);
-                
-                if (!isNaN(price)) {
-                    window.optionalItemPrices[itemId] = price;
-                    optionalItemPrices[itemId] = price;
-                    console.log(`Updated ${itemId} in optionalItemPrices to ${price}`);
-                    
-                    // Recalculate if we have data already
-                    if (calculatedData) {
-                        calculateFanData();
-                    }
-                }
-            });
-        });
         
         console.log("Optional items initialized successfully");
         
@@ -2805,28 +2788,41 @@ function calculateFanData() {
     // Get optional item prices - IMPORTANT: Include BOTH standard and custom optional items
     const localOptionalItemPrices = {};
     
-    // Standard optional items
-    document.querySelectorAll('.optional-item').forEach(select => {
-        if (select && select.value === 'required') {
-            const priceInput = select.parentElement?.querySelector('.price-input');
-            if (priceInput && priceInput.value) {
-                localOptionalItemPrices[select.id] = parseFloat(priceInput.value);
+    // Standard optional items from the global object
+    window.optionalItemPrices = window.optionalItemPrices || {};
+    for (const [itemId, price] of Object.entries(window.optionalItemPrices)) {
+        localOptionalItemPrices[itemId] = parseFloat(price);
+    }
+    
+    // Also get standard optional items from the DOM
+    document.querySelectorAll('.standard-optional-item input[type="hidden"]').forEach(input => {
+        if (input.dataset.price) {
+            const itemId = input.value;
+            const price = parseFloat(input.dataset.price);
+            if (!isNaN(price) && price > 0) {
+                localOptionalItemPrices[itemId] = price;
             }
         }
     });
     
-    // Ensure we have the global objects initialized
-    window.customOptionalItems = window.customOptionalItems || {};
-    window.optionalItemPrices = window.optionalItemPrices || {};
-    
     // Custom optional items from the global object
-    if (window.customOptionalItems && Object.keys(window.customOptionalItems).length > 0) {
-        console.log("Including custom optional items in calculation request");
-        for (const [itemId, price] of Object.entries(window.customOptionalItems)) {
-            localOptionalItemPrices[itemId] = parseFloat(price);
-            console.log(`Added custom optional item to request: ${itemId} = ${price}`);
-        }
+    window.customOptionalItems = window.customOptionalItems || {};
+    for (const [itemId, price] of Object.entries(window.customOptionalItems)) {
+        localOptionalItemPrices[itemId] = parseFloat(price);
     }
+    
+    // Also get custom optional items from the DOM
+    document.querySelectorAll('.custom-optional-item input[type="hidden"]').forEach(input => {
+        if (input.dataset.price && input.dataset.itemId) {
+            const itemId = input.dataset.itemId;
+            const price = parseFloat(input.dataset.price);
+            if (!isNaN(price) && price > 0) {
+                localOptionalItemPrices[itemId] = price;
+            }
+        }
+    });
+    
+    console.log("All optional items for calculation:", localOptionalItemPrices);
     
     // Get custom accessories data
     const customAccessoriesData = {};
@@ -3085,6 +3081,11 @@ function calculateFanData() {
         console.error('Error:', error);
         showError(error.message || 'Failed to calculate fan data');
     });
+
+    // In calculateFanData(), after updating total_weight and all calculations, add:
+    if (typeof fetchVendorRate === 'function') {
+        fetchVendorRate();
+    }
 }
 
 // Helper function to update element text content
@@ -3162,19 +3163,79 @@ async function addFanToProject() {
     });
     fanData.specifications.accessories = accessories;
     
-    // Get optional items
+    // Get optional items - FIX: Make this consistent with database saving
     const optionalItemPrices = {};
+    const optionalItemNames = {};
+    
+    // Collect from .optional-item selects (standard optional items)
     document.querySelectorAll('.optional-item').forEach(select => {
         if (select && select.value === 'required') {
             const priceInput = select.parentElement?.querySelector('.price-input');
             if (priceInput && priceInput.value) {
-                optionalItemPrices[select.id] = parseFloat(priceInput.value);
+                const itemId = select.id;
+                const price = parseFloat(priceInput.value);
+                optionalItemPrices[itemId] = price;
+                // Also store the display name
+                const label = select.parentElement?.querySelector('label');
+                if (label) {
+                    optionalItemNames[itemId] = label.textContent.replace(':', '').trim();
+                }
             }
         }
     });
+    
+    // Also collect from input[id$="_price"] elements (alternative collection method)
+    document.querySelectorAll('input[id$="_price"]').forEach(item => {
+        const itemId = item.id.replace('_price', '');
+        const price = parseFloat(item.value || '0');
+        if (price > 0) {
+            optionalItemPrices[itemId] = price;
+            // Try to find the associated label for the name
+            const container = item.closest('.optional-item-group, .form-group');
+            if (container) {
+                const label = container.querySelector('label');
+                if (label) {
+                    optionalItemNames[itemId] = label.textContent.replace(':', '').trim();
+                }
+            }
+        }
+    });
+    
+    // Store the data in the format expected by the database
     fanData.optional_items_detail = optionalItemPrices;
     
-    console.log("Fan data:", fanData);
+    // Create the items/prices structure for database storage
+    if (Object.keys(optionalItemPrices).length > 0) {
+        fanData.optional_items = optionalItemPrices;  // Direct key:price mapping
+        fanData.optional_item_prices = optionalItemPrices;  // For backward compatibility
+        
+        // Also create the items/names structure if we have names
+        if (Object.keys(optionalItemNames).length > 0) {
+            fanData.optional_item_names = optionalItemNames;
+        }
+    } else {
+        fanData.optional_items = {};
+        fanData.optional_item_prices = {};
+    }
+    
+    // Merge in custom optional items as key-value pairs - use consistent naming
+    fanData.custom_optional_items = { ...window.customOptionalItems };
+    // Also include custom_option_items for backward compatibility
+    fanData.custom_option_items = { ...window.customOptionalItems };
+    
+    // Merge custom optional items into the main optional_items object
+    if (window.customOptionalItems) {
+        Object.assign(fanData.optional_items, window.customOptionalItems);
+    }
+    
+    console.log("Optional items data structure:");
+    console.log("- optionalItemPrices:", optionalItemPrices);
+    console.log("- optionalItemNames:", optionalItemNames);
+    console.log("- fanData.optional_items:", fanData.optional_items);
+    console.log("- fanData.custom_optional_items:", fanData.custom_optional_items);
+    
+    console.log("COMPLETE FAN DATA BEING SENT:");
+    console.log(JSON.stringify(fanData, null, 2));
     
     // Initialize window.fanData if it doesn't exist
     if (!window.fanData) {
@@ -3295,6 +3356,7 @@ function resetForNextFan() {
 // Function to display project summary
 function displayProjectSummary() {
     console.log("Displaying project summary");
+    console.log("Starting displayProjectSummary with fan data:", window.fanData);
     
     const summaryContainer = document.getElementById('project-summary');
     if (!summaryContainer) {
@@ -3363,113 +3425,208 @@ function displayProjectSummary() {
         const fanData = fans[i];
         if (!fanData) continue;
         
+        console.log(`Processing fan ${i + 1} data:`, fanData);
+        console.log("Optional items before normalization:", fanData.optional_items);
+        console.log("Custom optional items before normalization:", fanData.custom_optional_items);
+        
+        // Normalize custom optional items to ensure they display correctly
+        normalizeCustomOptionalItems(fanData);
+        
+        console.log("Optional items after normalization:", fanData.optional_items);
+        console.log("Custom optional items after normalization:", fanData.custom_optional_items);
+        
         // Add to totals
         totalProjectWeight += fanData.total_weight || 0;
         totalFabricationCost += fanData.fabrication_cost || 0;
         totalBoughtOutCost += fanData.total_bought_out_cost || 0;
         totalProjectCost += fanData.total_cost || 0;
         
-        // Create fan card
-        const fanCard = document.createElement('div');
-        fanCard.className = 'fan-card';
-        fanCard.innerHTML = `
-            <h4>Fan ${i + 1}</h4>
-            <div><strong>Model:</strong> ${fanData.fan_model || fanData.specifications?.fan_model || ''}</div>
-            <div><strong>Size:</strong> ${fanData.fan_size || fanData.specifications?.size || ''}</div>
-            <div><strong>Class:</strong> ${fanData.class || fanData.specifications?.class || ''}</div>
-            <div><strong>Arrangement:</strong> ${fanData.arrangement || fanData.specifications?.arrangement || ''}</div>
-            <div><strong>Total Weight:</strong> ${fanData.total_weight || 0} kg</div>
-            <div><strong>Fabrication Cost:</strong> ₹${(fanData.fabrication_cost || 0).toLocaleString('en-IN')}</div>
-            <div><strong>Bought Out Cost:</strong> ₹${(fanData.total_bought_out_cost || 0).toLocaleString('en-IN')}</div>
-            <div><strong>Total Cost:</strong> ₹${(fanData.total_cost || 0).toLocaleString('en-IN')}</div>
-        `;
-        // Optional items breakdown
-        let hasAnyOptional = false;
-        let optionalHtml = '';
-        // Standard optional items
-        if (fanData.optional_items_detail && Object.keys(fanData.optional_items_detail).length > 0) {
-            optionalHtml += '<div class="optional-items-breakdown"><strong>Optional Items:</strong><ul>';
-            for (const [item, cost] of Object.entries(fanData.optional_items_detail)) {
-                if (cost > 0) {
-                    const displayName = item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                    optionalHtml += `<li>${displayName}: ₹${cost.toLocaleString('en-IN')}</li>`;
-                    hasAnyOptional = true;
-                }
-            }
-            optionalHtml += '</ul></div>';
+                        // Create fan card
+                const fanCard = document.createElement('div');
+                fanCard.className = 'fan-card';
+                fanCard.innerHTML = `
+                    <h4>Fan ${i + 1}</h4>
+                    <div><strong>Model:</strong> ${fanData.fan_model || fanData.specifications?.fan_model || ''}</div>
+                    <div><strong>Size:</strong> ${fanData.fan_size || fanData.specifications?.size || ''}</div>
+                    <div><strong>Class:</strong> ${fanData.class || fanData.specifications?.class || ''}</div>
+                    <div><strong>Arrangement:</strong> ${fanData.arrangement || fanData.specifications?.arrangement || ''}</div>
+                    <div><strong>Total Weight:</strong> ${fanData.total_weight || 0} kg</div>
+                    <div><strong>Fabrication Cost:</strong> ₹${(fanData.fabrication_cost || 0).toLocaleString('en-IN')}</div>
+                    <div><strong>Bought Out Cost:</strong> ₹${(fanData.bought_out_cost || 0).toLocaleString('en-IN')}</div>
+                    <div><strong>Total Cost:</strong> ₹${(fanData.total_cost || 0).toLocaleString('en-IN')}</div>
+                `;
+
+        // Bought Out Items breakdown (including vibration isolators and optional items)
+        let boughtOutHtml = '<div class="bought-out-items-breakdown"><strong>Bought Out Items:</strong><ul>';
+        let hasBoughtOutItems = false;
+
+        // Check for the presence of custom optional items in the array notation format
+        if (fanData["custom_optional_items[]"]) {
+            boughtOutHtml += `<li><strong>Custom Optional Item:</strong> ${fanData["custom_optional_items[]"]}</li>`;
+            hasBoughtOutItems = true;
         }
-        // Custom optional items (merge with standard if both exist)
-        if (fanData.custom_optional_items && Object.keys(fanData.custom_optional_items).length > 0) {
-            if (!hasAnyOptional) optionalHtml += '<div class="optional-items-breakdown"><strong>Optional Items:</strong><ul>';
-            for (const [item, cost] of Object.entries(fanData.custom_optional_items)) {
-                if (cost > 0) {
-                    const displayName = item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                    optionalHtml += `<li>${displayName}: ₹${cost.toLocaleString('en-IN')}</li>`;
-                    hasAnyOptional = true;
-                }
-            }
-            optionalHtml += '</ul></div>';
+
+        // Add vibration isolators if present
+        if (fanData.vibration_isolators && fanData.vibration_isolators !== 'not_required') {
+            boughtOutHtml += `<li>Vibration Isolators (${fanData.vibration_isolators})</li>`;
+            hasBoughtOutItems = true;
         }
-        if (optionalHtml) fanCard.innerHTML += optionalHtml;
-        fansContainer.appendChild(fanCard);
-        // Bought Out Items breakdown
-        let boughtOutHtml = '<div class="bought-out-items"><strong>Bought Out Items:</strong>';
-        let hasBoughtOut = false;
-        let boughtOutList = '<ul>';
-        // Add optional items (standard)
-        if (fanData.optional_items && Object.keys(fanData.optional_items).length > 0) {
+
+        // Add motor if present
+        if (fanData.motor_brand && fanData.motor_kw) {
+            boughtOutHtml += `<li>Motor (${fanData.motor_brand} ${fanData.motor_kw}kW ${fanData.motor_pole}P ${fanData.motor_efficiency})</li>`;
+            hasBoughtOutItems = true;
+        }
+
+        // Add bearing if present
+        if (fanData.bearing_brand) {
+            boughtOutHtml += `<li>Bearing (${fanData.bearing_brand})</li>`;
+            hasBoughtOutItems = true;
+        }
+
+        // Add drive pack if present
+        if (fanData.drive_pack_kw) {
+            boughtOutHtml += `<li>Drive Pack (${fanData.drive_pack_kw} kW)</li>`;
+            hasBoughtOutItems = true;
+        }
+
+        // Add standard optional items
+        if (fanData.optional_items && typeof fanData.optional_items === 'object') {
+            let hasOptionalItems = false;
+            let optionalItemsHtml = `<li style="list-style: none; margin-top: 10px;"><div style="background-color: #f0f4f8; padding: 5px; border-radius: 4px; border-left: 3px solid #4a6da7; margin-bottom: 5px;"><strong>Optional Items:</strong></div><ul>`;
+            
             for (const [item, cost] of Object.entries(fanData.optional_items)) {
                 if (cost > 0) {
-                    const displayName = item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                    boughtOutList += `<li>${displayName}: ₹${cost.toLocaleString('en-IN')}</li>`;
-                    hasBoughtOut = true;
+                    // Format the display name based on the item ID
+                    let displayName;
+                    if (item.startsWith('custom_')) {
+                        // For custom items, extract the name part and format it
+                        const namePart = item.replace('custom_', '').split('_').slice(0, -1).join('_'); // Remove timestamp part
+                        displayName = namePart.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                    } else {
+                        // For standard items, just format the ID
+                        displayName = item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                    }
+                    
+                    optionalItemsHtml += `<li>${displayName} - ₹${parseFloat(cost).toLocaleString('en-IN')}</li>`;
+                    hasOptionalItems = true;
+                    hasBoughtOutItems = true;
                 }
             }
+            
+            optionalItemsHtml += `</ul></li>`;
+            
+            if (hasOptionalItems) {
+                boughtOutHtml += optionalItemsHtml;
+            }
         }
-        // Add custom optional items if present (for legacy/compatibility)
-        if (fanData.custom_optional_items && Object.keys(fanData.custom_optional_items).length > 0) {
+        
+        // Display custom optional items with enhanced visibility
+        if (fanData.custom_optional_items && typeof fanData.custom_optional_items === 'object') {
+            // Create a more prominent styled header for custom optional items
+            boughtOutHtml += `<li style="list-style: none; margin-top: 10px;">
+                <div style="background-color: #e1f5fe; padding: 8px; border-radius: 6px; border-left: 4px solid #03a9f4; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <strong style="font-size: 1.05em; color: #0277bd;">Custom Optional Items:</strong>
+                </div>
+                <ul style="margin-left: 5px;">`;
+            
+            let hasCustomItems = false;
+            
             for (const [item, cost] of Object.entries(fanData.custom_optional_items)) {
-                if (cost > 0) {
+                const displayName = item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                boughtOutHtml += `<li style="padding: 3px 0; margin-bottom: 2px; font-weight: 500; color: #0277bd;">${displayName}</li>`;
+                hasCustomItems = true;
+                hasBoughtOutItems = true;
+            }
+            
+            // Fall back to check custom_option_items for backward compatibility
+            if (!hasCustomItems && fanData.custom_option_items && typeof fanData.custom_option_items === 'object') {
+                for (const [item, cost] of Object.entries(fanData.custom_option_items)) {
                     const displayName = item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                    boughtOutList += `<li>${displayName}: ₹${cost.toLocaleString('en-IN')}</li>`;
-                    hasBoughtOut = true;
+                    boughtOutHtml += `<li style="padding: 3px 0; margin-bottom: 2px; font-weight: 500; color: #0277bd;">${displayName}</li>`;
+                    hasCustomItems = true;
+                    hasBoughtOutItems = true;
                 }
             }
+            
+            if (!hasCustomItems) {
+                // Check for bracket notation format
+                if (fanData["custom_optional_items[]"]) {
+                    boughtOutHtml += `<li style="padding: 3px 0; margin-bottom: 2px; font-weight: 500; color: #0277bd;">${fanData["custom_optional_items[]"]}</li>`;
+                    hasCustomItems = true;
+                    hasBoughtOutItems = true;
+                } else {
+                    boughtOutHtml += `<li>No custom optional items</li>`;
+                }
+            }
+            
+            boughtOutHtml += `</ul></li>`;
+        // Backward compatibility with custom_option_items
+        } else if (fanData.custom_option_items && typeof fanData.custom_option_items === 'object') {
+            // Create a more prominent styled header for custom optional items
+            boughtOutHtml += `<li style="list-style: none; margin-top: 10px;">
+                <div style="background-color: #e1f5fe; padding: 8px; border-radius: 6px; border-left: 4px solid #03a9f4; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <strong style="font-size: 1.05em; color: #0277bd;">Custom Optional Items:</strong>
+                </div>
+                <ul style="margin-left: 5px;">`;
+                
+            let hasCustomItems = false;
+            
+            for (const [item, cost] of Object.entries(fanData.custom_option_items)) {
+                const displayName = item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                boughtOutHtml += `<li style="padding: 3px 0; margin-bottom: 2px; font-weight: 500; color: #0277bd;">${displayName}</li>`;
+                hasCustomItems = true;
+                hasBoughtOutItems = true;
+            }
+            
+            if (!hasCustomItems) {
+                // Check for bracket notation format
+                if (fanData["custom_optional_items[]"]) {
+                    boughtOutHtml += `<li style="padding: 3px 0; margin-bottom: 2px; font-weight: 500; color: #0277bd;">${fanData["custom_optional_items[]"]}</li>`;
+                    hasCustomItems = true;
+                    hasBoughtOutItems = true;
+                } else {
+                    boughtOutHtml += `<li>No custom optional items</li>`;
+                }
+            }
+            
+            boughtOutHtml += `</ul></li>`;
+        // Handle the case where custom_optional_items is just a string in bracket notation format
+        } else if (fanData["custom_optional_items[]"]) {
+            boughtOutHtml += `<li style="list-style: none; margin-top: 10px;">
+                <div style="background-color: #e1f5fe; padding: 8px; border-radius: 6px; border-left: 4px solid #03a9f4; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <strong style="font-size: 1.05em; color: #0277bd;">Custom Optional Items:</strong>
+                </div>
+                <ul style="margin-left: 5px;">`;
+                
+            boughtOutHtml += `<li style="padding: 3px 0; margin-bottom: 2px; font-weight: 500; color: #0277bd;">${fanData["custom_optional_items[]"]}</li>`;
+            boughtOutHtml += `</ul></li>`;
+            hasBoughtOutItems = true;
         }
-        boughtOutList += '</ul>';
-        if (hasBoughtOut) {
-            boughtOutHtml += boughtOutList;
-        } else {
-            boughtOutHtml += '<div>No bought out items selected</div>';
+
+        if (!hasBoughtOutItems) {
+            boughtOutHtml += '<li>No bought out items selected</li>';
         }
-        boughtOutHtml += '</div>';
+        boughtOutHtml += '</ul></div>';
         fanCard.innerHTML += boughtOutHtml;
-        if (fanData.material === 'others') {
-            let customMatHtml = '<div class="custom-materials-breakdown"><strong>Custom Materials:</strong><ul>';
-            for (let j = 0; j < 5; j++) {
-                const name = fanData[`material_name_${j}`];
-                const weight = fanData[`material_weight_${j}`];
-                const rate = fanData[`material_rate_${j}`];
-                if (name && weight && rate) {
-                    const cost = (parseFloat(weight) * parseFloat(rate)).toFixed(2);
-                    customMatHtml += `<li>${name}: ${weight} kg × ₹${rate}/kg = ₹${cost}</li>`;
-                }
-            }
-            customMatHtml += '</ul></div>';
-            fanCard.innerHTML += customMatHtml;
-        }
+
+        fansContainer.appendChild(fanCard);
     }
     
     summaryContainer.appendChild(fansContainer);
     
-    // Add project total section
-    const totalSection = document.createElement('div');
-    totalSection.className = 'project-total-section';
-    totalSection.innerHTML = `
-        <div class="project-total-card">
+    // We've removed the consolidated custom optional items section as per user request
+    // Each fan will display its own custom optional items
+    
+    // Create project totals section
+    const projectTotals = document.createElement('div');
+    projectTotals.className = 'project-totals';
+    projectTotals.innerHTML = `
+        <h4>Project Totals</h4>
+        <div class="totals-grid">
             <div class="total-row">
                 <span>Total Weight:</span>
-                <span>${totalProjectWeight.toFixed(2)} kg</span>
+                <span>${totalProjectWeight.toLocaleString('en-IN')} kg</span>
             </div>
             <div class="total-row">
                 <span>Total Fabrication Cost:</span>
@@ -3480,12 +3637,21 @@ function displayProjectSummary() {
                 <span>₹${totalBoughtOutCost.toLocaleString('en-IN')}</span>
             </div>
             <div class="total-row grand-total">
-                <span>Project Total Cost:</span>
+                <span>Total Project Cost:</span>
                 <span>₹${totalProjectCost.toLocaleString('en-IN')}</span>
             </div>
         </div>
     `;
-    summaryContainer.appendChild(totalSection);
+    summaryContainer.appendChild(projectTotals);
+    
+    // Update margin calculation and display
+    if (window.totalCostWithMargin && totalProjectCost > 0) {
+        const margin = ((window.totalCostWithMargin - totalProjectCost) / window.totalCostWithMargin) * 100;
+        const marginElement = document.getElementById('project-total-margin');
+        if (marginElement) {
+            marginElement.textContent = margin.toFixed(2);
+        }
+    }
     
     // Add back the original buttons if they existed, otherwise create new ones
     if (originalButtons) {
@@ -4147,6 +4313,13 @@ function saveProjectToDatabase(enquiryNumber) {
                     }
                 }
                 
+                // Debug optional items data for this fan
+                console.log(`Fan ${index + 1} optional items data:`, {
+                    optional_items: fan.optional_items,
+                    custom_option_items: fan.custom_option_items,
+                    custom_optional_items: fan.custom_optional_items
+                });
+                
                 return {
                     fan_number: index + 1,
                     specifications: {
@@ -4161,8 +4334,8 @@ function saveProjectToDatabase(enquiryNumber) {
                         bearing_brand: fan.bearing_brand || '',
                         drive_pack_kw: parseFloat(fan.drive_pack_kw || 0),
                         custom_accessories: fan.custom_accessories || [],
-                        optional_items: fan.optional_items || [],
-                        custom_option_items: fan.custom_option_items || [],
+                        optional_items: fan.optional_items || {},
+                        custom_option_items: fan.custom_option_items || fan.custom_optional_items || {},
                         shaft_diameter: fan.shaft_diameter || fan.custom_shaft_diameter || 0,
                         no_of_isolators: fan.no_of_isolators || fan.custom_no_of_isolators || 0,
                         fabrication_margin: fan.fabrication_margin || 0,
@@ -4448,7 +4621,8 @@ async function loadSelectedEnquiry() {
                         total_bought_out_cost: parseFloat(fan.costs.bought_out_cost) || parseFloat(fan.total_bought_out_cost) || 0,
                         fabrication_selling_price: parseFloat(fan.costs.fabrication_selling_price) || 0,
                         bought_out_selling_price: parseFloat(fan.costs.bought_out_selling_price) || 0,
-                        total_cost: parseFloat(fan.costs.total_selling_price) || parseFloat(fan.costs.total_cost) || 0,
+                        total_cost: parseFloat(fan.costs.total_cost) || parseFloat(fan.costs.total_cost) || 0,
+                        total_selling_price: parseFloat(fan.costs.total_selling_price) || parseFloat(fan.costs.total_selling_price) || 0,
                         total_job_margin: parseFloat(fan.costs.total_job_margin) || 0,
                         
                         // Add all individual bought out prices directly to the root for easy access
@@ -4525,11 +4699,48 @@ async function loadSelectedEnquiry() {
                         fanData.specifications.optional_items = fan.specifications.optional_items;
                     }
                     
+                    // Handle optional items with prices if they exist separately
+                    if (fan.optional_item_prices && fan.optional_items) {
+                        // If we have both items and prices, merge them properly
+                        const mergedOptionalItems = {};
+                        
+                        // If optional_items is already in the merged format (item_id: price)
+                        if (typeof fan.optional_items === 'object' && !Array.isArray(fan.optional_items)) {
+                            for (const [itemId, price] of Object.entries(fan.optional_items)) {
+                                if (price > 0) {
+                                    mergedOptionalItems[itemId] = parseFloat(price);
+                                }
+                            }
+                        }
+                        
+                        fanData.optional_items = mergedOptionalItems;
+                        fanData.specifications.optional_items = mergedOptionalItems;
+                        fanData.optional_item_prices = fan.optional_item_prices;
+                    }
+                    
+                    // Add custom optional items if available
+                    if (fan.specifications.custom_optional_items) {
+                        fanData.custom_optional_items = fan.specifications.custom_optional_items;
+                        fanData.specifications.custom_optional_items = fan.specifications.custom_optional_items;
+                    }
+                    
+                    // Handle custom_option_items for backward compatibility
+                    if (fan.specifications.custom_option_items) {
+                        fanData.custom_option_items = fan.specifications.custom_option_items;
+                        fanData.specifications.custom_option_items = fan.specifications.custom_option_items;
+                        
+                        // If we don't have custom_optional_items but have custom_option_items, use it
+                        if (!fanData.custom_optional_items) {
+                            fanData.custom_optional_items = fan.specifications.custom_option_items;
+                            fanData.specifications.custom_optional_items = fan.specifications.custom_option_items;
+                        }
+                    }
+                    
+                    console.log("Processed fan data:", fanData);
+                    
                     // Add explicit margin fields with defaults if missing
                     fanData.fabrication_margin = parseFloat(fan.fabrication_margin) || parseFloat(fan.costs.fabrication_margin) || 25;
                     fanData.bought_out_margin = parseFloat(fan.bought_out_margin) || parseFloat(fan.costs.bought_out_margin) || 25;
-                    
-                    console.log("Processed fan data:", fanData);
                     
                     if (index < window.fanData.length) {
                         window.fanData[index] = fanData;
@@ -4870,6 +5081,18 @@ function createCustomOptionalItemModal() {
     console.log("Ensuring custom optional item modal exists.");
     if (document.getElementById('customOptionalItemModal')) {
         console.log("Custom optional item modal already exists.");
+        // Ensure event listeners are set even if modal already exists
+        const saveBtn = document.getElementById('saveCustomOptionalItemBtn');
+        if (saveBtn) {
+            saveBtn.removeEventListener('click', saveCustomOptionalItem);
+            saveBtn.addEventListener('click', saveCustomOptionalItem);
+            console.log("Re-added event listener to existing saveCustomOptionalItemBtn");
+        }
+        const closeBtn = document.getElementById('closeCustomOptionalItemBtn');
+        if (closeBtn) {
+            closeBtn.removeEventListener('click', closeCustomOptionalItemModal);
+            closeBtn.addEventListener('click', closeCustomOptionalItemModal);
+        }
         return; // Modal already exists
     }
 
@@ -4902,8 +5125,11 @@ function createCustomOptionalItemModal() {
 
     // Add event listeners for the modal buttons
     document.getElementById('saveCustomOptionalItemBtn').addEventListener('click', saveCustomOptionalItem);
-    document.getElementById('closeCustomOptionalItemBtn').addEventListener('click', () => {
-        modal.style.display = 'none';
+    console.log("Added click event listener to saveCustomOptionalItemBtn");
+    
+    // Use a direct function reference for the close button
+    document.getElementById('closeCustomOptionalItemBtn').addEventListener('click', function() {
+        closeCustomOptionalItemModal();
     });
 }
 
@@ -5074,25 +5300,27 @@ function addCustomOptionalItemButton() {
 
 // Clear optional items
 function clearOptionalItems() {
-    const optionalItemsContainer = document.getElementById('optional-items-container');
-    if (optionalItemsContainer) {
-        optionalItemsContainer.innerHTML = ''; // Remove all optional items
-    }
-    document.getElementById('optional_items_breakdown').innerHTML = '';
-    document.getElementById('optional_items_price').textContent = '₹0';
+    console.log("Clearing all optional items");
     
-    // Reset all optional item select elements to "Not Required"
-    const optionalSelects = document.querySelectorAll('.optional-item');
-    optionalSelects.forEach(select => {
-        select.value = 'not_required';
-        // Hide the associated price input if it exists
-        const priceInput = select.parentElement?.querySelector('.price-input');
-        if (priceInput) {
-            priceInput.style.display = 'none';
-            priceInput.required = false;
-            priceInput.value = '';
-        }
-    });
+    // Clear standard optional items container
+    const standardContainer = document.getElementById('standard-optional-items-container');
+    if (standardContainer) {
+        standardContainer.innerHTML = '';
+    }
+    
+    // Clear display of optional items costs
+    const costsContainer = document.getElementById('optional_items_costs');
+    if (costsContainer) {
+        costsContainer.innerHTML = '';
+    }
+    
+    // Reset global objects
+    window.optionalItemPrices = {};
+    
+    // Clear session storage
+    sessionStorage.removeItem('optionalItemPrices');
+    
+    console.log("All optional items cleared");
 }
 
 // Function to clear session storage and reset custom optional items
@@ -5602,3 +5830,409 @@ function initializeVendorRateHandling() {
         });
     }
 }
+
+// Function to close the custom optional item modal
+function closeCustomOptionalItemModal() {
+    console.log("Closing custom optional item modal");
+    const modal = document.getElementById('customOptionalItemModal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Clear the input fields
+        const nameInput = document.getElementById('customOptionalItemName');
+        const priceInput = document.getElementById('customOptionalItemPrice');
+        if (nameInput) nameInput.value = '';
+        if (priceInput) priceInput.value = '';
+    } else {
+        console.error("Custom optional item modal not found when trying to close it");
+    }
+}
+
+// Function to open the custom optional item modal
+function openCustomOptionalItemModal() {
+    const modal = document.getElementById('customOptionalItemModal');
+    if (modal) {
+        // Clear previous input values
+        document.getElementById('customOptionalItemName').value = '';
+        document.getElementById('customOptionalItemPrice').value = '';
+        // Display the modal
+        modal.style.display = 'block';
+    } else {
+        console.error("Custom optional item modal not found!");
+    }
+}
+
+// --- MIGRATION: Normalize custom optional items for legacy data ---
+function normalizeCustomOptionalItems(fanData) {
+    console.log("Normalizing custom optional items for fan data:", fanData);
+    
+    // Initialize objects if they don't exist
+    if (!fanData.optional_items) fanData.optional_items = {};
+    if (!fanData.custom_optional_items) fanData.custom_optional_items = {};
+    
+    // Handle backward compatibility with custom_option_items
+    if (fanData.custom_option_items && !fanData.custom_optional_items) {
+        console.log("Converting custom_option_items to custom_optional_items");
+        fanData.custom_optional_items = {...fanData.custom_option_items};
+    }
+    
+    // Handle legacy array format
+    if (Array.isArray(fanData.custom_optional_items)) {
+        console.log("Converting array format custom optional items to object");
+        const obj = {};
+        fanData.custom_optional_items.forEach(item => {
+            if (typeof item === 'string') {
+                const id = item.toLowerCase().replace(/\s+/g, '_');
+                obj[id] = 0;
+            } else if (item && item.name) {
+                const id = item.name.toLowerCase().replace(/\s+/g, '_');
+                obj[id] = item.price || 0;
+            }
+        });
+        fanData.custom_optional_items = obj;
+    }
+    
+    // Handle legacy string format with brackets notation
+    if (fanData["custom_optional_items[]"]) {
+        console.log("Converting bracket notation custom optional items format");
+        const name = fanData["custom_optional_items[]"];
+        
+        // Keep the array notation for the template to display properly
+        // This is important for backward compatibility
+        console.log(`Preserving custom_optional_items[] value: ${name}`);
+        
+        // Also add a regular entry to custom_optional_items for consistency
+        const id = name.toLowerCase().replace(/\s+/g, '_');
+        fanData.custom_optional_items[id] = 0;
+        console.log(`Added backup entry to custom_optional_items with ID: ${id}`);
+    }
+    
+    // Ensure consistency between custom_optional_items and custom_option_items
+    if (fanData.custom_optional_items) {
+        fanData.custom_option_items = {...fanData.custom_optional_items};
+    }
+    
+    console.log("Normalized fan data:", fanData);
+    return fanData;
+}
+
+// Function to create the Standard Optional Item Modal
+function createStandardOptionalItemModal() {
+    console.log("Creating/checking standard optional item modal");
+    let modal = document.getElementById('standardOptionalItemModal');
+    if (!modal) {
+        console.log("Standard optional item modal not found, creating it");
+        modal = document.createElement('div');
+        modal.id = 'standardOptionalItemModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Add Optional Item</h3>
+                <label for="standardOptionalItemSelect">Select Item:</label>
+                <select id="standardOptionalItemSelect" onchange="handleOptionalItemTypeChange()">
+                    <option value="">-- Select an item --</option>
+                    <option value="flex_connectors">Flex Connectors</option>
+                    <option value="silencer">Silencer</option>
+                    <option value="testing_charges">Testing Charges</option>
+                    <option value="freight_charges">Freight Charges</option>
+                    <option value="warranty_charges">Warranty Charges</option>
+                    <option value="packing_charges">Packing Charges</option>
+                    <option value="amca_sparkproof">AMCA Type C Spark Proof Construction</option>
+                    <option value="accessories_assembly">Accessories Assembly Charges</option>
+                    <option value="paint_specification">Special Paint Specification</option>
+                    <option value="documentation">Special Documentation</option>
+                    <option value="custom">Custom Item (Enter name below)</option>
+                </select>
+                <div id="custom-item-name-container" style="display: none; margin-top: 10px;">
+                    <label for="customItemName">Custom Item Name:</label>
+                    <input type="text" id="customItemName" placeholder="Enter custom item name">
+                </div>
+                <label for="standardOptionalItemPrice">Price (₹):</label>
+                <input type="number" id="standardOptionalItemPrice" step="0.01" min="0" placeholder="Enter price">
+                <div class="modal-buttons">
+                    <button id="saveStandardOptionalItemBtn" class="btn btn-primary">Add Item</button>
+                    <button onclick="closeStandardOptionalItemModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listener to the save button
+        document.getElementById('saveStandardOptionalItemBtn').addEventListener('click', saveStandardOptionalItem);
+        console.log("Added click event listener to newly created saveStandardOptionalItemBtn");
+        
+        // Add event listener for dropdown change
+        document.getElementById('standardOptionalItemSelect').addEventListener('change', handleOptionalItemTypeChange);
+    } else {
+        // Ensure event listeners are set even if modal already exists
+        const saveBtn = modal.querySelector('#saveStandardOptionalItemBtn');
+        if (saveBtn) {
+            saveBtn.removeEventListener('click', saveStandardOptionalItem);
+            saveBtn.addEventListener('click', saveStandardOptionalItem);
+            console.log("Re-added event listener to existing saveStandardOptionalItemBtn");
+        }
+    }
+}
+
+// Function to handle change in optional item type selection
+function handleOptionalItemTypeChange() {
+    const selectElement = document.getElementById('standardOptionalItemSelect');
+    const customNameContainer = document.getElementById('custom-item-name-container');
+    
+    if (selectElement.value === 'custom') {
+        customNameContainer.style.display = 'block';
+    } else {
+        customNameContainer.style.display = 'none';
+    }
+}
+
+// Function to show the Standard Optional Item modal
+function openStandardOptionalItemModal() {
+    console.log("Showing standard optional item modal");
+    const modal = document.getElementById('standardOptionalItemModal');
+    if (modal) {
+        // Clear previous input values
+        document.getElementById('standardOptionalItemSelect').value = '';
+        document.getElementById('standardOptionalItemPrice').value = '';
+        // Display the modal
+        modal.style.display = 'block';
+    } else {
+        console.error("Standard optional item modal not found!");
+        createStandardOptionalItemModal();
+        openStandardOptionalItemModal();
+    }
+}
+
+// Function to close the Standard Optional Item modal
+function closeStandardOptionalItemModal() {
+    const modal = document.getElementById('standardOptionalItemModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Function to save a Standard Optional Item
+function saveStandardOptionalItem() {
+    console.log("saveStandardOptionalItem function called");
+    
+    const selectElement = document.getElementById('standardOptionalItemSelect');
+    if (!selectElement) {
+        console.error("standardOptionalItemSelect element not found");
+        return;
+    }
+    
+    const priceInput = document.getElementById('standardOptionalItemPrice');
+    if (!priceInput) {
+        console.error("standardOptionalItemPrice element not found");
+        return;
+    }
+    
+    let itemId = selectElement.value;
+    let itemName = selectElement.options[selectElement.selectedIndex].text;
+    const price = parseFloat(priceInput.value);
+    
+    console.log(`Selected item: ${itemName} (ID: ${itemId}) with price: ${price}`);
+    
+    // Handle custom item
+    if (itemId === 'custom') {
+        const customNameInput = document.getElementById('customItemName');
+        if (!customNameInput) {
+            console.error("customItemName element not found");
+            return;
+        }
+        
+        const customName = customNameInput.value.trim();
+        
+        if (!customName) {
+            alert('Please enter a custom item name.');
+            customNameInput.focus();
+            return;
+        }
+        
+        // Create a unique ID for the custom item
+        itemId = 'custom_' + customName.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+        itemName = customName;
+        console.log(`Using custom item: ${itemName} (ID: ${itemId})`);
+    } else if (!itemId) {
+        alert('Please select an item.');
+        selectElement.focus();
+        return;
+    }
+    
+    if (isNaN(price) || price <= 0) {
+        alert('Please enter a valid positive price.');
+        priceInput.focus();
+        return;
+    }
+    
+    // Check if this item already exists (for standard items only)
+    if (itemId !== 'custom' && !itemId.startsWith('custom_')) {
+        const existingItem = document.querySelector(`.standard-optional-item[data-item-id="${itemId}"]`);
+        if (existingItem) {
+            console.log(`Updating existing item: ${itemName}`);
+            // Update the existing item
+            const priceDisplay = existingItem.querySelector('.price-display');
+            if (priceDisplay) {
+                priceDisplay.textContent = `₹${price.toLocaleString('en-IN')}`;
+            }
+            
+            // Update the hidden input
+            const hiddenInput = existingItem.querySelector('input[type="hidden"]');
+            if (hiddenInput) {
+                hiddenInput.dataset.price = price;
+            }
+            
+            // Update the global object
+            window.optionalItemPrices[itemId] = price;
+        } else {
+            console.log(`Adding new standard item: ${itemName}`);
+            // Add new standard item
+            addOptionalItemToUI(itemId, itemName, price);
+        }
+    } else {
+        console.log(`Adding new custom item: ${itemName}`);
+        // Add new custom item
+        addOptionalItemToUI(itemId, itemName, price);
+    }
+    
+    // Save to session storage
+    saveOptionalItemsToSession();
+    
+    // Close the modal
+    closeStandardOptionalItemModal();
+    
+    // Reset the custom item input field
+    const customNameContainer = document.getElementById('custom-item-name-container');
+    if (customNameContainer) {
+        customNameContainer.style.display = 'none';
+    }
+    const customNameInput = document.getElementById('customItemName');
+    if (customNameInput) {
+        customNameInput.value = '';
+    }
+    
+    // Recalculate if needed
+    if (typeof calculatedData !== 'undefined' && calculatedData) {
+        calculateFanData();
+    }
+    
+    console.log("saveStandardOptionalItem function completed successfully");
+}
+
+// Helper function to add an optional item to the UI
+function addOptionalItemToUI(itemId, itemName, price) {
+    console.log(`addOptionalItemToUI called with: itemId=${itemId}, itemName=${itemName}, price=${price}`);
+    
+    // Add to the global object
+    window.optionalItemPrices[itemId] = price;
+    console.log(`Added to window.optionalItemPrices: ${itemId} = ${price}`);
+    
+    // Add visual representation to the container
+    const container = document.getElementById('standard-optional-items-container');
+    if (container) {
+        console.log(`Found standard-optional-items-container`);
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'standard-optional-item optional-item-group';
+        itemDiv.dataset.itemId = itemId;
+        
+        // Use a different background color for custom items
+        const isCustom = itemId.startsWith('custom_');
+        const backgroundColor = isCustom ? '#e0f7fa' : '#f5f5f5';
+        
+        itemDiv.innerHTML = `
+            <div style="display: flex; align-items: center; margin-bottom: 5px; padding: 5px; background-color: ${backgroundColor}; border-radius: 4px;">
+                <label style="margin-right: auto;">${itemName}: </label>
+                <span class="price-display">₹${price.toLocaleString('en-IN')}</span>
+                <input type="hidden" name="standard_optional_items[]" value="${itemId}" data-price="${price}" data-item-name="${itemName}">
+                <button type="button" class="remove-btn" onclick="removeStandardOptionalItem('${itemId}')">×</button>
+            </div>
+        `;
+        container.appendChild(itemDiv);
+        console.log(`Item added to UI: ${itemName}`);
+    } else {
+        console.error(`standard-optional-items-container not found in DOM!`);
+    }
+}
+
+// Function to remove a Standard Optional Item
+function removeStandardOptionalItem(itemId) {
+    const item = document.querySelector(`.standard-optional-item[data-item-id="${itemId}"]`);
+    if (item) {
+        item.remove();
+    }
+    
+    // Remove from the global object
+    if (itemId in window.optionalItemPrices) {
+        delete window.optionalItemPrices[itemId];
+    }
+    
+    // Save updated list to session storage
+    saveOptionalItemsToSession();
+    
+    // Recalculate if needed
+    if (typeof calculatedData !== 'undefined' && calculatedData) {
+        calculateFanData();
+    }
+}
+
+// Function to normalize optional items data for compatibility
+function normalizeCustomOptionalItems(fanData) {
+    console.log("Normalizing optional items for fan data:", fanData);
+    
+    // Ensure fan data has optional_items
+    fanData.optional_items = fanData.optional_items || {};
+    
+    // Handle legacy formats that may be present in existing data
+    if (fanData.custom_optional_items) {
+        console.log("WARNING: Found legacy custom_optional_items property, these will be migrated to standard optional items");
+        // Convert any custom items to regular optional items with custom_ prefix
+        if (typeof fanData.custom_optional_items === 'object') {
+            for (const [key, value] of Object.entries(fanData.custom_optional_items)) {
+                const customItemId = 'custom_' + key;
+                fanData.optional_items[customItemId] = value;
+                console.log(`Migrated custom item ${key} to standard optional items as ${customItemId}`);
+            }
+        }
+    }
+    
+    // Clean up any legacy properties
+    delete fanData.custom_optional_items;
+    delete fanData.custom_option_items;
+    delete fanData["custom_optional_items[]"];
+    
+    console.log("Normalized fan data:", fanData);
+    return fanData;
+}
+
+// Function to ensure save button event listeners are set
+function ensureSaveButtonListeners() {
+    console.log("Ensuring save button event listeners are set");
+    
+    // Add event listener to standard optional item save button
+    const saveStandardOptionalItemBtn = document.getElementById('saveStandardOptionalItemBtn');
+    if (saveStandardOptionalItemBtn) {
+        // Remove any existing listeners to avoid duplicates
+        saveStandardOptionalItemBtn.removeEventListener('click', saveStandardOptionalItem);
+        // Add the event listener
+        saveStandardOptionalItemBtn.addEventListener('click', saveStandardOptionalItem);
+        console.log("Added event listener to saveStandardOptionalItemBtn");
+    } else {
+        console.warn("saveStandardOptionalItemBtn not found in DOM");
+    }
+    
+    // Add event listener to custom optional item save button
+    const saveCustomOptionalItemBtn = document.getElementById('saveCustomOptionalItemBtn');
+    if (saveCustomOptionalItemBtn) {
+        // Remove any existing listeners to avoid duplicates
+        saveCustomOptionalItemBtn.removeEventListener('click', saveCustomOptionalItem);
+        // Add the event listener
+        saveCustomOptionalItemBtn.addEventListener('click', saveCustomOptionalItem);
+        console.log("Added event listener to saveCustomOptionalItemBtn");
+    } else {
+        console.log("saveCustomOptionalItemBtn not found in DOM yet - will be added when modal is created");
+    }
+}
+
+// Add this to window load and DOMContentLoaded events
+document.addEventListener('DOMContentLoaded', ensureSaveButtonListeners);
+window.addEventListener('load', ensureSaveButtonListeners);
