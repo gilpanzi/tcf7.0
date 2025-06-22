@@ -3140,21 +3140,110 @@ async function addFanToProject() {
             arrangement: document.getElementById('arrangement').value,
             vendor: document.getElementById('vendor').value,
             material: document.getElementById('material').value,
+            vibration_isolators: document.getElementById('vibration_isolators').value,
+            bearing_brand: document.getElementById('bearing_brand').value,
+            drive_pack_kw: parseFloat(document.getElementById('drive_pack_kw')?.value) || 0,
+            shaft_diameter: parseFloat(document.getElementById('shaft_diameter')?.value) || 0,
+            no_of_isolators: parseInt(document.getElementById('no_of_isolators')?.value) || 0,
+            fabrication_margin: parseFloat(document.getElementById('fabrication_margin')?.value) || 25,
+            bought_out_margin: parseFloat(document.getElementById('bought_out_margin')?.value) || 25,
             accessories: []
         },
         weights: {
-            bare_fan_weight: parseFloat(document.getElementById('bare_fan_weight').value) || 0,
-            accessory_weight: parseFloat(document.getElementById('accessory_weight').value) || 0,
-            total_weight: parseFloat(document.getElementById('total_weight').value) || 0,
-            fabrication_weight: parseFloat(document.getElementById('fabrication_weight').value) || 0,
-            bought_out_weight: parseFloat(document.getElementById('bought_out_weight').value) || 0
+            bare_fan_weight: parseFloat(document.getElementById('bare_fan_weight')?.value) || 0,
+            accessory_weight: parseFloat(document.getElementById('accessory_weight')?.value) || 0,
+            total_weight: parseFloat(document.getElementById('total_weight')?.value) || 0,
+            fabrication_weight: parseFloat(document.getElementById('fabrication_weight')?.value) || 0,
+            bought_out_weight: parseFloat(document.getElementById('bought_out_weight')?.value) || 0
         },
         costs: {
-            fabrication_cost: parseFloat(document.getElementById('fabrication_cost').value) || 0,
-            bought_out_cost: parseFloat(document.getElementById('bought_out_cost').value) || 0,
-            total_cost: parseFloat(document.getElementById('total_cost').value) || 0
+            fabrication_cost: parseFloat(document.getElementById('fabrication_cost')?.value) || 0,
+            motor_cost: parseFloat(document.getElementById('motor_cost')?.value) || 0,
+            vibration_isolators_cost: parseFloat(document.getElementById('vibration_isolators_cost')?.value) || 0,
+            drive_pack_cost: parseFloat(document.getElementById('drive_pack_cost')?.value) || 0,
+            bearing_cost: parseFloat(document.getElementById('bearing_cost')?.value) || 0,
+            bought_out_cost: parseFloat(document.getElementById('bought_out_cost')?.value) || 0,
+            total_cost: parseFloat(document.getElementById('total_cost')?.value) || 0,
+            fabrication_selling_price: parseFloat(document.getElementById('fabrication_selling_price')?.value) || 0,
+            bought_out_selling_price: parseFloat(document.getElementById('bought_out_selling_price')?.value) || 0,
+            total_selling_price: parseFloat(document.getElementById('total_selling_price')?.value) || 0,
+            total_job_margin: parseFloat(document.getElementById('total_job_margin')?.value) || 0
+        },
+        motor: {
+            brand: document.getElementById('motor_brand')?.value || '',
+            kw: parseFloat(document.getElementById('motor_kw')?.value) || 0,
+            pole: parseInt(document.getElementById('pole')?.value) || 0,
+            efficiency: document.getElementById('efficiency')?.value || '',
+            discount_rate: parseFloat(document.getElementById('motor_discount')?.value) || 0
         }
     };
+    
+    // Add top-level fields for Excel export compatibility
+    fanData.fan_model = fanData.specifications.fan_model;
+    fanData.fan_size = fanData.specifications.size;
+    fanData.class_ = fanData.specifications.class;
+    fanData.class = fanData.specifications.class; // Alternative naming
+    fanData.arrangement = fanData.specifications.arrangement;
+    fanData.vendor = fanData.specifications.vendor;
+    fanData.material = fanData.specifications.material;
+    fanData.vibration_isolators = fanData.specifications.vibration_isolators;
+    fanData.bearing_brand = fanData.specifications.bearing_brand;
+    fanData.drive_pack_kw = fanData.specifications.drive_pack_kw;
+    fanData.shaft_diameter = fanData.specifications.shaft_diameter;
+    fanData.no_of_isolators = fanData.specifications.no_of_isolators;
+    fanData.fabrication_margin = fanData.specifications.fabrication_margin;
+    fanData.bought_out_margin = fanData.specifications.bought_out_margin;
+    
+    // Add weight fields at top level
+    fanData.bare_fan_weight = fanData.weights.bare_fan_weight;
+    fanData.accessory_weights = fanData.weights.accessory_weight;
+    fanData.total_weight = fanData.weights.total_weight;
+    fanData.fabrication_weight = fanData.weights.fabrication_weight;
+    fanData.bought_out_weight = fanData.weights.bought_out_weight;
+    
+    // Add cost fields at top level
+    fanData.fabrication_cost = fanData.costs.fabrication_cost;
+    fanData.motor_cost = fanData.costs.motor_cost;
+    fanData.vibration_isolators_cost = fanData.costs.vibration_isolators_cost;
+    fanData.drive_pack_cost = fanData.costs.drive_pack_cost;
+    fanData.bearing_cost = fanData.costs.bearing_cost;
+    fanData.bought_out_cost = fanData.costs.bought_out_cost;
+    fanData.total_cost = fanData.costs.total_cost;
+    fanData.fabrication_selling_price = fanData.costs.fabrication_selling_price;
+    fanData.bought_out_selling_price = fanData.costs.bought_out_selling_price;
+    fanData.total_selling_price = fanData.costs.total_selling_price;
+    fanData.total_job_margin = fanData.costs.total_job_margin;
+    
+    // Add motor fields at top level
+    fanData.motor_brand = fanData.motor.brand;
+    fanData.motor_kw = fanData.motor.kw;
+    fanData.pole = fanData.motor.pole;
+    fanData.efficiency = fanData.motor.efficiency;
+    fanData.motor_discount = fanData.motor.discount_rate;
+    
+    // Add cost aliases for Excel export
+    fanData.vibration_isolators_price = fanData.vibration_isolators_cost;
+    fanData.bearing_price = fanData.bearing_cost;
+    fanData.drive_pack_price = fanData.drive_pack_cost;
+    fanData.discounted_motor_price = fanData.motor_cost;
+    fanData.total_bought_out_cost = fanData.bought_out_cost;
+    
+    // Add custom material fields if present
+    for (let i = 0; i < 5; i++) {
+        const nameField = document.getElementById(`material_name_${i}`);
+        const weightField = document.getElementById(`material_weight_${i}`);
+        const rateField = document.getElementById(`material_rate_${i}`);
+        
+        if (nameField) fanData[`material_name_${i}`] = nameField.value || '';
+        if (weightField) fanData[`material_weight_${i}`] = parseFloat(weightField.value) || 0;
+        if (rateField) fanData[`material_rate_${i}`] = parseFloat(rateField.value) || 0;
+    }
+    
+    // Add custom shaft diameter and isolators if different from defaults
+    const customShaftDiameter = document.getElementById('custom_shaft_diameter');
+    const customNoOfIsolators = document.getElementById('custom_no_of_isolators');
+    if (customShaftDiameter) fanData.custom_shaft_diameter = parseFloat(customShaftDiameter.value) || fanData.shaft_diameter;
+    if (customNoOfIsolators) fanData.custom_no_of_isolators = parseInt(customNoOfIsolators.value) || fanData.no_of_isolators;
     
     // Get accessories
     const accessories = {};
@@ -3162,80 +3251,126 @@ async function addFanToProject() {
         accessories[checkbox.value] = true;
     });
     fanData.specifications.accessories = accessories;
+    fanData.accessories = accessories; // Also store at top level for Excel export
     
-    // Get optional items - FIX: Make this consistent with database saving
-    const optionalItemPrices = {};
-    const optionalItemNames = {};
+    // IMPROVED OPTIONAL ITEMS COLLECTION - START
+    // 1. Collect standard optional items with prices
+    const standardOptionalItems = {};
+    const standardOptionalItemPrices = {};
+    const standardOptionalItemsArray = []; // BUGFIX: Create array to store multiple items
     
-    // Collect from .optional-item selects (standard optional items)
+    // Get from standard optional items container
+    document.querySelectorAll('.standard-optional-item').forEach(item => {
+        const itemId = item.dataset.itemId;
+        const hiddenInput = item.querySelector('input[type="hidden"]');
+        if (itemId && hiddenInput) {
+            const price = parseFloat(hiddenInput.dataset.price) || 0;
+            const itemName = hiddenInput.dataset.itemName || itemId;
+            standardOptionalItems[itemId] = itemName;
+            standardOptionalItemPrices[itemId] = price;
+            
+            // BUGFIX: Add to array instead of overwriting
+            standardOptionalItemsArray.push(itemId);
+            console.log(`[DEBUG] Found standard optional item: ${itemId} = ${price}`);
+        }
+    });
+    
+    // Also check for the old-style optional item selects
     document.querySelectorAll('.optional-item').forEach(select => {
         if (select && select.value === 'required') {
             const priceInput = select.parentElement?.querySelector('.price-input');
             if (priceInput && priceInput.value) {
-                const itemId = select.id;
-                const price = parseFloat(priceInput.value);
-                optionalItemPrices[itemId] = price;
-                // Also store the display name
-                const label = select.parentElement?.querySelector('label');
-                if (label) {
-                    optionalItemNames[itemId] = label.textContent.replace(':', '').trim();
-                }
+                standardOptionalItemPrices[select.id] = parseFloat(priceInput.value);
+                standardOptionalItems[select.id] = select.id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                // BUGFIX: Add to array instead of overwriting
+                standardOptionalItemsArray.push(select.id);
             }
         }
     });
     
-    // Also collect from input[id$="_price"] elements (alternative collection method)
-    document.querySelectorAll('input[id$="_price"]').forEach(item => {
-        const itemId = item.id.replace('_price', '');
-        const price = parseFloat(item.value || '0');
-        if (price > 0) {
-            optionalItemPrices[itemId] = price;
-            // Try to find the associated label for the name
-            const container = item.closest('.optional-item-group, .form-group');
-            if (container) {
-                const label = container.querySelector('label');
-                if (label) {
-                    optionalItemNames[itemId] = label.textContent.replace(':', '').trim();
-                }
-            }
-        }
-    });
-    
-    // Store the data in the format expected by the database
-    fanData.optional_items_detail = optionalItemPrices;
-    
-    // Create the items/prices structure for database storage
-    if (Object.keys(optionalItemPrices).length > 0) {
-        fanData.optional_items = optionalItemPrices;  // Direct key:price mapping
-        fanData.optional_item_prices = optionalItemPrices;  // For backward compatibility
+    // CRITICAL FIX: Check for hidden inputs with name="standard_optional_items[]"
+    document.querySelectorAll('input[name="standard_optional_items[]"]').forEach(input => {
+        const itemId = input.value;
+        const price = parseFloat(input.dataset.price) || 0;
+        const itemName = input.dataset.itemName || itemId;
         
-        // Also create the items/names structure if we have names
-        if (Object.keys(optionalItemNames).length > 0) {
-            fanData.optional_item_names = optionalItemNames;
+        if (itemId && price > 0) {
+            standardOptionalItems[itemId] = itemName;
+            standardOptionalItemPrices[itemId] = price;
+            // BUGFIX: Add to array instead of overwriting
+            standardOptionalItemsArray.push(itemId);
+            console.log(`[DEBUG] Found hidden standard optional item: ${itemId} = ${price}`);
         }
-    } else {
-        fanData.optional_items = {};
-        fanData.optional_item_prices = {};
-    }
+    });
     
-    // Merge in custom optional items as key-value pairs - use consistent naming
-    fanData.custom_optional_items = { ...window.customOptionalItems };
-    // Also include custom_option_items for backward compatibility
-    fanData.custom_option_items = { ...window.customOptionalItems };
+    // BUGFIX: Set the array properly
+    fanData[`standard_optional_items[]`] = standardOptionalItemsArray;
     
-    // Merge custom optional items into the main optional_items object
-    if (window.customOptionalItems) {
-        Object.assign(fanData.optional_items, window.customOptionalItems);
-    }
+    // 2. Collect custom optional items
+    const customOptionalItems = { ...window.customOptionalItems } || {};
     
-    console.log("Optional items data structure:");
-    console.log("- optionalItemPrices:", optionalItemPrices);
-    console.log("- optionalItemNames:", optionalItemNames);
-    console.log("- fanData.optional_items:", fanData.optional_items);
-    console.log("- fanData.custom_optional_items:", fanData.custom_optional_items);
+    // Also check for custom optional items in the UI
+    document.querySelectorAll('.custom-optional-item').forEach(item => {
+        const itemId = item.dataset.itemId;
+        const hiddenInput = item.querySelector('input[type="hidden"]');
+        if (itemId && hiddenInput) {
+            const price = parseFloat(hiddenInput.dataset.price) || 0;
+            customOptionalItems[itemId] = price;
+        }
+    });
     
-    console.log("COMPLETE FAN DATA BEING SENT:");
-    console.log(JSON.stringify(fanData, null, 2));
+    // Handle custom_optional_items[] format (array notation)
+    document.querySelectorAll('input[name="custom_optional_items[]"]').forEach(input => {
+        if (input.value) {
+            const displayName = input.value;
+            const price = parseFloat(input.dataset.price) || 0;
+            const itemId = input.dataset.itemId || displayName.toLowerCase().replace(/\s+/g, '_');
+            customOptionalItems[itemId] = price;
+            
+            // Store the display name for the Excel export
+            fanData[`custom_optional_items[]`] = displayName;
+        }
+    });
+    
+    // 3. Merge all optional items into a single comprehensive structure
+    const allOptionalItems = { ...standardOptionalItemPrices, ...customOptionalItems };
+    
+    // Store in multiple formats for backward compatibility and Excel export
+    fanData.optional_items = allOptionalItems;
+    fanData.optional_item_prices = standardOptionalItemPrices;
+    fanData.optional_items_detail = standardOptionalItemPrices;
+    fanData.custom_optional_items = customOptionalItems;
+    fanData.custom_option_items = customOptionalItems; // Backward compatibility
+    fanData.standard_optional_items = standardOptionalItems;
+    fanData.optionalItemPrices = standardOptionalItemPrices; // For Excel export compatibility
+    
+    // Calculate total optional items cost
+    const totalOptionalItemsCost = Object.values(allOptionalItems).reduce((sum, price) => sum + (parseFloat(price) || 0), 0);
+    fanData.optional_items_cost = totalOptionalItemsCost;
+    
+    console.log("Collected optional items:", {
+        standard: standardOptionalItems,
+        standardPrices: standardOptionalItemPrices,
+        custom: customOptionalItems,
+        merged: allOptionalItems,
+        totalCost: totalOptionalItemsCost
+    });
+    // IMPROVED OPTIONAL ITEMS COLLECTION - END
+    
+    // Get custom accessories
+    const customAccessoriesData = {};
+    document.querySelectorAll('.custom-accessory').forEach(item => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        const weightInput = item.querySelector('.weight-input');
+        if (checkbox && checkbox.checked && weightInput) {
+            customAccessoriesData[checkbox.value] = parseFloat(weightInput.value) || 0;
+        }
+    });
+    fanData.custom_accessories = customAccessoriesData;
+    fanData.specifications.custom_accessories = customAccessoriesData;
+    
+    console.log("Fan data:", fanData);
+    console.log("Custom optional items:", window.customOptionalItems);
     
     // Initialize window.fanData if it doesn't exist
     if (!window.fanData) {
@@ -4313,13 +4448,6 @@ function saveProjectToDatabase(enquiryNumber) {
                     }
                 }
                 
-                // Debug optional items data for this fan
-                console.log(`Fan ${index + 1} optional items data:`, {
-                    optional_items: fan.optional_items,
-                    custom_option_items: fan.custom_option_items,
-                    custom_optional_items: fan.custom_optional_items
-                });
-                
                 return {
                     fan_number: index + 1,
                     specifications: {
@@ -4334,8 +4462,8 @@ function saveProjectToDatabase(enquiryNumber) {
                         bearing_brand: fan.bearing_brand || '',
                         drive_pack_kw: parseFloat(fan.drive_pack_kw || 0),
                         custom_accessories: fan.custom_accessories || [],
-                        optional_items: fan.optional_items || {},
-                        custom_option_items: fan.custom_option_items || fan.custom_optional_items || {},
+                        optional_items: fan.optional_items || [],
+                        custom_option_items: fan.custom_option_items || [],
                         shaft_diameter: fan.shaft_diameter || fan.custom_shaft_diameter || 0,
                         no_of_isolators: fan.no_of_isolators || fan.custom_no_of_isolators || 0,
                         fabrication_margin: fan.fabrication_margin || 0,
@@ -4550,29 +4678,30 @@ async function loadSelectedEnquiry() {
                 data.fans.forEach((fan, index) => {
                     console.log("Processing fan data from server:", fan);
                     
+                    // The server returns flat database structure, so access fields directly
                     // Create a properly structured fan data object with necessary nested objects
                     const fanData = {
                         // Original flat structure for backward compatibility
-                        fan_model: fan.specifications.fan_model,
-                        fan_size: fan.specifications.size,
-                        class: fan.specifications.class,
-                        class_: fan.specifications.class,
-                        arrangement: fan.specifications.arrangement,
-                        vendor: fan.specifications.vendor,
-                        material: fan.specifications.material,
-                        moc: fan.specifications.material,
+                        fan_model: fan.fan_model || fan.fan_model || '',
+                        fan_size: fan.fan_size || fan.size || '',
+                        class: fan.class || fan.class_ || '',
+                        class_: fan.class || fan.class_ || '',
+                        arrangement: fan.arrangement || '',
+                        vendor: fan.vendor || '',
+                        material: fan.material || '',
+                        moc: fan.material || '',
                         
                         // Create nested structure as required by the summary page
                         specifications: {
-                            fan_model: fan.specifications.fan_model,
-                            size: fan.specifications.size,
-                            class: fan.specifications.class,
-                            arrangement: fan.specifications.arrangement,
-                            vendor: fan.specifications.vendor,
-                            material: fan.specifications.material,
-                            vibration_isolators: fan.specifications.vibration_isolators || 'not_required',
-                            bearing_brand: fan.specifications.bearing_brand || '',
-                            drive_pack_kw: parseFloat(fan.specifications.drive_pack_kw) || 0,
+                            fan_model: fan.fan_model || '',
+                            size: fan.fan_size || fan.size || '',
+                            class: fan.class || '',
+                            arrangement: fan.arrangement || '',
+                            vendor: fan.vendor || '',
+                            material: fan.material || '',
+                            vibration_isolators: fan.vibration_isolators || 'not_required',
+                            bearing_brand: fan.bearing_brand || '',
+                            drive_pack_kw: parseFloat(fan.drive_pack_kw) || 0,
                             
                             // Add explicit margin fields with defaults if missing
                             fabrication_margin: parseFloat(fan.fabrication_margin) || 25,
@@ -4580,76 +4709,80 @@ async function loadSelectedEnquiry() {
                         },
                         
                         weights: {
-                            bare_fan_weight: parseFloat(fan.weights.bare_fan_weight) || 0,
-                            accessory_weight: parseFloat(fan.weights.accessory_weight) || 0,
-                            total_weight: parseFloat(fan.weights.total_weight) || 0,
-                            fabrication_weight: parseFloat(fan.weights.fabrication_weight) || 0,
-                            bought_out_weight: parseFloat(fan.weights.bought_out_weight) || 0
+                            bare_fan_weight: parseFloat(fan.bare_fan_weight) || 0,
+                            accessory_weight: parseFloat(fan.accessory_weight || fan.accessory_weights) || 0,
+                            total_weight: parseFloat(fan.total_weight) || 0,
+                            fabrication_weight: parseFloat(fan.fabrication_weight) || 0,
+                            bought_out_weight: parseFloat(fan.bought_out_weight) || 0
                         },
                         
                         costs: {
-                            fabrication_cost: parseFloat(fan.costs.fabrication_cost) || 0,
-                            bought_out_cost: parseFloat(fan.costs.bought_out_cost) || 0,
-                            total_cost: parseFloat(fan.costs.total_cost) || 0,
-                            fabrication_selling_price: parseFloat(fan.costs.fabrication_selling_price) || 0,
-                            bought_out_selling_price: parseFloat(fan.costs.bought_out_selling_price) || 0,
-                            total_selling_price: parseFloat(fan.costs.total_selling_price) || 0,
-                            total_job_margin: parseFloat(fan.costs.total_job_margin) || 0,
+                            fabrication_cost: parseFloat(fan.fabrication_cost) || 0,
+                            bought_out_cost: parseFloat(fan.bought_out_cost) || 0,
+                            total_cost: parseFloat(fan.total_cost) || 0,
+                            fabrication_selling_price: parseFloat(fan.fabrication_selling_price) || 0,
+                            bought_out_selling_price: parseFloat(fan.bought_out_selling_price) || 0,
+                            total_selling_price: parseFloat(fan.total_selling_price) || 0,
+                            total_job_margin: parseFloat(fan.total_job_margin) || 0,
                             
                             // Add individual bought out costs explicitly
-                            motor_cost: parseFloat(fan.costs.motor_cost) || parseFloat(fan.motor_cost) || parseFloat(fan.discounted_motor_price) || 0, 
-                            vibration_isolators_cost: parseFloat(fan.costs.vibration_isolators_cost) || parseFloat(fan.vibration_isolators_cost) || parseFloat(fan.vibration_isolators_price) || 0,
-                            bearing_cost: parseFloat(fan.costs.bearing_cost) || parseFloat(fan.bearing_cost) || parseFloat(fan.bearing_price) || 0,
-                            drive_pack_cost: parseFloat(fan.costs.drive_pack_cost) || parseFloat(fan.drive_pack_cost) || parseFloat(fan.drive_pack_price) || 0,
-                            optional_items_cost: parseFloat(fan.costs.optional_items_cost) || parseFloat(fan.optional_items_cost) || 0
+                            motor_cost: parseFloat(fan.motor_cost) || 0, 
+                            vibration_isolators_cost: parseFloat(fan.vibration_isolators_cost) || 0,
+                            bearing_cost: parseFloat(fan.bearing_cost) || 0,
+                            drive_pack_cost: parseFloat(fan.drive_pack_cost) || 0,
+                            optional_items_cost: parseFloat(fan.optional_items_cost) || 0
                         },
                         
                         motor: {
-                            kw: parseFloat(fan.motor.kw) || 0,
-                            brand: fan.motor.brand || '',
-                            pole: parseInt(fan.motor.pole) || 0,
-                            efficiency: fan.motor.efficiency || '', // Keep as string (IE2, IE3, etc.)
-                            discount_rate: parseFloat(fan.motor.discount_rate) || 0
+                            kw: parseFloat(fan.motor_kw) || 0,
+                            brand: fan.motor_brand || '',
+                            pole: parseInt(fan.motor_pole) || 0,
+                            efficiency: fan.motor_efficiency || '', // Keep as string (IE2, IE3, etc.)
+                            discount_rate: parseFloat(fan.motor_discount_rate) || 0
                         },
                         
                         // Maintain compatibility with calculation results
-                        bare_fan_weight: parseFloat(fan.weights.bare_fan_weight) || 0,
-                        accessory_weights: parseFloat(fan.weights.accessory_weight) || 0,
-                        total_weight: parseFloat(fan.weights.total_weight) || 0,
-                        fabrication_cost: parseFloat(fan.costs.fabrication_cost) || 0,
-                        bought_out_cost: parseFloat(fan.costs.bought_out_cost) || 0,
-                        total_bought_out_cost: parseFloat(fan.costs.bought_out_cost) || parseFloat(fan.total_bought_out_cost) || 0,
-                        fabrication_selling_price: parseFloat(fan.costs.fabrication_selling_price) || 0,
-                        bought_out_selling_price: parseFloat(fan.costs.bought_out_selling_price) || 0,
-                        total_cost: parseFloat(fan.costs.total_cost) || parseFloat(fan.costs.total_cost) || 0,
-                        total_selling_price: parseFloat(fan.costs.total_selling_price) || parseFloat(fan.costs.total_selling_price) || 0,
-                        total_job_margin: parseFloat(fan.costs.total_job_margin) || 0,
+                        bare_fan_weight: parseFloat(fan.bare_fan_weight) || 0,
+                        accessory_weights: parseFloat(fan.accessory_weight || fan.accessory_weights) || 0,
+                        total_weight: parseFloat(fan.total_weight) || 0,
+                        fabrication_cost: parseFloat(fan.fabrication_cost) || 0,
+                        bought_out_cost: parseFloat(fan.bought_out_cost) || 0,
+                        total_bought_out_cost: parseFloat(fan.bought_out_cost) || 0,
+                        fabrication_selling_price: parseFloat(fan.fabrication_selling_price) || 0,
+                        bought_out_selling_price: parseFloat(fan.bought_out_selling_price) || 0,
+                        total_cost: parseFloat(fan.total_cost) || 0,
+                        total_selling_price: parseFloat(fan.total_selling_price) || 0,
+                        total_job_margin: parseFloat(fan.total_job_margin) || 0,
                         
                         // Add all individual bought out prices directly to the root for easy access
-                        motor_cost: parseFloat(fan.costs.motor_cost) || parseFloat(fan.motor_cost) || 0,
-                        discounted_motor_price: parseFloat(fan.discounted_motor_price) || parseFloat(fan.motor_cost) || 0,
-                        vibration_isolators_cost: parseFloat(fan.costs.vibration_isolators_cost) || parseFloat(fan.vibration_isolators_cost) || 0,
-                        vibration_isolators_price: parseFloat(fan.vibration_isolators_price) || parseFloat(fan.vibration_isolators_cost) || 0,
-                        bearing_cost: parseFloat(fan.costs.bearing_cost) || parseFloat(fan.bearing_cost) || 0,
-                        bearing_price: parseFloat(fan.bearing_price) || parseFloat(fan.bearing_cost) || 0,
-                        drive_pack_cost: parseFloat(fan.costs.drive_pack_cost) || parseFloat(fan.drive_pack_cost) || 0,
-                        drive_pack_price: parseFloat(fan.drive_pack_price) || parseFloat(fan.drive_pack_cost) || 0,
-                        optional_items_cost: parseFloat(fan.costs.optional_items_cost) || parseFloat(fan.optional_items_cost) || 0,
+                        motor_cost: parseFloat(fan.motor_cost) || 0,
+                        discounted_motor_price: parseFloat(fan.motor_cost) || 0,
+                        vibration_isolators_cost: parseFloat(fan.vibration_isolators_cost) || 0,
+                        vibration_isolators_price: parseFloat(fan.vibration_isolators_cost) || 0,
+                        bearing_cost: parseFloat(fan.bearing_cost) || 0,
+                        bearing_price: parseFloat(fan.bearing_cost) || 0,
+                        drive_pack_cost: parseFloat(fan.drive_pack_cost) || 0,
+                        drive_pack_price: parseFloat(fan.drive_pack_cost) || 0,
+                        optional_items_cost: parseFloat(fan.optional_items_cost) || 0,
                         
                         // Motor fields for backward compatibility
-                        motor_brand: fan.motor.brand || '',
-                        motor_kw: parseFloat(fan.motor.kw) || 0,
-                        motor_pole: parseInt(fan.motor.pole) || 0, // Add motor_pole field explicitly
-                        pole: parseInt(fan.motor.pole) || 0,
-                        motor_efficiency: fan.motor.efficiency || '', // Keep as string (IE2, IE3, etc.)
-                        efficiency: fan.motor.efficiency || '', // Keep as string (IE2, IE3, etc.)
-                        motor_discount_rate: parseFloat(fan.motor.discount_rate) || 0, // Add motor_discount_rate field explicitly
-                        motor_discount: parseFloat(fan.motor.discount_rate) || 0,
+                        motor_brand: fan.motor_brand || '',
+                        motor_kw: parseFloat(fan.motor_kw) || 0,
+                        motor_pole: parseInt(fan.motor_pole) || 0, // Add motor_pole field explicitly
+                        pole: parseInt(fan.motor_pole) || 0,
+                        motor_efficiency: fan.motor_efficiency || '', // Keep as string (IE2, IE3, etc.)
+                        efficiency: fan.motor_efficiency || '', // Keep as string (IE2, IE3, etc.)
+                        motor_discount_rate: parseFloat(fan.motor_discount_rate) || 0, // Add motor_discount_rate field explicitly
+                        motor_discount: parseFloat(fan.motor_discount_rate) || 0,
                         
                         // Specification fields for backward compatibility
-                        vibration_isolators: fan.specifications.vibration_isolators || 'not_required',
-                        bearing_brand: fan.specifications.bearing_brand || '',
-                        drive_pack_kw: parseFloat(fan.specifications.drive_pack_kw) || 0,
+                        vibration_isolators: fan.vibration_isolators || 'not_required',
+                        bearing_brand: fan.bearing_brand || '',
+                        drive_pack_kw: parseFloat(fan.drive_pack_kw) || 0,
+                        shaft_diameter: parseFloat(fan.shaft_diameter) || 0,
+                        no_of_isolators: parseInt(fan.no_of_isolators) || 0,
+                        fabrication_margin: parseFloat(fan.fabrication_margin) || 25,
+                        bought_out_margin: parseFloat(fan.bought_out_margin) || 25,
                     };
                     
                     // Debug the motor fields specifically
@@ -4671,76 +4804,148 @@ async function loadSelectedEnquiry() {
                         }
                     });
                     
-                    // Add accessories if available
-                    if (fan.specifications.accessories) {
-                        // Convert the array to an object with true values for checkboxes
-                        if (Array.isArray(fan.specifications.accessories)) {
-                            const accessoriesObj = {};
-                            fan.specifications.accessories.forEach(acc => {
-                                accessoriesObj[acc] = true;
-                            });
-                            fanData.accessories = accessoriesObj;
-                            fanData.specifications.accessories = accessoriesObj;
-                        } else {
-                            fanData.accessories = fan.specifications.accessories;
-                            fanData.specifications.accessories = fan.specifications.accessories;
+                    // Add accessories if available - parse JSON if it's a string
+                    if (fan.accessories) {
+                        try {
+                            const accessories = typeof fan.accessories === 'string' ? JSON.parse(fan.accessories) : fan.accessories;
+                            fanData.accessories = accessories;
+                            fanData.specifications.accessories = accessories;
+                        } catch (e) {
+                            console.warn("Could not parse accessories JSON:", fan.accessories);
+                            fanData.accessories = {};
+                            fanData.specifications.accessories = {};
+                        }
+                    } else {
+                        fanData.accessories = {};
+                        fanData.specifications.accessories = {};
+                    }
+                    
+                    // Add custom accessories if available - parse JSON if it's a string
+                    if (fan.custom_accessories) {
+                        try {
+                            const customAccessories = typeof fan.custom_accessories === 'string' ? JSON.parse(fan.custom_accessories) : fan.custom_accessories;
+                            fanData.custom_accessories = customAccessories;
+                            fanData.specifications.custom_accessories = customAccessories;
+                        } catch (e) {
+                            console.warn("Could not parse custom accessories JSON:", fan.custom_accessories);
+                            fanData.custom_accessories = {};
+                            fanData.specifications.custom_accessories = {};
                         }
                     }
                     
-                    // Add custom accessories if available
-                    if (fan.specifications.custom_accessories) {
-                        fanData.custom_accessories = fan.specifications.custom_accessories;
-                        fanData.specifications.custom_accessories = fan.specifications.custom_accessories;
-                    }
-                    
-                    // Add optional items if available
-                    if (fan.specifications.optional_items) {
-                        fanData.optional_items = fan.specifications.optional_items;
-                        fanData.specifications.optional_items = fan.specifications.optional_items;
-                    }
-                    
-                    // Handle optional items with prices if they exist separately
-                    if (fan.optional_item_prices && fan.optional_items) {
-                        // If we have both items and prices, merge them properly
-                        const mergedOptionalItems = {};
-                        
-                        // If optional_items is already in the merged format (item_id: price)
-                        if (typeof fan.optional_items === 'object' && !Array.isArray(fan.optional_items)) {
-                            for (const [itemId, price] of Object.entries(fan.optional_items)) {
-                                if (price > 0) {
-                                    mergedOptionalItems[itemId] = parseFloat(price);
+                    // Add optional items if available - parse JSON if it's a string
+                    if (fan.optional_items || fan.optional_items_json) {
+                        try {
+                            const optionalItemsData = fan.optional_items_json || fan.optional_items;
+                            const optionalItems = typeof optionalItemsData === 'string' ? JSON.parse(optionalItemsData) : optionalItemsData;
+                            fanData.optional_items = optionalItems;
+                            fanData.specifications.optional_items = optionalItems;
+                            
+                            // CRITICAL FIX: Populate the UI with loaded optional items
+                            if (optionalItems && typeof optionalItems === 'object') {
+                                // Initialize optional items objects if not already done
+                                window.optionalItemPrices = window.optionalItemPrices || {};
+                                
+                                // Clear existing optional items in UI
+                                const standardContainer = document.getElementById('standard-optional-items-container');
+                                if (standardContainer) {
+                                    standardContainer.innerHTML = '';
                                 }
+                                
+                                // Add each loaded optional item to the UI
+                                Object.entries(optionalItems).forEach(([itemId, price]) => {
+                                    if (price > 0) {
+                                        // Store in global optional items
+                                        window.optionalItemPrices[itemId] = parseFloat(price);
+                                        
+                                        // Add to UI container if it exists
+                                        if (standardContainer) {
+                                            const displayName = itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                            const itemDiv = document.createElement('div');
+                                            itemDiv.className = 'standard-optional-item optional-item-group';
+                                            itemDiv.dataset.itemId = itemId;
+                                            itemDiv.innerHTML = `
+                                                <div style="display: flex; align-items: center; margin-bottom: 5px; padding: 5px; background-color: #f5f5f5; border-radius: 4px;">
+                                                    <label style="margin-right: auto;">${displayName}: </label>
+                                                    <span class="price-display">₹${parseFloat(price).toLocaleString('en-IN')}</span>
+                                                    <input type="hidden" name="standard_optional_items[]" value="${itemId}" data-price="${price}">
+                                                    <button type="button" class="remove-btn" onclick="removeStandardOptionalItem('${itemId}')">×</button>
+                                                </div>
+                                            `;
+                                            standardContainer.appendChild(itemDiv);
+                                        }
+                                        
+                                        console.log(`[LOADED] Optional item: ${itemId} = ₹${price}`);
+                                    }
+                                });
                             }
+                        } catch (e) {
+                            console.warn("Could not parse optional items JSON:", fan.optional_items);
+                            fanData.optional_items = {};
+                            fanData.specifications.optional_items = {};
                         }
-                        
-                        fanData.optional_items = mergedOptionalItems;
-                        fanData.specifications.optional_items = mergedOptionalItems;
-                        fanData.optional_item_prices = fan.optional_item_prices;
+                    } else {
+                        fanData.optional_items = {};
+                        fanData.specifications.optional_items = {};
                     }
                     
-                    // Add custom optional items if available
-                    if (fan.specifications.custom_optional_items) {
-                        fanData.custom_optional_items = fan.specifications.custom_optional_items;
-                        fanData.specifications.custom_optional_items = fan.specifications.custom_optional_items;
-                    }
-                    
-                    // Handle custom_option_items for backward compatibility
-                    if (fan.specifications.custom_option_items) {
-                        fanData.custom_option_items = fan.specifications.custom_option_items;
-                        fanData.specifications.custom_option_items = fan.specifications.custom_option_items;
-                        
-                        // If we don't have custom_optional_items but have custom_option_items, use it
-                        if (!fanData.custom_optional_items) {
-                            fanData.custom_optional_items = fan.specifications.custom_option_items;
-                            fanData.specifications.custom_optional_items = fan.specifications.custom_option_items;
+                    // Add custom optional items if available - parse JSON if it's a string
+                    if (fan.custom_option_items || fan.custom_optional_items_json) {
+                        try {
+                            const customItemsData = fan.custom_optional_items_json || fan.custom_option_items;
+                            const customItems = typeof customItemsData === 'string' ? JSON.parse(customItemsData) : customItemsData;
+                            fanData.custom_option_items = customItems;
+                            fanData.specifications.custom_option_items = customItems;
+                            
+                            // CRITICAL FIX: Populate the UI with loaded custom optional items
+                            if (customItems && typeof customItems === 'object') {
+                                // Initialize custom optional items objects if not already done
+                                window.customOptionalItems = window.customOptionalItems || {};
+                                
+                                // Clear existing custom optional items in UI
+                                const customContainer = document.getElementById('custom-optional-items-container');
+                                if (customContainer) {
+                                    customContainer.innerHTML = '';
+                                }
+                                
+                                // Add each loaded custom optional item to the UI
+                                Object.entries(customItems).forEach(([itemId, price]) => {
+                                    if (price > 0) {
+                                        // Store in global custom optional items
+                                        window.customOptionalItems[itemId] = parseFloat(price);
+                                        
+                                        // Add to UI container if it exists
+                                        if (customContainer) {
+                                            const displayName = itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                            const itemDiv = document.createElement('div');
+                                            itemDiv.className = 'custom-optional-item optional-item-group';
+                                            itemDiv.dataset.itemId = itemId;
+                                            itemDiv.innerHTML = `
+                                                <div style="display: flex; align-items: center; margin-bottom: 5px; padding: 5px; background-color: #f0f8ff; border-radius: 4px;">
+                                                    <label style="margin-right: auto;">${displayName}: </label>
+                                                    <span class="price-display">₹${parseFloat(price).toLocaleString('en-IN')}</span>
+                                                    <input type="hidden" name="custom_optional_items[]" value="${itemId}" data-price="${price}">
+                                                    <button type="button" class="remove-btn" onclick="removeCustomOptionalItem('${itemDiv.id}', '${itemId}')">×</button>
+                                                </div>
+                                            `;
+                                            customContainer.appendChild(itemDiv);
+                                        }
+                                        
+                                        console.log(`[LOADED] Custom optional item: ${itemId} = ₹${price}`);
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            console.warn("Could not parse custom optional items JSON:", fan.custom_option_items);
+                            fanData.custom_option_items = {};
+                            fanData.specifications.custom_option_items = {};
                         }
+                    } else {
+                        fanData.custom_option_items = {};
+                        fanData.specifications.custom_option_items = {};
                     }
                     
                     console.log("Processed fan data:", fanData);
-                    
-                    // Add explicit margin fields with defaults if missing
-                    fanData.fabrication_margin = parseFloat(fan.fabrication_margin) || parseFloat(fan.costs.fabrication_margin) || 25;
-                    fanData.bought_out_margin = parseFloat(fan.bought_out_margin) || parseFloat(fan.costs.bought_out_margin) || 25;
                     
                     if (index < window.fanData.length) {
                         window.fanData[index] = fanData;
@@ -4766,6 +4971,8 @@ async function loadSelectedEnquiry() {
                 if (enquiryForm) enquiryForm.style.display = 'none';
                 if (fanFormSection) fanFormSection.style.display = 'block';
             }
+            
+            console.log('Successfully loaded enquiry with optional items:', window.enquiryNumber);
             
             console.log('Successfully loaded enquiry:', window.enquiryNumber);
         } else {

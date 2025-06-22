@@ -822,9 +822,41 @@ function saveFanData(fanNumber) {
             data.motor_cost = 0;
         }
         
-        // Get optional items from the optional items container
+        // BUGFIX: Get optional items from the new standard-optional-item system
         data.optional_items = {};
-        const optionalItems = {
+        const standardOptionalItemsArray = [];
+        
+        // Collect from the new standard optional items container
+        document.querySelectorAll('.standard-optional-item').forEach(item => {
+            const itemId = item.dataset.itemId;
+            const hiddenInput = item.querySelector('input[type="hidden"]');
+            if (itemId && hiddenInput) {
+                const price = parseFloat(hiddenInput.dataset.price) || 0;
+                if (price > 0) {
+                    data.optional_items[itemId] = price;
+                    standardOptionalItemsArray.push(itemId);
+                    console.log(`[BUGFIX] Collected optional item: ${itemId} = ${price}`);
+                }
+            }
+        });
+        
+        // Also check for hidden inputs with name="standard_optional_items[]" (backup method)
+        document.querySelectorAll('input[name="standard_optional_items[]"]').forEach(input => {
+            const itemId = input.value;
+            const price = parseFloat(input.dataset.price) || 0;
+            
+            if (itemId && price > 0 && !data.optional_items[itemId]) {
+                data.optional_items[itemId] = price;
+                standardOptionalItemsArray.push(itemId);
+                console.log(`[BUGFIX] Collected hidden optional item: ${itemId} = ${price}`);
+            }
+        });
+        
+        // Set the standard_optional_items[] field for backward compatibility
+        data['standard_optional_items[]'] = standardOptionalItemsArray;
+        
+        // LEGACY: Still check for old-style checkboxes (for backward compatibility)
+        const legacyOptionalItems = {
             flex_connectors: 'Flex Connectors',
             silencer: 'Silencer',
             testing_charges: 'Testing Charges',
@@ -833,14 +865,47 @@ function saveFanData(fanNumber) {
             packing_charges: 'Packing Charges'
         };
 
-        for (const [key, displayName] of Object.entries(optionalItems)) {
+        for (const [key, displayName] of Object.entries(legacyOptionalItems)) {
             const checkbox = document.getElementById(key);
             const priceInput = document.querySelector(`[data-item="${key}"]`);
             
-            if (checkbox && checkbox.value === 'required' && priceInput) {
+            if (checkbox && checkbox.value === 'required' && priceInput && !data.optional_items[key]) {
                 const price = parseFloat(priceInput.value) || 0;
                 if (price > 0) {
                     data.optional_items[key] = price;
+                    standardOptionalItemsArray.push(key);
+                    console.log(`[LEGACY] Collected optional item: ${key} = ${price}`);
+                }
+            }
+        }
+        
+        console.log(`[BUGFIX] Total optional items collected:`, data.optional_items);
+        console.log(`[BUGFIX] Standard optional items array:`, standardOptionalItemsArray);
+        
+        // ENHANCEMENT: Collect custom material fields when material is set to 'others'
+        const materialField = document.getElementById('material') || document.getElementById('moc');
+        if (materialField && materialField.value === 'others') {
+            console.log('[MATERIAL] Collecting custom material fields because material is set to "others"');
+            
+            // Collect all 5 material slots
+            for (let i = 0; i < 5; i++) {
+                const nameField = document.getElementById(`material_name_${i}`);
+                const weightField = document.getElementById(`material_weight_${i}`);
+                const rateField = document.getElementById(`material_rate_${i}`);
+                
+                if (nameField) {
+                    data[`material_name_${i}`] = nameField.value || '';
+                    console.log(`[MATERIAL] material_name_${i} = "${nameField.value}"`);
+                }
+                
+                if (weightField) {
+                    data[`material_weight_${i}`] = parseFloat(weightField.value) || 0;
+                    console.log(`[MATERIAL] material_weight_${i} = ${weightField.value}`);
+                }
+                
+                if (rateField) {
+                    data[`material_rate_${i}`] = parseFloat(rateField.value) || 0;
+                    console.log(`[MATERIAL] material_rate_${i} = ${rateField.value}`);
                 }
             }
         }
@@ -1529,7 +1594,7 @@ function showProjectSummary() {
         }
     });
     // --- BEGIN: Project Summary Export to Excel ---
-    setTimeout(addExportToExcelButton, 500);
+    setTimeout(addNewExportButton, 500);
     // --- END: Project Summary Export to Excel ---
 }
 
@@ -1681,12 +1746,28 @@ function createFanCard(fanNumber, fanData) {
         optionalItems = {...fanData.optional_items};
     }
     
-    // Check for standard_optional_items[] field
+    // Check for standard_optional_items[] field - handle both single item and array
     if (fanData["standard_optional_items[]"]) {
-        const itemName = fanData["standard_optional_items[]"];
-        if (itemName) {
-            // Add this item to our optional items list
-            optionalItems[itemName] = 0;  // Default to 0 cost
+        const standardItems = fanData["standard_optional_items[]"];
+        
+        // BUGFIX: Handle both array and single string format
+        if (Array.isArray(standardItems)) {
+            // Multiple items stored as array
+            standardItems.forEach(itemName => {
+                if (itemName) {
+                    // For multiple items, try to get individual costs from optional_items, otherwise split total cost
+                    const individualCost = fanData.optional_items && fanData.optional_items[itemName] 
+                        ? fanData.optional_items[itemName] 
+                        : (fanData.optional_items_cost > 0 ? Math.round(fanData.optional_items_cost / standardItems.length) : 'Included');
+                    optionalItems[itemName] = individualCost;
+                    console.log(`[DEBUG] Added standard optional item: ${itemName} = ${individualCost}`);
+                }
+            });
+        } else if (typeof standardItems === 'string') {
+            // Single item stored as string (backward compatibility)
+            const cost = fanData.optional_items_cost > 0 ? fanData.optional_items_cost : 'Included';
+            optionalItems[standardItems] = cost;
+            console.log(`[DEBUG] Added standard optional item: ${standardItems} = ${cost}`);
         }
     }
     
@@ -3411,54 +3492,235 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // --- BEGIN: Project Summary Export to Excel ---
 function extractProjectSummaryTable() {
-    const summary = document.getElementById('project-summary');
     const fans = window.fanData || [];
-    const fanCards = summary.querySelectorAll('.fan-card');
+    if (!fans.length) {
+        return [['Field'], ['No fan data available']];
+    }
+    
+    console.log('Extracting project summary table from actual fan data:', fans);
+    
     const rows = [];
-    const sectionRows = [];
-    // Build a map of label to row index for easy column filling
-    const labelToRow = {};
-    // For each fan, collect all rows (label, value)
-    fanCards.forEach((fanCard, fanIdx) => {
-        let currentSection = '';
-        fanCard.querySelectorAll('h3, .detail-item').forEach(item => {
-            if (item.tagName === 'H3') {
-                currentSection = item.textContent.trim();
-                if (fanIdx === 0) {
-                    rows.push([currentSection]);
-                    sectionRows.push(rows.length - 1);
-                }
-            } else {
-                const spans = item.querySelectorAll('span, input');
-                let label = spans[0]?.textContent?.trim() || '';
-                let value = '';
-                if (spans[1]) {
-                    value = spans[1].tagName === 'INPUT' ? spans[1].value : spans[1].textContent.trim();
-                } else if (spans[0] && spans[0].tagName === 'INPUT') {
-                    value = spans[0].value;
-                }
-                // Find or create the row for this label
-                let rowIdx = labelToRow[label];
-                if (fanIdx === 0) {
-                    rows.push([label, value]);
-                    rowIdx = rows.length - 1;
-                    labelToRow[label] = rowIdx;
-                } else {
-                    rowIdx = labelToRow[label];
-                    if (rowIdx !== undefined) {
-                        rows[rowIdx][fanIdx + 1] = value;
-                    }
-                }
-            }
-        });
-    });
-    // Add header row
+    
+    // Header row
     const header = ['Field'];
     for (let i = 0; i < fans.length; i++) {
         const fan = fans[i];
         header.push(`${fan.fan_model || ''} ${fan.fan_size ? '- ' + fan.fan_size : ''}`.trim() || `Fan ${i+1}`);
     }
-    rows.unshift(header);
+    rows.push(header);
+    
+    // Fan Details Section
+    rows.push(['Fan Details', ...Array(fans.length).fill('')]);
+    
+    const fanDetailsFields = [
+        {label: 'Class', key: 'class_', alt: 'class'},
+        {label: 'Arrangement', key: 'arrangement'},
+        {label: 'Material', key: 'material'},
+        {label: 'Vendor', key: 'vendor'},
+        {label: 'Shaft Diameter (mm)', key: 'shaft_diameter'},
+        {label: 'No. of Isolators', key: 'no_of_isolators'},
+        {label: 'Isolator Brand/Type', key: 'vibration_isolators'},
+        {label: 'Bearing Brand', key: 'bearing_brand'},
+        {label: 'Drive Pack kW', key: 'drive_pack_kw', alt: 'drive_pack'}
+    ];
+    
+    fanDetailsFields.forEach(field => {
+        const row = [field.label];
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            let value = fan[field.key] || (field.alt ? fan[field.alt] : '') || '';
+            row.push(value);
+        }
+        rows.push(row);
+    });
+    
+    // Motor Details Section
+    rows.push(['Motor Details', ...Array(fans.length).fill('')]);
+    
+    const motorFields = [
+        {label: 'Motor Brand', key: 'motor_brand'},
+        {label: 'Motor kW', key: 'motor_kw'},
+        {label: 'Pole', key: 'pole'},
+        {label: 'Efficiency', key: 'efficiency'},
+        {label: 'Motor Discount (%)', key: 'motor_discount'}
+    ];
+    
+    motorFields.forEach(field => {
+        const row = [field.label];
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            let value = fan[field.key] || '';
+            
+            // Handle empty motor fields
+            if (field.key === 'motor_brand' && !value) {
+                value = fan.arrangement === '4' ? 'Not Required (Direct Drive)' : 'To Be Selected';
+            } else if (['motor_kw', 'pole', 'efficiency'].includes(field.key) && !value) {
+                value = fan.arrangement === '4' ? 'N/A' : 'TBD';
+            }
+            
+            row.push(value);
+        }
+        rows.push(row);
+    });
+    
+    // Weights Section
+    rows.push(['Weights', ...Array(fans.length).fill('')]);
+    
+    const weightFields = [
+        {label: 'Bare Fan Weight (kg)', key: 'bare_fan_weight'},
+        {label: 'Accessory Weight (kg)', key: 'accessory_weights'},
+        {label: 'Total Weight (kg)', key: 'total_weight'}
+    ];
+    
+    weightFields.forEach(field => {
+        const row = [field.label];
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            const value = fan[field.key] || '';
+            row.push(value ? `${value} kg` : '');
+        }
+        rows.push(row);
+    });
+    
+    // Costs Section
+    rows.push(['Costs', ...Array(fans.length).fill('')]);
+    
+    const costFields = [
+        {label: 'Fabrication Cost', key: 'fabrication_cost'},
+        {label: 'Bought Out Cost', key: 'bought_out_cost'},
+        {label: 'Total Cost', key: 'total_cost'},
+        {label: 'Fabrication Selling Price', key: 'fabrication_selling_price'},
+        {label: 'Bought Out Selling Price', key: 'bought_out_selling_price'},
+        {label: 'Total Selling Price', key: 'total_selling_price'},
+        {label: 'Job Margin (%)', key: 'total_job_margin'}
+    ];
+    
+    costFields.forEach(field => {
+        const row = [field.label];
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            const value = fan[field.key] || '';
+            if (field.key === 'total_job_margin') {
+                row.push(value ? `${value}%` : '');
+            } else {
+                row.push(value ? `₹${parseFloat(value).toLocaleString('en-IN')}` : '');
+            }
+        }
+        rows.push(row);
+    });
+    
+    // Accessories Section
+    rows.push(['Accessories', ...Array(fans.length).fill('')]);
+    
+    // Get all unique accessories across all fans
+    const allAccessories = new Set();
+    fans.forEach(fan => {
+        if (fan.accessories && typeof fan.accessories === 'object') {
+            Object.keys(fan.accessories).forEach(acc => {
+                if (fan.accessories[acc]) {
+                    allAccessories.add(acc);
+                }
+            });
+        }
+    });
+    
+    const accessoryNames = {
+        'unitary_base_frame': 'Unitary Base Frame',
+        'isolation_base_frame': 'Isolation Base Frame',
+        'split_casing': 'Split Casing',
+        'inlet_companion_flange': 'Inlet Companion Flange',
+        'outlet_companion_flange': 'Outlet Companion Flange',
+        'inlet_butterfly_damper': 'Inlet Butterfly Damper',
+        'Swing out Construction': 'Swing out Construction'
+    };
+    
+    Array.from(allAccessories).sort().forEach(acc => {
+        const displayName = accessoryNames[acc] || acc.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const row = [displayName];
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            const isIncluded = fan.accessories && fan.accessories[acc];
+            row.push(isIncluded ? 'Included' : '');
+        }
+        rows.push(row);
+    });
+    
+    // Optional Items Section
+    rows.push(['Optional Items', ...Array(fans.length).fill('')]);
+    
+    // Get all unique optional items across all fans
+    const allOptionalItems = new Set();
+    fans.forEach(fan => {
+        // Check optional_items object
+        if (fan.optional_items && typeof fan.optional_items === 'object') {
+            Object.keys(fan.optional_items).forEach(item => {
+                allOptionalItems.add(item);
+            });
+        }
+        
+        // Check standard_optional_items[] format - handle both array and string
+        if (fan['standard_optional_items[]']) {
+            const standardItems = fan['standard_optional_items[]'];
+            if (Array.isArray(standardItems)) {
+                standardItems.forEach(item => allOptionalItems.add(item));
+            } else if (typeof standardItems === 'string') {
+                allOptionalItems.add(standardItems);
+            }
+        }
+    });
+    
+    const optionalItemNames = {
+        'flex_connectors': 'Flex Connectors',
+        'silencer': 'Silencer',
+        'testing_charges': 'Testing Charges',
+        'freight_charges': 'Freight Charges',
+        'warranty_charges': 'Warranty Charges',
+        'packing_charges': 'Packing Charges',
+        'vibration_sensors': 'Vibration Sensors',
+        'temperature_sensors': 'Temperature Sensors'
+    };
+    
+    // Default costs for optional items
+    const defaultCosts = {
+        'testing_charges': 2000,
+        'silencer': 5000,
+        'flex_connectors': 3000,
+        'freight_charges': 1000,
+        'warranty_charges': 1500,
+        'packing_charges': 500,
+        'vibration_sensors': 4000,
+        'temperature_sensors': 3500
+    };
+    
+    Array.from(allOptionalItems).sort().forEach(item => {
+        const displayName = optionalItemNames[item] || item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const row = [displayName];
+        for (let i = 0; i < fans.length; i++) {
+            const fan = fans[i];
+            let cost = '';
+            
+            // Check optional_items object
+            if (fan.optional_items && fan.optional_items[item]) {
+                cost = fan.optional_items[item];
+            }
+            // Check standard_optional_items[] format - handle both array and string
+            else if (fan['standard_optional_items[]']) {
+                const standardItems = fan['standard_optional_items[]'];
+                if (Array.isArray(standardItems) && standardItems.includes(item)) {
+                    // For array format, try to get individual cost from optional_items first
+                    cost = (fan.optional_items && fan.optional_items[item]) || defaultCosts[item] || 'Included';
+                } else if (standardItems === item) {
+                    // For string format (backward compatibility)
+                    cost = fan.optional_items_cost || defaultCosts[item] || 'Included';
+                }
+            }
+            
+            row.push(cost ? `₹${parseFloat(cost).toLocaleString('en-IN')}` : '');
+        }
+        rows.push(row);
+    });
+    
+    console.log('Generated table rows:', rows);
     return rows;
 }
 
@@ -3580,6 +3842,16 @@ function exportProjectSummaryToExcelWYSIWYG() {
                     }
                 });
             }
+            
+            // CRITICAL FIX: Also check for standard_optional_items[] format - handle both array and string
+            if (fan['standard_optional_items[]']) {
+                const standardItems = fan['standard_optional_items[]'];
+                if (Array.isArray(standardItems)) {
+                    standardItems.forEach(item => optionalItemKeys.add(item));
+                } else if (typeof standardItems === 'string') {
+                    optionalItemKeys.add(standardItems);
+                }
+            }
         });
         
         // Standard optional item names mapping
@@ -3616,9 +3888,31 @@ function exportProjectSummaryToExcelWYSIWYG() {
             const row = [displayName];
             for (let i = 0; i < fans.length; i++) {
                 const fan = fans[i];
-                const price = fan.optional_items && fan.optional_items[key] ? 
-                    parseFloat(fan.optional_items[key]) : '';
-                row.push(price !== '' ? `₹${price.toLocaleString('en-IN')}` : '');
+                let price = '';
+                
+                // Check regular optional_items first
+                if (fan.optional_items && fan.optional_items[key]) {
+                    price = parseFloat(fan.optional_items[key]);
+                }
+                // CRITICAL FIX: Check for standard_optional_items[] match and use optional_items_cost - handle both array and string
+                else if (fan['standard_optional_items[]']) {
+                    const standardItems = fan['standard_optional_items[]'];
+                    if (Array.isArray(standardItems) && standardItems.includes(key)) {
+                        // For array format, try to get individual cost from optional_items first
+                        price = (fan.optional_items && fan.optional_items[key]) || 
+                               (fan.optional_items_cost > 0 ? parseFloat(fan.optional_items_cost) / standardItems.length : 0);
+                    } else if (standardItems === key && fan.optional_items_cost > 0) {
+                        // For string format (backward compatibility)
+                        price = parseFloat(fan.optional_items_cost);
+                    }
+                }
+                
+                const isStandardItem = fan['standard_optional_items[]'] && 
+                    (Array.isArray(fan['standard_optional_items[]']) 
+                        ? fan['standard_optional_items[]'].includes(key) 
+                        : fan['standard_optional_items[]'] === key);
+                        
+                row.push(price !== '' && price > 0 ? `₹${price.toLocaleString('en-IN')}` : (isStandardItem ? 'Included' : ''));
             }
             rows.push(row);
         });
@@ -3644,6 +3938,11 @@ function exportProjectSummaryToExcelWYSIWYG() {
                         accessoryKeys.add(key);
                     }
                 });
+            }
+            
+            // CRITICAL FIX: Also check for custom_accessories as string
+            if (fan.custom_accessories && typeof fan.custom_accessories === 'string') {
+                accessoryKeys.add(fan.custom_accessories);
             }
         });
         
@@ -3685,7 +3984,18 @@ function exportProjectSummaryToExcelWYSIWYG() {
             const row = [displayName];
             for (let i = 0; i < fans.length; i++) {
                 const fan = fans[i];
-                row.push(fan.accessories && fan.accessories[key] === true ? 'Included' : '');
+                let isIncluded = false;
+                
+                // Check regular accessories object
+                if (fan.accessories && fan.accessories[key] === true) {
+                    isIncluded = true;
+                }
+                // CRITICAL FIX: Check custom_accessories as string
+                else if (fan.custom_accessories && typeof fan.custom_accessories === 'string' && fan.custom_accessories === key) {
+                    isIncluded = true;
+                }
+                
+                row.push(isIncluded ? 'Included' : '');
             }
             rows.push(row);
         });
@@ -4307,5 +4617,811 @@ function updateProjectTotals() {
     // Calculate and update project margin
     const averageJobMargin = fanCount > 0 ? parseFloat((totalJobMarginSum / fanCount).toFixed(2)) : 0;
     updateElement('project-total-margin', `${averageJobMargin}%`);
+}
+
+// NEW COMPLETE EXCEL EXPORT SYSTEM - REPLACES ALL EXISTING EXCEL EXPORT FUNCTIONS
+function exportProjectSummaryToExcelComplete() {
+    console.log("Starting new complete Excel export");
+    
+    // Ensure we have fan data
+    if (!window.fanData || window.fanData.length === 0) {
+        alert('No fan data available to export. Please calculate fan data first.');
+        return;
+    }
+
+    // Filter out null/empty fan data
+    const validFans = window.fanData.filter(fan => fan !== null && fan !== undefined);
+    
+    if (validFans.length === 0) {
+        alert('No valid fan data found to export.');
+        return;
+    }
+
+    console.log("Valid fans for export:", validFans.length);
+    console.log("Fan data:", validFans);
+
+    try {
+        // Create HTML table with full styling that Excel will recognize
+        const htmlContent = generateStyledHTMLForExcel(validFans);
+        
+        // Create blob and download
+        const blob = new Blob([htmlContent], { 
+            type: 'application/vnd.ms-excel;charset=utf-8' 
+        });
+        
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        
+        // Generate filename
+        const enquiryNumber = window.enquiryNumber || 'Unknown';
+        const customerName = window.customerName || 'Unknown';
+        const filename = `${enquiryNumber}_${customerName}_Summary.xls`;
+        link.download = filename;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        console.log("Excel export completed successfully");
+        
+    } catch (error) {
+        console.error("Excel export failed:", error);
+        alert('Failed to export Excel file: ' + error.message);
+    }
+}
+
+function generateStyledHTMLForExcel(fans) {
+    const enquiryNumber = window.enquiryNumber || 'Unknown';
+    const customerName = window.customerName || 'Unknown';
+    const salesEngineer = window.salesEngineer || 'Unknown';
+    
+    let html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            font-family: Calibri, Arial, sans-serif;
+            font-size: 11pt;
+        }
+        th { 
+            background-color: #1F4E79; 
+            color: white; 
+            font-weight: bold; 
+            padding: 8px; 
+            border: 1px solid #000000;
+            text-align: center;
+        }
+        td { 
+            padding: 6px; 
+            border: 1px solid #CCCCCC;
+            text-align: center;
+        }
+        .section-header { 
+            background-color: #70AD47; 
+            color: white; 
+            font-weight: bold; 
+            text-align: left;
+            padding: 8px;
+        }
+        .section-project { background-color: #70AD47; }
+        .section-fan { background-color: #E74C3C; }
+        .section-motor { background-color: #9B59B6; }
+        .section-weights { background-color: #F39C12; }
+        .section-costs { background-color: #2E86AB; }
+        .section-accessories { background-color: #27AE60; }
+        .section-optional { background-color: #E67E22; }
+        .section-totals { background-color: #8E44AD; }
+        .field-label { 
+            background-color: #F8F9FA; 
+            font-weight: bold; 
+            color: #2C3E50;
+            text-align: left;
+            padding: 6px;
+        }
+        .currency { 
+            color: #27AE60; 
+            font-weight: bold; 
+            background-color: #F8F9FA;
+            text-align: right;
+        }
+        .percentage { 
+            color: #E74C3C; 
+            font-weight: bold; 
+            background-color: #FDEDEC;
+        }
+        .included { 
+            color: #27AE60; 
+            font-weight: bold; 
+            background-color: #E8F8F5;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <tr>
+            <th style="width: 300px;">Field</th>`;
+    
+    // Add fan column headers
+    for (let i = 0; i < fans.length; i++) {
+        html += `<th style="width: 150px;">Fan ${i + 1}</th>`;
+    }
+    html += `</tr>`;
+    
+    // Project Information Section
+    html += `<tr><td class="section-header section-project" colspan="${fans.length + 1}">PROJECT INFORMATION</td></tr>`;
+    html += addHTMLRow('Enquiry Number', fans.map(() => enquiryNumber));
+    html += addHTMLRow('Customer Name', fans.map(() => customerName));
+    html += addHTMLRow('Sales Engineer', fans.map(() => salesEngineer));
+    html += addHTMLRow('Total Fans', fans.map(() => fans.length));
+    
+    // Fan Specifications Section
+    html += `<tr><td class="section-header section-fan" colspan="${fans.length + 1}">FAN SPECIFICATIONS</td></tr>`;
+    html += addHTMLRow('Fan Model', fans.map(f => f.fan_model || ''));
+    html += addHTMLRow('Fan Size', fans.map(f => f.fan_size || ''));
+    html += addHTMLRow('Class', fans.map(f => f.class_ || f.class || ''));
+    html += addHTMLRow('Arrangement', fans.map(f => f.arrangement || ''));
+    html += addHTMLRow('Material', fans.map(f => f.material || ''));
+    html += addHTMLRow('Vendor', fans.map(f => f.vendor || ''));
+    html += addHTMLRow('Vendor Rate (₹/kg)', fans.map(f => f.vendor_rate ? `₹${f.vendor_rate}/kg` : ''));
+    html += addHTMLRow('Shaft Diameter (mm)', fans.map(f => f.custom_shaft_diameter || f.shaft_diameter || ''));
+    html += addHTMLRow('No. of Isolators', fans.map(f => f.custom_no_of_isolators || f.no_of_isolators || ''));
+    html += addHTMLRow('Vibration Isolators', fans.map(f => f.vibration_isolators || ''));
+    html += addHTMLRow('Bearing Brand', fans.map(f => f.bearing_brand || ''));
+    
+    // Motor Details Section
+    html += `<tr><td class="section-header section-motor" colspan="${fans.length + 1}">MOTOR DETAILS</td></tr>`;
+    html += addHTMLRow('Motor Brand', fans.map(f => f.motor_brand || ''));
+    html += addHTMLRow('Motor kW', fans.map(f => f.motor_kw || ''));
+    html += addHTMLRow('Motor Pole', fans.map(f => f.pole || ''));
+    html += addHTMLRow('Motor Efficiency', fans.map(f => f.efficiency || ''));
+    html += addHTMLRow('Motor Discount (%)', fans.map(f => f.motor_discount || ''), 'percentage');
+    html += addHTMLRow('Drive Pack kW', fans.map(f => f.drive_pack_kw || f.drive_pack || ''));
+    
+    // Weights Section
+    html += `<tr><td class="section-header section-weights" colspan="${fans.length + 1}">WEIGHTS BREAKDOWN</td></tr>`;
+    html += addHTMLRow('Bare Fan Weight (kg)', fans.map(f => f.bare_fan_weight || ''));
+    html += addHTMLRow('Accessory Weight (kg)', fans.map(f => f.accessory_weights || f.accessory_weight || ''));
+    html += addHTMLRow('Total Weight (kg)', fans.map(f => f.total_weight || ''));
+    
+    // Costs Section
+    html += `<tr><td class="section-header section-costs" colspan="${fans.length + 1}">COST BREAKDOWN</td></tr>`;
+    html += addHTMLRow('Fabrication Cost (₹)', fans.map(f => formatCurrency(f.fabrication_cost)), 'currency');
+    html += addHTMLRow('Fabrication Margin (%)', fans.map(f => f.fabrication_margin || ''), 'percentage');
+    html += addHTMLRow('Fabrication Selling Price (₹)', fans.map(f => formatCurrency(f.fabrication_selling_price)), 'currency');
+    html += addHTMLRow('Motor Cost (₹)', fans.map(f => formatCurrency(f.motor_cost)), 'currency');
+    html += addHTMLRow('Vibration Isolators Cost (₹)', fans.map(f => formatCurrency(f.vibration_isolators_cost)), 'currency');
+    html += addHTMLRow('Drive Pack Cost (₹)', fans.map(f => formatCurrency(f.drive_pack_cost)), 'currency');
+    html += addHTMLRow('Bearing Cost (₹)', fans.map(f => formatCurrency(f.bearing_cost)), 'currency');
+    html += addHTMLRow('Optional Items Cost (₹)', fans.map(f => formatCurrency(f.optional_items_cost)), 'currency');
+    html += addHTMLRow('Total Bought Out Cost (₹)', fans.map(f => formatCurrency(f.bought_out_cost)), 'currency');
+    html += addHTMLRow('Bought Out Margin (%)', fans.map(f => f.bought_out_margin || ''), 'percentage');
+    html += addHTMLRow('Bought Out Selling Price (₹)', fans.map(f => formatCurrency(f.bought_out_selling_price)), 'currency');
+    html += addHTMLRow('Total Cost (₹)', fans.map(f => formatCurrency(f.total_cost)), 'currency');
+    html += addHTMLRow('Total Selling Price (₹)', fans.map(f => formatCurrency(f.total_selling_price)), 'currency');
+    html += addHTMLRow('Job Margin (%)', fans.map(f => f.total_job_margin || ''), 'percentage');
+    
+    // Custom Materials Section (for fans with material='others')
+    const hasCustomMaterials = fans.some(fan => fan.material === 'others' || fan.moc === 'others');
+    if (hasCustomMaterials) {
+        html += `<tr><td class="section-header section-materials" colspan="${fans.length + 1}">CUSTOM MATERIALS</td></tr>`;
+        
+        // Add custom material fields for all 5 material slots
+        for (let i = 0; i < 5; i++) {
+            // Material Name
+            html += addHTMLRow(`Material ${i + 1} Name`, fans.map(f => {
+                if (f.material === 'others' || f.moc === 'others') {
+                    return f[`material_name_${i}`] || '';
+                }
+                return '';
+            }));
+            
+            // Material Weight
+            html += addHTMLRow(`Material ${i + 1} Weight (kg)`, fans.map(f => {
+                if (f.material === 'others' || f.moc === 'others') {
+                    const weight = f[`material_weight_${i}`];
+                    return weight && weight > 0 ? `${weight} kg` : '';
+                }
+                return '';
+            }));
+            
+            // Material Rate
+            html += addHTMLRow(`Material ${i + 1} Rate (₹/kg)`, fans.map(f => {
+                if (f.material === 'others' || f.moc === 'others') {
+                    const rate = f[`material_rate_${i}`];
+                    return rate && rate > 0 ? formatCurrency(rate) + '/kg' : '';
+                }
+                return '';
+            }));
+            
+            // Calculate and show total cost for each material
+            html += addHTMLRow(`Material ${i + 1} Total Cost (₹)`, fans.map(f => {
+                if (f.material === 'others' || f.moc === 'others') {
+                    const weight = parseFloat(f[`material_weight_${i}`]) || 0;
+                    const rate = parseFloat(f[`material_rate_${i}`]) || 0;
+                    const totalCost = weight * rate;
+                    return totalCost > 0 ? formatCurrency(totalCost) : '';
+                }
+                return '';
+            }), 'currency');
+        }
+    }
+    
+    // Accessories Section
+    html += `<tr><td class="section-header section-accessories" colspan="${fans.length + 1}">ACCESSORIES</td></tr>`;
+    const allAccessories = extractAllAccessories(fans);
+    allAccessories.forEach(accessory => {
+        const values = fans.map(fan => getAccessoryStatus(fan, accessory));
+        html += addHTMLRow(formatAccessoryName(accessory), values, 'included');
+    });
+    
+    // Optional Items Section
+    html += `<tr><td class="section-header section-optional" colspan="${fans.length + 1}">OPTIONAL ITEMS</td></tr>`;
+    const allOptionalItems = extractAllOptionalItems(fans);
+    allOptionalItems.forEach(item => {
+        const values = fans.map(fan => getOptionalItemCost(fan, item));
+        html += addHTMLRow(formatOptionalItemName(item), values, 'currency');
+    });
+    
+    // Totals Section
+    html += `<tr><td class="section-header section-totals" colspan="${fans.length + 1}">PROJECT TOTALS</td></tr>`;
+    html += addHTMLRow('Total Project Weight (kg)', [calculateProjectTotal(fans, 'total_weight')]);
+    html += addHTMLRow('Total Project Cost (₹)', [formatCurrency(calculateProjectTotal(fans, 'total_cost'))], 'currency');
+    html += addHTMLRow('Total Project Selling Price (₹)', [formatCurrency(calculateProjectTotal(fans, 'total_selling_price'))], 'currency');
+    
+    html += `
+    </table>
+</body>
+</html>`;
+    
+    return html;
+}
+
+function addHTMLRow(fieldName, values, type = 'normal') {
+    let html = `<tr><td class="field-label">${fieldName}</td>`;
+    
+    values.forEach(value => {
+        let cellClass = '';
+        let cellValue = value || '';
+        
+        if (type === 'currency' && cellValue && cellValue.toString().includes('₹')) {
+            cellClass = 'currency';
+        } else if (type === 'percentage' && cellValue && cellValue.toString().includes('%')) {
+            cellClass = 'percentage';
+        } else if (type === 'included' && cellValue === 'Included') {
+            cellClass = 'included';
+        }
+        
+        html += `<td class="${cellClass}">${cellValue}</td>`;
+    });
+    
+    html += `</tr>`;
+    return html;
+}
+
+function buildCompleteExcelData(fans) {
+    const rows = [];
+    const styleInfo = {
+        sectionRows: [],
+        headerRow: 0,
+        fanDetailStart: 0,
+        accessoriesStart: 0,
+        optionalItemsStart: 0
+    };
+    
+    // Project header information
+    const enquiryNumber = window.enquiryNumber || 'Unknown';
+    const customerName = window.customerName || 'Unknown';
+    const salesEngineer = window.salesEngineer || 'Unknown';
+    
+    // Header row
+    const headerRow = ['Field'];
+    for (let i = 0; i < fans.length; i++) {
+        headerRow.push(`Fan ${i + 1}`);
+    }
+    rows.push(headerRow);
+    styleInfo.headerRow = 0;
+    
+    // Project Information Section
+    addSectionToExcel(rows, styleInfo, 'PROJECT INFORMATION');
+    addFieldToExcel(rows, 'Enquiry Number', fans.map(() => enquiryNumber));
+    addFieldToExcel(rows, 'Customer Name', fans.map(() => customerName));
+    addFieldToExcel(rows, 'Sales Engineer', fans.map(() => salesEngineer));
+    addFieldToExcel(rows, 'Total Fans', fans.map(() => fans.length));
+    
+    // Fan Details Section
+    addSectionToExcel(rows, styleInfo, 'FAN SPECIFICATIONS');
+    styleInfo.fanDetailStart = rows.length;
+    
+    addFieldToExcel(rows, 'Fan Model', fans.map(f => f.fan_model || ''));
+    addFieldToExcel(rows, 'Fan Size', fans.map(f => f.fan_size || ''));
+    addFieldToExcel(rows, 'Class', fans.map(f => f.class_ || f.class || ''));
+    addFieldToExcel(rows, 'Arrangement', fans.map(f => f.arrangement || ''));
+    addFieldToExcel(rows, 'Material', fans.map(f => f.material || ''));
+    addFieldToExcel(rows, 'Vendor', fans.map(f => f.vendor || ''));
+    addFieldToExcel(rows, 'Vendor Rate (₹/kg)', fans.map(f => f.vendor_rate ? `₹${f.vendor_rate}/kg` : ''));
+    addFieldToExcel(rows, 'Shaft Diameter (mm)', fans.map(f => f.custom_shaft_diameter || f.shaft_diameter || ''));
+    addFieldToExcel(rows, 'No. of Isolators', fans.map(f => f.custom_no_of_isolators || f.no_of_isolators || ''));
+    addFieldToExcel(rows, 'Vibration Isolators', fans.map(f => f.vibration_isolators || ''));
+    addFieldToExcel(rows, 'Bearing Brand', fans.map(f => f.bearing_brand || ''));
+    
+    // Motor Details Section
+    addSectionToExcel(rows, styleInfo, 'MOTOR DETAILS');
+    addFieldToExcel(rows, 'Motor Brand', fans.map(f => f.motor_brand || ''));
+    addFieldToExcel(rows, 'Motor kW', fans.map(f => f.motor_kw || ''));
+    addFieldToExcel(rows, 'Motor Pole', fans.map(f => f.pole || ''));
+    addFieldToExcel(rows, 'Motor Efficiency', fans.map(f => f.efficiency || ''));
+    addFieldToExcel(rows, 'Motor Discount (%)', fans.map(f => f.motor_discount || ''));
+    addFieldToExcel(rows, 'Drive Pack kW', fans.map(f => f.drive_pack_kw || f.drive_pack || ''));
+    
+    // Weights Section
+    addSectionToExcel(rows, styleInfo, 'WEIGHTS BREAKDOWN');
+    addFieldToExcel(rows, 'Bare Fan Weight (kg)', fans.map(f => f.bare_fan_weight || ''));
+    addFieldToExcel(rows, 'Accessory Weight (kg)', fans.map(f => f.accessory_weights || f.accessory_weight || ''));
+    addFieldToExcel(rows, 'Total Weight (kg)', fans.map(f => f.total_weight || ''));
+    
+    // Costs Section
+    addSectionToExcel(rows, styleInfo, 'COST BREAKDOWN');
+    addFieldToExcel(rows, 'Fabrication Cost (₹)', fans.map(f => formatCurrency(f.fabrication_cost)));
+    addFieldToExcel(rows, 'Fabrication Margin (%)', fans.map(f => f.fabrication_margin || ''));
+    addFieldToExcel(rows, 'Fabrication Selling Price (₹)', fans.map(f => formatCurrency(f.fabrication_selling_price)));
+    addFieldToExcel(rows, 'Motor Cost (₹)', fans.map(f => formatCurrency(f.motor_cost)));
+    addFieldToExcel(rows, 'Vibration Isolators Cost (₹)', fans.map(f => formatCurrency(f.vibration_isolators_cost)));
+    addFieldToExcel(rows, 'Drive Pack Cost (₹)', fans.map(f => formatCurrency(f.drive_pack_cost)));
+    addFieldToExcel(rows, 'Bearing Cost (₹)', fans.map(f => formatCurrency(f.bearing_cost)));
+    addFieldToExcel(rows, 'Optional Items Cost (₹)', fans.map(f => formatCurrency(f.optional_items_cost)));
+    addFieldToExcel(rows, 'Total Bought Out Cost (₹)', fans.map(f => formatCurrency(f.bought_out_cost)));
+    addFieldToExcel(rows, 'Bought Out Margin (%)', fans.map(f => f.bought_out_margin || ''));
+    addFieldToExcel(rows, 'Bought Out Selling Price (₹)', fans.map(f => formatCurrency(f.bought_out_selling_price)));
+    addFieldToExcel(rows, 'Total Cost (₹)', fans.map(f => formatCurrency(f.total_cost)));
+    addFieldToExcel(rows, 'Total Selling Price (₹)', fans.map(f => formatCurrency(f.total_selling_price)));
+    addFieldToExcel(rows, 'Job Margin (%)', fans.map(f => f.total_job_margin || ''));
+    
+    // Custom Materials Section (for fans with material='others')
+    const hasCustomMaterials = fans.some(fan => fan.material === 'others' || fan.moc === 'others');
+    if (hasCustomMaterials) {
+        addSectionToExcel(rows, styleInfo, 'CUSTOM MATERIALS');
+        
+        // Add custom material fields for all 5 material slots
+        for (let i = 0; i < 5; i++) {
+            // Material Name
+            addFieldToExcel(rows, `Material ${i + 1} Name`, fans.map(f => {
+                if (f.material === 'others' || f.moc === 'others') {
+                    return f[`material_name_${i}`] || '';
+                }
+                return '';
+            }));
+            
+            // Material Weight
+            addFieldToExcel(rows, `Material ${i + 1} Weight (kg)`, fans.map(f => {
+                if (f.material === 'others' || f.moc === 'others') {
+                    const weight = f[`material_weight_${i}`];
+                    return weight && weight > 0 ? `${weight} kg` : '';
+                }
+                return '';
+            }));
+            
+            // Material Rate
+            addFieldToExcel(rows, `Material ${i + 1} Rate (₹/kg)`, fans.map(f => {
+                if (f.material === 'others' || f.moc === 'others') {
+                    const rate = f[`material_rate_${i}`];
+                    return rate && rate > 0 ? formatCurrency(rate) + '/kg' : '';
+                }
+                return '';
+            }));
+            
+            // Calculate and show total cost for each material
+            addFieldToExcel(rows, `Material ${i + 1} Total Cost (₹)`, fans.map(f => {
+                if (f.material === 'others' || f.moc === 'others') {
+                    const weight = parseFloat(f[`material_weight_${i}`]) || 0;
+                    const rate = parseFloat(f[`material_rate_${i}`]) || 0;
+                    const totalCost = weight * rate;
+                    return totalCost > 0 ? formatCurrency(totalCost) : '';
+                }
+                return '';
+            }));
+        }
+    }
+    
+    // Accessories Section
+    addSectionToExcel(rows, styleInfo, 'ACCESSORIES');
+    styleInfo.accessoriesStart = rows.length;
+    
+    const allAccessories = extractAllAccessories(fans);
+    console.log("Extracted accessories:", allAccessories);
+    
+    allAccessories.forEach(accessory => {
+        const values = fans.map(fan => getAccessoryStatus(fan, accessory));
+        addFieldToExcel(rows, formatAccessoryName(accessory), values);
+    });
+    
+    // Optional Items Section
+    addSectionToExcel(rows, styleInfo, 'OPTIONAL ITEMS');
+    styleInfo.optionalItemsStart = rows.length;
+    
+    const allOptionalItems = extractAllOptionalItems(fans);
+    console.log("Extracted optional items:", allOptionalItems);
+    
+    allOptionalItems.forEach(item => {
+        const values = fans.map(fan => getOptionalItemCost(fan, item));
+        addFieldToExcel(rows, formatOptionalItemName(item), values);
+    });
+    
+    // Totals Section
+    addSectionToExcel(rows, styleInfo, 'PROJECT TOTALS');
+    addFieldToExcel(rows, 'Total Project Weight (kg)', [calculateProjectTotal(fans, 'total_weight')]);
+    addFieldToExcel(rows, 'Total Project Cost (₹)', [formatCurrency(calculateProjectTotal(fans, 'total_cost'))]);
+    addFieldToExcel(rows, 'Total Project Selling Price (₹)', [formatCurrency(calculateProjectTotal(fans, 'total_selling_price'))]);
+    
+    return { rows, styleInfo };
+}
+
+function extractAllAccessories(fans) {
+    const accessories = new Set();
+    
+    fans.forEach(fan => {
+        // Standard accessories object
+        if (fan.accessories && typeof fan.accessories === 'object') {
+            Object.keys(fan.accessories).forEach(key => {
+                if (fan.accessories[key] === true) {
+                    accessories.add(key);
+                }
+            });
+        }
+        
+        // Custom accessories as string
+        if (fan.custom_accessories && typeof fan.custom_accessories === 'string') {
+            accessories.add(fan.custom_accessories);
+        }
+        
+        // Custom accessories as object
+        if (fan.custom_accessories && typeof fan.custom_accessories === 'object') {
+            Object.keys(fan.custom_accessories).forEach(key => {
+                if (fan.custom_accessories[key]) {
+                    accessories.add(key);
+                }
+            });
+        }
+        
+        // Check specifications.accessories
+        if (fan.specifications && fan.specifications.accessories) {
+            Object.keys(fan.specifications.accessories).forEach(key => {
+                if (fan.specifications.accessories[key] === true) {
+                    accessories.add(key);
+                }
+            });
+        }
+    });
+    
+    return Array.from(accessories).sort();
+}
+
+function extractAllOptionalItems(fans) {
+    const optionalItems = new Set();
+    
+    fans.forEach(fan => {
+        // Standard optional_items object
+        if (fan.optional_items && typeof fan.optional_items === 'object') {
+            Object.keys(fan.optional_items).forEach(key => {
+                optionalItems.add(key);
+            });
+        }
+        
+        // standard_optional_items[] format - handle both array and string
+        if (fan['standard_optional_items[]']) {
+            const standardItems = fan['standard_optional_items[]'];
+            if (Array.isArray(standardItems)) {
+                standardItems.forEach(item => optionalItems.add(item));
+            } else if (typeof standardItems === 'string') {
+                optionalItems.add(standardItems);
+            }
+        }
+        
+        // Custom optional items
+        if (fan.custom_optional_items && typeof fan.custom_optional_items === 'object') {
+            Object.keys(fan.custom_optional_items).forEach(key => {
+                optionalItems.add(key);
+            });
+        }
+        
+        // custom_option_items (backward compatibility)
+        if (fan.custom_option_items && typeof fan.custom_option_items === 'object') {
+            Object.keys(fan.custom_option_items).forEach(key => {
+                optionalItems.add(key);
+            });
+        }
+    });
+    
+    return Array.from(optionalItems).sort();
+}
+
+function getAccessoryStatus(fan, accessory) {
+    // Check standard accessories
+    if (fan.accessories && fan.accessories[accessory] === true) {
+        return 'Included';
+    }
+    
+    // Check custom accessories as string
+    if (fan.custom_accessories === accessory) {
+        return 'Included';
+    }
+    
+    // Check custom accessories as object
+    if (fan.custom_accessories && typeof fan.custom_accessories === 'object' && fan.custom_accessories[accessory]) {
+        return 'Included';
+    }
+    
+    // Check specifications.accessories
+    if (fan.specifications && fan.specifications.accessories && fan.specifications.accessories[accessory] === true) {
+        return 'Included';
+    }
+    
+    return '';
+}
+
+function getOptionalItemCost(fan, item) {
+    // Check standard optional_items object
+    if (fan.optional_items && fan.optional_items[item]) {
+        const cost = parseFloat(fan.optional_items[item]);
+        return cost > 0 ? formatCurrency(cost) : 'Included';
+    }
+    
+    // Check standard_optional_items[] format - handle both array and string
+    if (fan['standard_optional_items[]']) {
+        const standardItems = fan['standard_optional_items[]'];
+        if (Array.isArray(standardItems) && standardItems.includes(item)) {
+            // For array format, try to get individual cost from optional_items first
+            if (fan.optional_items && fan.optional_items[item]) {
+                const cost = parseFloat(fan.optional_items[item]);
+                return cost > 0 ? formatCurrency(cost) : 'Included';
+            } else if (fan.optional_items_cost && fan.optional_items_cost > 0) {
+                return formatCurrency(fan.optional_items_cost / standardItems.length);
+            }
+            return 'Included';
+        } else if (standardItems === item) {
+            // For string format (backward compatibility)
+            if (fan.optional_items_cost && fan.optional_items_cost > 0) {
+                return formatCurrency(fan.optional_items_cost);
+            }
+            return 'Included';
+        }
+    }
+    
+    // Check custom optional items
+    if (fan.custom_optional_items && fan.custom_optional_items[item]) {
+        const cost = parseFloat(fan.custom_optional_items[item]);
+        return cost > 0 ? formatCurrency(cost) : 'Included';
+    }
+    
+    // Check custom_option_items (backward compatibility)
+    if (fan.custom_option_items && fan.custom_option_items[item]) {
+        const cost = parseFloat(fan.custom_option_items[item]);
+        return cost > 0 ? formatCurrency(cost) : 'Included';
+    }
+    
+    return '';
+}
+
+function formatAccessoryName(accessory) {
+    const accessoryNames = {
+        'unitary_base_frame': 'Unitary Base Frame',
+        'isolation_base_frame': 'Isolation Base Frame',
+        'split_casing': 'Split Casing',
+        'inlet_companion_flange': 'Inlet Companion Flange',
+        'outlet_companion_flange': 'Outlet Companion Flange',
+        'inlet_butterfly_damper': 'Inlet Butterfly Damper'
+    };
+    
+    return accessoryNames[accessory] || accessory.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function formatOptionalItemName(item) {
+    const optionalItemNames = {
+        'flex_connectors': 'Flex Connectors',
+        'silencer': 'Silencer',
+        'testing_charges': 'Testing Charges',
+        'freight_charges': 'Freight Charges',
+        'warranty_charges': 'Warranty Charges',
+        'packing_charges': 'Packing Charges',
+        'vibration_sensors': 'Vibration Sensors',
+        'temperature_sensors': 'Temperature Sensors'
+    };
+    
+    // Clean up custom item names by removing timestamp suffixes
+    if (optionalItemNames[item]) {
+        return optionalItemNames[item];
+    }
+    
+    let cleanName = item;
+    
+    // Handle custom items with timestamps (e.g., "custom_test_1750578172082")
+    if (item.startsWith('custom_')) {
+        // Remove 'custom_' prefix
+        cleanName = item.replace('custom_', '');
+        
+        // Remove timestamp suffix (series of digits at the end)
+        cleanName = cleanName.replace(/_\d+$/, '');
+        
+        // If the name is now empty or just underscores, use the original
+        if (!cleanName || cleanName.match(/^_*$/)) {
+            cleanName = item.replace('custom_', '');
+        }
+    }
+    
+    // Format the name properly
+    return cleanName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function formatCurrency(value) {
+    if (!value || value === 0) return '';
+    const num = parseFloat(value);
+    if (isNaN(num)) return '';
+    return `₹${num.toLocaleString('en-IN')}`;
+}
+
+function calculateProjectTotal(fans, field) {
+    return fans.reduce((total, fan) => {
+        const value = parseFloat(fan[field]) || 0;
+        return total + value;
+    }, 0);
+}
+
+function addSectionToExcel(rows, styleInfo, sectionName) {
+    const sectionRow = [sectionName];
+    while (sectionRow.length < rows[0].length) {
+        sectionRow.push('');
+    }
+    rows.push(sectionRow);
+    styleInfo.sectionRows.push(rows.length - 1);
+}
+
+function addFieldToExcel(rows, fieldName, values) {
+    const row = [fieldName];
+    values.forEach(value => {
+        row.push(value || '');
+    });
+    // Pad row to match header length if needed
+    while (row.length < rows[0].length) {
+        row.push('');
+    }
+    rows.push(row);
+}
+
+function applyExcelStyling(ws, styleInfo) {
+    if (!ws['!ref']) return;
+    
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    
+    // Apply styles with a more direct approach for maximum compatibility
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+            if (!ws[cellAddress]) continue;
+            
+            const cellValue = ws[cellAddress].v || '';
+            
+            // Initialize cell style
+            ws[cellAddress].s = ws[cellAddress].s || {};
+            
+            if (R === styleInfo.headerRow) {
+                // Header row - Blue background, white text
+                ws[cellAddress].s = {
+                    font: { bold: true, color: { rgb: 'FFFFFF' } },
+                    fill: { patternType: 'solid', fgColor: { rgb: '1F4E79' } },
+                    alignment: { horizontal: 'center' }
+                };
+            } else if (styleInfo.sectionRows.includes(R)) {
+                // Section headers with different colors
+                const sectionName = cellValue.toString();
+                let bgColor = '70AD47'; // Default green
+                
+                switch(sectionName) {
+                    case 'PROJECT INFORMATION': bgColor = '70AD47'; break; // Green
+                    case 'FAN SPECIFICATIONS': bgColor = 'E74C3C'; break; // Red  
+                    case 'MOTOR DETAILS': bgColor = '9B59B6'; break; // Purple
+                    case 'WEIGHTS BREAKDOWN': bgColor = 'F39C12'; break; // Orange
+                    case 'COST BREAKDOWN': bgColor = '2E86AB'; break; // Blue
+                    case 'CUSTOM MATERIALS': bgColor = '8E44AD'; break; // Purple
+                    case 'ACCESSORIES': bgColor = '27AE60'; break; // Emerald
+                    case 'OPTIONAL ITEMS': bgColor = 'E67E22'; break; // Orange
+                    case 'PROJECT TOTALS': bgColor = '8E44AD'; break; // Purple
+                }
+                
+                ws[cellAddress].s = {
+                    font: { bold: true, color: { rgb: 'FFFFFF' } },
+                    fill: { patternType: 'solid', fgColor: { rgb: bgColor } },
+                    alignment: { horizontal: 'left' }
+                };
+                
+            } else if (C === 0) {
+                // Field labels (first column) - Light gray background
+                ws[cellAddress].s = {
+                    font: { bold: true, color: { rgb: '2C3E50' } },
+                    fill: { patternType: 'solid', fgColor: { rgb: 'F8F9FA' } },
+                    alignment: { horizontal: 'left' }
+                };
+                
+            } else {
+                // Data cells
+                const fieldName = ws[XLSX.utils.encode_cell({ r: R, c: 0 })].v || '';
+                
+                if (cellValue.toString().includes('₹')) {
+                    // Currency values - Green text
+                    ws[cellAddress].s = {
+                        font: { color: { rgb: '27AE60' }, bold: true },
+                        fill: { patternType: 'solid', fgColor: { rgb: 'F8F9FA' } },
+                        alignment: { horizontal: 'right' }
+                    };
+                } else if (cellValue.toString().includes('%') || fieldName.includes('Margin') || fieldName.includes('Discount')) {
+                    // Percentage values - Red text
+                    ws[cellAddress].s = {
+                        font: { color: { rgb: 'E74C3C' }, bold: true },
+                        fill: { patternType: 'solid', fgColor: { rgb: 'FDEDEC' } },
+                        alignment: { horizontal: 'center' }
+                    };
+                } else if (cellValue === 'Included') {
+                    // Included items - Green background
+                    ws[cellAddress].s = {
+                        font: { color: { rgb: '27AE60' }, bold: true },
+                        fill: { patternType: 'solid', fgColor: { rgb: 'E8F8F5' } },
+                        alignment: { horizontal: 'center' }
+                    };
+                } else {
+                    // Regular data
+                    ws[cellAddress].s = {
+                        font: { color: { rgb: '34495E' } },
+                        fill: { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } },
+                        alignment: { horizontal: 'center' }
+                    };
+                }
+            }
+        }
+    }
+    
+    // Set column widths
+    const colWidths = [{ wch: 28 }]; // First column (Field names)
+    for (let i = 1; i < range.e.c + 1; i++) {
+        colWidths.push({ wch: 18 }); // Fan columns
+    }
+    ws['!cols'] = colWidths;
+    
+    console.log("Applied styling to", range.e.r + 1, "rows and", range.e.c + 1, "columns");
+}
+
+// Replace the existing export button click handler
+function addNewExportButton() {
+    // Remove existing export buttons
+    const existingButtons = document.querySelectorAll('[onclick*="exportProjectSummaryToExcel"]');
+    existingButtons.forEach(btn => btn.remove());
+    
+    // Add new export button
+    const summarySection = document.getElementById('project-summary');
+    if (summarySection) {
+        const buttonGroup = summarySection.querySelector('.button-group');
+        if (buttonGroup) {
+            const exportBtn = document.createElement('button');
+            exportBtn.type = 'button';
+            exportBtn.className = 'action-button export-btn';
+            exportBtn.textContent = 'Export to Excel';
+            exportBtn.onclick = exportProjectSummaryToExcelComplete;
+            exportBtn.style.cssText = 'background-color: #28a745; margin-left: 10px;';
+            
+            // Insert before the last button (or append if no buttons)
+            const lastButton = buttonGroup.lastElementChild;
+            if (lastButton) {
+                buttonGroup.insertBefore(exportBtn, lastButton);
+            } else {
+                buttonGroup.appendChild(exportBtn);
+            }
+        }
+    }
+    
+    console.log("New export button added");
 }
 

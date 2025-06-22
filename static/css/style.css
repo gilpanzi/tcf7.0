@@ -897,7 +897,7 @@ input[type="checkbox"]:hover {
 
 .fans-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 36px;
     margin-bottom: 48px;
 }
@@ -907,11 +907,13 @@ input[type="checkbox"]:hover {
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(67, 97, 238, 0.10), 0 1.5px 6px rgba(58, 12, 163, 0.04);
     padding: 0 0 32px 0;
-    overflow: visible;
+    overflow: hidden;
     border: none;
     min-height: 420px;
     transition: box-shadow 0.3s, transform 0.2s;
     position: relative;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 .fan-card:hover {
     box-shadow: 0 20px 48px rgba(67, 97, 238, 0.18), 0 2px 8px rgba(58, 12, 163, 0.08);
@@ -947,15 +949,29 @@ input[type="checkbox"]:hover {
     font-size: 1.05rem;
     color: #3a0ca3;
     font-weight: 600;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+.fan-specs .spec-item {
+    display: flex;
+    flex-direction: column;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
 }
 .fan-specs .spec-item span:first-child {
     color: #4361ee;
     font-weight: 700;
     margin-right: 6px;
+    margin-bottom: 4px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 .fan-specs .spec-item span:last-child {
     color: #222;
     font-weight: 600;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 .weights-section, .cost-summary-section, .bought-out-section, .accessories-section {
     margin: 18px 32px 0 32px;
@@ -975,10 +991,13 @@ input[type="checkbox"]:hover {
 .detail-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: 7px 0;
     border-bottom: 1px dashed #e0e0e0;
     font-size: 1.05rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
 }
 .detail-item:last-child {
     border-bottom: none;
@@ -986,10 +1005,18 @@ input[type="checkbox"]:hover {
 .detail-item span:first-child {
     color: #3a0ca3;
     font-weight: 600;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    flex: 1;
+    margin-right: 10px;
 }
 .detail-item span:last-child {
     color: #222;
     font-weight: 700;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    flex-shrink: 0;
+    text-align: right;
 }
 .total-cost, .total-selling-price, .job-margin {
     background: #e0fbfc;
@@ -1096,6 +1123,7 @@ input[type="checkbox"]:hover {
 @media (max-width: 900px) {
     .fans-container {
         grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
     .project-summary {
         padding: 18px 4px 18px 4px;
@@ -1106,5 +1134,21 @@ input[type="checkbox"]:hover {
     .fan-header, .fan-specs, .weights-section, .cost-summary-section, .bought-out-section, .accessories-section {
         padding-left: 12px;
         padding-right: 12px;
+    }
+    
+    /* Ensure single column layout for fan specs on smaller screens */
+    .fan-specs {
+        grid-template-columns: 1fr;
+        gap: 8px 12px;
+        font-size: 0.95rem;
+    }
+    
+    /* Reduce font sizes for better fit */
+    .detail-item {
+        font-size: 0.95rem;
+    }
+    
+    .detail-item span:first-child {
+        margin-right: 8px;
     }
 } 

@@ -802,862 +802,84 @@ def register_routes(app):
                 'message': str(e)
             }), 500
 
-    @app.route('/add_fan_to_project', methods=['POST'])
-    def add_fan_to_project():
-        """Add a fan to a project."""
+    def save_to_database(fan_data, enquiry_number, customer_name, total_fans, sales_engineer):
+        """Save fan data to the local database."""
         try:
-            data = request.json
-            logger.info(f"Adding fan to project: {data}")
+            conn = sqlite3.connect('fan_pricing.db')
+            cursor = conn.cursor()
             
-            # Check if we're editing an existing fan
-            editing_fan_index = session.get('editing_fan_index')
-            
-            # Validate required fields
-            required_fields = ['enquiry_number', 'customer_name', 'total_fans', 'sales_engineer']
-            for field in required_fields:
-                if not data.get(field):
-                    return jsonify({
-                        'success': False,
-                        'message': f'Missing required field: {field}'
-                    }), 400
-            
-            # Basic project data
-            enquiry_number = data['enquiry_number']
-            customer_name = data['customer_name']
-            total_fans = int(data['total_fans'])
-            sales_engineer = data.get('sales_engineer', 'N/A')
-            
-            # Fan specific data with proper structure
-            fan_data = {
-                'fan_number': current_fan_number,
-                'enquiry_number': enquiry_number,
-                'fan_model': data.get('fan_model', ''),
-                'fan_size': data.get('fan_size', ''),
-                'class_': data.get('class', ''),
-                'arrangement': data.get('arrangement', ''),
-                'vendor': data.get('vendor', 'TCF Factory'),
-                'material': data.get('material', 'ms'),
-                'bare_fan_weight': float(data.get('bare_fan_weight', 0) or 0),
-                'accessory_weights': float(data.get('accessory_weights', 0) or 0),
-                'total_weight': float(data.get('total_weight', 0) or 0),
-                'fabrication_weight': float(data.get('fabrication_weight', 0) or 0),
-                'bought_out_weight': float(data.get('bought_out_weight', 0) or 0),
-                'fabrication_cost': float(data.get('fabrication_cost', 0) or 0),
-                'motor_cost': float(data.get('motor_cost', data.get('discounted_motor_price', 0)) or 0),
-                'vibration_isolators_cost': float(data.get('vibration_isolators_cost', data.get('vibration_isolators_price', 0)) or 0),
-                'drive_pack_cost': float(data.get('drive_pack_cost', data.get('drive_pack_price', 0)) or 0),
-                'bearing_cost': float(data.get('bearing_cost', data.get('bearing_price', 0)) or 0),
-                'optional_items_cost': float(data.get('optional_items_cost', 0) or 0),
-                'flex_connectors_cost': float(data.get('flex_connectors_cost', 0) or 0),
-                'bought_out_cost': float(data.get('total_bought_out_cost', 0) or 0),
-                'total_cost': float(data.get('total_cost', 0) or 0),
-                'fabrication_selling_price': float(data.get('fabrication_selling_price', 0) or 0),
-                'bought_out_selling_price': float(data.get('bought_out_selling_price', 0) or 0),
-                'total_selling_price': float(data.get('total_selling_price', 0) or 0),
-                'total_job_margin': float(data.get('total_job_margin', 0) or 0),
-                'vibration_isolators': data.get('vibration_isolators', ''),
-                'drive_pack_kw': float(data.get('drive_pack_kw', 0) or 0),
-                'motor_kw': float(data.get('motor_kw', 0) or 0),
-                'motor_brand': data.get('motor_brand', ''),
-                'motor_pole': float(data.get('pole', 0) or 0),
-                'motor_efficiency': data.get('efficiency', ''),
-                'motor_discount_rate': float(data.get('motor_discount', 0) or 0),
-                'bearing_brand': data.get('bearing_brand', ''),
-                'shaft_diameter': float(data.get('shaft_diameter', 0) or 0)
-            }
-            
-            # Add custom material fields
-            for i in range(5):
-                name_key = f'material_name_{i}'
-                weight_key = f'material_weight_{i}'
-                rate_key = f'material_rate_{i}'
-                
-                fan_data[name_key] = data.get(name_key, '')
-                fan_data[weight_key] = float(data.get(weight_key, 0) or 0)
-                fan_data[rate_key] = float(data.get(rate_key, 0) or 0)
-            
-            # Add custom shaft diameter and isolators
-            fan_data['custom_no_of_isolators'] = int(data.get('custom_no_of_isolators', data.get('no_of_isolators', 0)) or 0)
-            fan_data['custom_shaft_diameter'] = float(data.get('custom_shaft_diameter', data.get('shaft_diameter', 0)) or 0)
-            
-            # Create properly nested structure for session storage
-            session_fan_data = {
-                'specifications': {
-                    'fan_model': fan_data['fan_model'],
-                    'size': fan_data['fan_size'],
-                    'class': fan_data['class_'],
-                    'arrangement': fan_data['arrangement'],
-                    'vendor': fan_data['vendor'],
-                    'material': fan_data['material'],
-                    'vibration_isolators': fan_data['vibration_isolators'],
-                    'bearing_brand': fan_data['bearing_brand'],
-                    'drive_pack_kw': fan_data['drive_pack_kw'],
-                    'shaft_diameter': fan_data['shaft_diameter']
-                },
-                'weights': {
-                    'bare_fan_weight': fan_data['bare_fan_weight'],
-                    'accessory_weight': fan_data['accessory_weights'],
-                    'total_weight': fan_data['total_weight'],
-                    'fabrication_weight': fan_data['fabrication_weight'],
-                    'bought_out_weight': fan_data['bought_out_weight']
-                },
-                'costs': {
-                    'fabrication_cost': fan_data['fabrication_cost'],
-                    'motor_cost': fan_data['motor_cost'],
-                    'vibration_isolators_cost': fan_data['vibration_isolators_cost'],
-                    'drive_pack_cost': fan_data['drive_pack_cost'],
-                    'bearing_cost': fan_data['bearing_cost'],
-                    'optional_items_cost': fan_data['optional_items_cost'],
-                    'flex_connectors_cost': fan_data['flex_connectors_cost'],
-                    'bought_out_cost': fan_data['bought_out_cost'],
-                    'total_cost': fan_data['total_cost'],
-                    'fabrication_selling_price': fan_data['fabrication_selling_price'],
-                    'bought_out_selling_price': fan_data['bought_out_selling_price'],
-                    'total_selling_price': fan_data['total_selling_price'],
-                    'total_job_margin': fan_data['total_job_margin']
-                },
-                'motor': {
-                    'brand': fan_data['motor_brand'],
-                    'kw': fan_data['motor_kw'],
-                    'pole': fan_data['motor_pole'],
-                    'efficiency': fan_data['motor_efficiency'],
-                    'discount_rate': fan_data['motor_discount_rate']
-                }
-            }
-            
-            # Add custom material fields to session data
-            for i in range(5):
-                name_key = f'material_name_{i}'
-                weight_key = f'material_weight_{i}'
-                rate_key = f'material_rate_{i}'
-                
-                session_fan_data[name_key] = fan_data[name_key]
-                session_fan_data[weight_key] = fan_data[weight_key]
-                session_fan_data[rate_key] = fan_data[rate_key]
-            
-            # Add custom shaft diameter and isolators to session data
-            session_fan_data['custom_no_of_isolators'] = fan_data['custom_no_of_isolators']
-            session_fan_data['custom_shaft_diameter'] = fan_data['custom_shaft_diameter']
-            
-            # Process accessories
-            accessories = data.get('accessories', {})
-            for key in list(accessories.keys()):
-                if not accessories[key]:
-                    del accessories[key]
-            
-            session_fan_data['specifications']['accessories'] = accessories
-            fan_data['accessories'] = json.dumps(accessories)
-            
-            # Process optional items
-            optional_items = data.get('optional_items', {})
-            optional_item_prices = data.get('optional_item_prices', {})
-            
-            # Combine optional items and their prices for storage
-            optional_items_data = {
-                'items': optional_items,
-                'prices': optional_item_prices
-            }
-            
-            session_fan_data['specifications']['optional_items'] = optional_items_data
-            fan_data['optional_items'] = json.dumps(optional_items_data)
-            
-            # Process custom accessories and options
-            custom_accessories = data.get('custom_accessories', {})
-            session_fan_data['specifications']['custom_accessories'] = custom_accessories
-            fan_data['custom_accessories'] = json.dumps(custom_accessories)
-            
-            # Process custom optional items
-            custom_option_items = data.get('custom_option_items', {})
-            custom_optional_items = data.get('custom_optional_items', {})
-            
-            # Use custom_optional_items if available, otherwise fallback to custom_option_items
-            if custom_optional_items and not custom_option_items:
-                custom_option_items = custom_optional_items
-            elif custom_option_items and not custom_optional_items:
-                custom_optional_items = custom_option_items
-                
-            # Store both for backward compatibility
-            session_fan_data['specifications']['custom_option_items'] = custom_option_items
-            session_fan_data['specifications']['custom_optional_items'] = custom_optional_items
-            fan_data['custom_option_items'] = json.dumps(custom_option_items)
-            fan_data['custom_optional_items'] = json.dumps(custom_optional_items)
-            
-            # Handle custom_optional_items[] array notation format
-            if 'custom_optional_items[]' in data:
-                # Keep this format in both fan_data and session_fan_data
-                logger.info(f"Found custom_optional_items[] in data: {data['custom_optional_items[]']}")
-                session_fan_data['specifications']['custom_optional_items[]'] = data['custom_optional_items[]']
-                # Also preserve it at top level for backward compatibility
-                session_fan_data['custom_optional_items[]'] = data['custom_optional_items[]']
-            
-            # If editing, update the existing fan in session
-            if editing_fan_index is not None and 'fans' in session and editing_fan_index < len(session['fans']):
-                session['fans'][editing_fan_index] = session_fan_data
-                session.pop('editing_fan_index', None)  # Clear editing flag
-                session.modified = True  # Ensure session changes are saved
-                logger.info(f"Updated fan {editing_fan_index} in session")
-                
-                # Redirect to summary after editing
-                return jsonify({
-                    'success': True,
-                    'message': 'Fan updated successfully',
-                    'project_complete': True
-                })
-            else:
-                # Add a new fan to the session
-                if 'fans' not in session:
-                    session['fans'] = []
-                session['fans'].append(session_fan_data)
-                session.modified = True  # Ensure session changes are saved
-                
-                # Connect to database
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                
-                # Check if project exists or create it
-                cursor.execute(
-                    'SELECT id FROM Projects WHERE enquiry_number = ?',
-                    (enquiry_number,)
+            # Create Projects table if it doesn't exist
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS Projects (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    enquiry_number TEXT UNIQUE,
+                    customer_name TEXT,
+                    total_fans INTEGER,
+                    sales_engineer TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-                project = cursor.fetchone()
-                
-                if project:
-                    project_id = project[0]
-                    logger.info(f"Found existing project with ID: {project_id}")
-                else:
-                    logger.info("Creating new project")
-                    cursor.execute(
-                        'INSERT INTO Projects (enquiry_number, customer_name, total_fans, sales_engineer) VALUES (?, ?, ?, ?)',
-                        (enquiry_number, customer_name, total_fans, sales_engineer)
-                    )
-                    project_id = cursor.lastrowid
-                    logger.info(f"Created new project with ID: {project_id}")
-                
-                # Insert fan data with correct parameter count
-                # Use dynamic SQL generation to avoid column/value mismatches
-                fan_data_columns = [
-                    'project_id', 'fan_number', 'fan_model', 'fan_size', 'class', 'arrangement', 
-                    'vendor', 'material', 'accessories', 'bare_fan_weight', 'accessory_weight',
-                    'total_weight', 'fabrication_cost', 'bought_out_cost', 'total_cost',
-                    'fabrication_selling_price', 'bought_out_selling_price', 'total_selling_price',
-                    'vibration_isolators', 'drive_pack_kw', 'custom_accessories', 'optional_items',
-                    'custom_option_items', 'motor_kw', 'motor_brand', 'motor_pole', 'motor_efficiency',
-                    'motor_discount_rate', 'bearing_brand', 'shaft_diameter', 'vibration_isolators_cost',
-                    'drive_pack_cost', 'bearing_cost', 'motor_cost', 'fabrication_weight', 'bought_out_weight',
-                    'optional_items_cost', 'flex_connectors_cost', 'total_job_margin',
-                    'no_of_isolators', 'fabrication_margin', 'bought_out_margin',
-                    'material_name_0', 'material_weight_0', 'material_rate_0',
-                    'material_name_1', 'material_weight_1', 'material_rate_1',
-                    'material_name_2', 'material_weight_2', 'material_rate_2',
-                    'material_name_3', 'material_weight_3', 'material_rate_3',
-                    'material_name_4', 'material_weight_4', 'material_rate_4',
-                    'custom_no_of_isolators', 'custom_shaft_diameter'
-                ]
-                
-                fan_data_values = [
-                    project_id,
-                    current_fan_number,
-                    fan_data['fan_model'],
-                    fan_data['fan_size'],
-                    fan_data['class_'],
-                    fan_data['arrangement'],
-                    fan_data['vendor'],
-                    fan_data['material'],
-                    fan_data['accessories'],
-                    fan_data['bare_fan_weight'],
-                    fan_data['accessory_weights'],
-                    fan_data['total_weight'],
-                    fan_data['fabrication_cost'],
-                    fan_data['bought_out_cost'],
-                    fan_data['total_cost'],
-                    fan_data['fabrication_selling_price'],
-                    fan_data['bought_out_selling_price'],
-                    fan_data['total_selling_price'],
-                    fan_data['vibration_isolators'],
-                    fan_data['drive_pack_kw'],
-                    fan_data['custom_accessories'],
-                    fan_data['optional_items'],
-                    fan_data['custom_option_items'],
-                    fan_data['motor_kw'],
-                    fan_data['motor_brand'],
-                    fan_data['motor_pole'],
-                    fan_data['motor_efficiency'],
-                    fan_data['motor_discount_rate'],
-                    fan_data['bearing_brand'],
-                    fan_data['shaft_diameter'],
-                    fan_data['vibration_isolators_cost'],
-                    fan_data['drive_pack_cost'],
-                    fan_data['bearing_cost'],
-                    fan_data['motor_cost'],
-                    fan_data['fabrication_weight'],
-                    fan_data['bought_out_weight'],
-                    fan_data['optional_items_cost'],
-                    fan_data['flex_connectors_cost'],
-                    fan_data['total_job_margin'],
-                    fan_data['no_of_isolators'],
-                    fan_data['fabrication_margin'],
-                    fan_data['bought_out_margin'],
-                    fan_data['material_name_0'],
-                    fan_data['material_weight_0'],
-                    fan_data['material_rate_0'],
-                    fan_data['material_name_1'],
-                    fan_data['material_weight_1'],
-                    fan_data['material_rate_1'],
-                    fan_data['material_name_2'],
-                    fan_data['material_weight_2'],
-                    fan_data['material_rate_2'],
-                    fan_data['material_name_3'],
-                    fan_data['material_weight_3'],
-                    fan_data['material_rate_3'],
-                    fan_data['material_name_4'],
-                    fan_data['material_weight_4'],
-                    fan_data['material_rate_4'],
-                    fan_data['custom_no_of_isolators'],
-                    fan_data['custom_shaft_diameter']
-                ]
-                
-                # Create the SQL dynamically to ensure column count matches value count
-                placeholders = ', '.join(['?' for _ in fan_data_values])
-                columns = ', '.join(fan_data_columns)
-                sql = f"INSERT INTO ProjectFans ({columns}) VALUES ({placeholders})"
-                
-                # Log the SQL before execution for debugging
-                logger.info(f"Executing SQL with {len(fan_data_values)} values for {len(fan_data_columns)} columns")
-                
-                # Execute with the values
-                cursor.execute(sql, fan_data_values)
-                
-                conn.commit()
-                
-                # Check if all fans have been added for this project
-                project_complete = current_fan_number >= total_fans
-                
-                return jsonify({
-                    'success': True,
-                    'message': 'Fan added successfully',
-                    'project_complete': project_complete
-                })
-            
-        except Exception as e:
-            logger.error(f"Error adding fan to project: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'message': f'Error adding fan to project: {str(e)}'
-            }), 500
-
-    @app.route('/get_project_data/<enquiry_number>')
-    def get_project_data(enquiry_number):
-        """Get all data for a project by enquiry number."""
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            
-            # Get project details
-            cursor.execute(
-                'SELECT id, enquiry_number, customer_name, total_fans, created_at FROM Projects WHERE enquiry_number = ?',
-                (enquiry_number,))
-            project = cursor.fetchone()
-            
-            if not project:
-                conn.close()
-                return jsonify({
-                    'success': False,
-                    'message': f'No project found with enquiry number: {enquiry_number}'
-                }), 404
-            
-            # Convert row to dictionary
-            project_columns = ['id', 'enquiry_number', 'customer_name', 'total_fans', 'created_at']
-            project_dict = dict(zip(project_columns, project))
-            
-            # Get all fans for this project
-            cursor.execute('''
-                SELECT * FROM ProjectFans
-                WHERE enquiry_number = ?
-                ORDER BY fan_number
-            ''', (enquiry_number,))
-            
-            fans = []
-            for row in cursor.fetchall():
-                # Get the column names correctly
-                column_names = [col[0] for col in cursor.description]
-                fan_dict = dict(zip(column_names, row))
-                
-                # Log the raw fan data for debugging
-                logger.debug(f"Raw fan data from database: {fan_dict}")
-                
-                # Build a proper fan structure with nested objects
-                fan_data = {
-                    'specifications': {
-                        'fan_model': fan_dict.get('fan_model', ''),
-                        'size': fan_dict.get('size', ''),
-                        'class': fan_dict.get('class', ''),
-                        'arrangement': fan_dict.get('arrangement', ''),
-                        'vendor': fan_dict.get('vendor', ''),
-                        'material': fan_dict.get('material', ''),
-                        'vibration_isolators': fan_dict.get('vibration_isolators', ''),
-                        'bearing_brand': fan_dict.get('bearing_brand', ''),
-                        'drive_pack_kw': float(fan_dict.get('drive_pack_kw', 0) or 0),
-                        'shaft_diameter': float(fan_dict.get('shaft_diameter', 0) or 0),
-                        'no_of_isolators': int(fan_dict.get('no_of_isolators', 0) or 0),
-                        'fabrication_margin': float(fan_dict.get('fabrication_margin', 0) or 0),
-                        'bought_out_margin': float(fan_dict.get('bought_out_margin', 0) or 0),
-                    },
-                    'weights': {
-                        'bare_fan_weight': float(fan_dict.get('bare_fan_weight', 0) or 0),
-                        'accessory_weight': float(fan_dict.get('accessory_weight', 0) or 0),
-                        'total_weight': float(fan_dict.get('total_weight', 0) or 0),
-                        'fabrication_weight': float(fan_dict.get('fabrication_weight', 0) or 0),
-                        'bought_out_weight': float(fan_dict.get('bought_out_weight', 0) or 0),
-                    },
-                    'costs': {
-                        'fabrication_cost': float(fan_dict.get('fabrication_cost', 0) or 0),
-                        'motor_cost': float(fan_dict.get('motor_cost', 0) or 0),
-                        'vibration_isolators_cost': float(fan_dict.get('vibration_isolators_cost', 0) or 0),
-                        'drive_pack_cost': float(fan_dict.get('drive_pack_cost', 0) or 0),
-                        'bearing_cost': float(fan_dict.get('bearing_cost', 0) or 0),
-                        'optional_items_cost': float(fan_dict.get('optional_items_cost', 0) or 0),
-                        'flex_connectors_cost': float(fan_dict.get('flex_connectors_cost', 0) or 0),
-                        'bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0),
-                        'total_cost': float(fan_dict.get('total_cost', 0) or 0),
-                        'fabrication_selling_price': float(fan_dict.get('fabrication_selling_price', 0) or 0),
-                        'bought_out_selling_price': float(fan_dict.get('bought_out_selling_price', 0) or 0),
-                        'total_selling_price': float(fan_dict.get('total_selling_price', 0) or 0),
-                        'total_job_margin': float(fan_dict.get('total_job_margin', 0) or 0),
-                    },
-                    'motor': {
-                        'kw': float(fan_dict.get('motor_kw', 0) or 0),
-                        'brand': fan_dict.get('motor_brand', ''),
-                        'pole': int(float(fan_dict.get('motor_pole', 0) or 0)),
-                        'efficiency': fan_dict.get('motor_efficiency', ''),
-                        'discount_rate': float(fan_dict.get('motor_discount_rate', 0) or 0),
-                    },
-                    'fabrication_margin': float(fan_dict.get('fabrication_margin', 0) or 0),
-                    'bought_out_margin': float(fan_dict.get('bought_out_margin', 0) or 0),
-                    'discounted_motor_price': float(fan_dict.get('motor_cost', 0) or 0),
-                    'total_bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0)
-                }
-                
-                # Add raw data for compatibility
-                fan_data.update({
-                    'fan_number': fan_dict.get('fan_number', 0),
-                    'enquiry_number': fan_dict.get('enquiry_number', ''),
-                    'fan_model': fan_dict.get('fan_model', ''),
-                    'fan_size': fan_dict.get('size', ''),
-                    'class_': fan_dict.get('class', ''),
-                    'arrangement': fan_dict.get('arrangement', ''),
-                    'vendor': fan_dict.get('vendor', ''),
-                    'material': fan_dict.get('material', ''),
-                    'vibration_isolators': fan_dict.get('vibration_isolators', ''),
-                    'bare_fan_weight': float(fan_dict.get('bare_fan_weight', 0) or 0),
-                    'accessory_weights': float(fan_dict.get('accessory_weight', 0) or 0),
-                    'total_weight': float(fan_dict.get('total_weight', 0) or 0),
-                    'fabrication_weight': float(fan_dict.get('fabrication_weight', 0) or 0),
-                    'bought_out_weight': float(fan_dict.get('bought_out_weight', 0) or 0),
-                    'fabrication_cost': float(fan_dict.get('fabrication_cost', 0) or 0),
-                    'motor_cost': float(fan_dict.get('motor_cost', 0) or 0),
-                    'vibration_isolators_cost': float(fan_dict.get('vibration_isolators_cost', 0) or 0),
-                    'drive_pack_cost': float(fan_dict.get('drive_pack_cost', 0) or 0),
-                    'bearing_cost': float(fan_dict.get('bearing_cost', 0) or 0),
-                    'optional_items_cost': float(fan_dict.get('optional_items_cost', 0) or 0),
-                    'flex_connectors_cost': float(fan_dict.get('flex_connectors_cost', 0) or 0),
-                    'bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0),
-                    'total_cost': float(fan_dict.get('total_cost', 0) or 0),
-                    'fabrication_selling_price': float(fan_dict.get('fabrication_selling_price', 0) or 0),
-                    'bought_out_selling_price': float(fan_dict.get('bought_out_selling_price', 0) or 0),
-                    'total_selling_price': float(fan_dict.get('total_selling_price', 0) or 0),
-                    'total_job_margin': float(fan_dict.get('total_job_margin', 0) or 0),
-                    'motor_kw': float(fan_dict.get('motor_kw', 0) or 0),
-                    'motor_brand': fan_dict.get('motor_brand', ''),
-                    'motor_pole': int(float(fan_dict.get('motor_pole', 0) or 0)),
-                    'motor_efficiency': fan_dict.get('motor_efficiency', ''),
-                    'motor_discount_rate': float(fan_dict.get('motor_discount_rate', 0) or 0),
-                    'bearing_brand': fan_dict.get('bearing_brand', ''),
-                    'shaft_diameter': float(fan_dict.get('shaft_diameter', 0) or 0),
-                    'drive_pack_kw': float(fan_dict.get('drive_pack_kw', 0) or 0),
-                    
-                    # Include additional fields to ensure correct pricing display
-                    'vibration_isolators_price': float(fan_dict.get('vibration_isolators_cost', 0) or 0),
-                    'bearing_price': float(fan_dict.get('bearing_cost', 0) or 0),
-                    'drive_pack_price': float(fan_dict.get('drive_pack_cost', 0) or 0),
-                    'discounted_motor_price': float(fan_dict.get('motor_cost', 0) or 0),
-                    'total_bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0)
-                })
-                
-                # Add custom material fields from database for materials 0-4
-                for i in range(5):
-                    name_key = f'material_name_{i}'
-                    weight_key = f'material_weight_{i}'
-                    rate_key = f'material_rate_{i}'
-                    
-                    if name_key in fan_dict:
-                        fan_data[name_key] = fan_dict.get(name_key, '')
-                    if weight_key in fan_dict:
-                        fan_data[weight_key] = float(fan_dict.get(weight_key, 0) or 0)
-                    if rate_key in fan_dict:
-                        fan_data[rate_key] = float(fan_dict.get(rate_key, 0) or 0)
-                
-                # Add custom no_of_isolators and shaft_diameter if available
-                if 'custom_no_of_isolators' in fan_dict:
-                    fan_data['custom_no_of_isolators'] = int(fan_dict.get('custom_no_of_isolators', 0) or 0)
-                else:
-                    # Fallback: Use the regular no_of_isolators field
-                    fan_data['custom_no_of_isolators'] = int(fan_dict.get('no_of_isolators', 0) or 0)
-                    
-                if 'custom_shaft_diameter' in fan_dict:
-                    fan_data['custom_shaft_diameter'] = float(fan_dict.get('custom_shaft_diameter', 0) or 0)
-                else:
-                    # Fallback: Use the regular shaft_diameter field
-                    fan_data['custom_shaft_diameter'] = float(fan_dict.get('shaft_diameter', 0) or 0)
-                
-                # Parse JSON fields
-                for json_field, spec_field in [
-                    ('accessories', 'accessories'),
-                    ('custom_accessories', 'custom_accessories'),
-                    ('optional_items', 'optional_items'),
-                    ('custom_option_items', 'custom_option_items')
-                ]:
-                    if fan_dict.get(json_field):
-                        try:
-                            # Parse the JSON and add to specs
-                            parsed_json = json.loads(fan_dict[json_field])
-                            fan_data['specifications'][spec_field] = parsed_json
-                            
-                            # Also add to top level for compatibility
-                            fan_data[spec_field] = parsed_json
-                            
-                            # Handle special case for optional_items
-                            if json_field == 'optional_items' and isinstance(parsed_json, dict):
-                                logger.info(f"Loading optional_items for fan {fan_dict.get('fan_number')}: {parsed_json}")
-                                
-                                # If it contains items and prices structure
-                                if 'items' in parsed_json and 'prices' in parsed_json:
-                                    logger.info(f"Found items/prices structure - items: {parsed_json['items']}, prices: {parsed_json['prices']}")
-                                    # Merge items with their prices from the database
-                                    merged_optional_items = {}
-                                    for item_id, item_name in parsed_json['items'].items():
-                                        # Use the price from the prices structure, default to 0
-                                        price = parsed_json['prices'].get(item_id, 0)
-                                        merged_optional_items[item_id] = price
-                                    
-                                    fan_data['optional_items'] = merged_optional_items
-                                    fan_data['optional_item_prices'] = parsed_json['prices']
-                                    fan_data['specifications']['optional_items'] = merged_optional_items
-                                    logger.info(f"Merged optional items: {merged_optional_items}")
-                                # Otherwise use the structure directly if it's just key:value pairs
-                                elif not ('items' in parsed_json or 'prices' in parsed_json):
-                                    fan_data['optional_items'] = parsed_json
-                                    fan_data['specifications']['optional_items'] = parsed_json
-                                    logger.info(f"Using direct key:value optional items: {parsed_json}")
-                        except json.JSONDecodeError as e:
-                            logger.warning(f"Failed to parse JSON for {json_field}: {fan_dict.get(json_field)} - Error: {str(e)}")
-                            # If it's a simple string, try to use it directly
-                            if isinstance(fan_dict.get(json_field), str) and not fan_dict.get(json_field).startswith('[') and not fan_dict.get(json_field).startswith('{'):
-                                fan_data['specifications'][spec_field] = [fan_dict.get(json_field)]
-                                fan_data[spec_field] = [fan_dict.get(json_field)]
-                            else:
-                                fan_data['specifications'][spec_field] = {}
-                                fan_data[spec_field] = {}
-                    else:
-                        fan_data['specifications'][spec_field] = {}
-                        fan_data[spec_field] = {}
-                
-                # Log the structured fan data for debugging
-                logger.debug(f"Structured fan data: {json.dumps(fan_data, default=str)}")
-                
-                fans.append(fan_data)
-            
-            conn.close()
-            
-            # Create project data to return
-            project_data = {
-                'success': True,
-                'project': {
-                    'enquiry_number': project[0],
-                    'customer_name': project[1],
-                    'total_fans': project[2],
-                    'sales_engineer': project[3],
-                    'created_at': project[4]
-                },
-                'fans': fans
-            }
-            
-            logger.info(f"Successfully loaded project {enquiry_number} with {len(fans)} fans")
-            return jsonify(project_data)
-            
-        except Exception as e:
-            logger.error(f"Error getting project data: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'message': f'Error getting project data: {str(e)}'
-            }), 500
-
-    @app.route('/get_all_projects')
-    def get_all_projects():
-        """Get a list of all projects."""
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                SELECT p.id, p.enquiry_number, p.customer_name, p.total_fans, 
-                       COUNT(pf.id) as fans_added, p.created_at
-                FROM Projects p
-                LEFT JOIN ProjectFans pf ON p.id = pf.project_id
-                GROUP BY p.id
-                ORDER BY p.created_at DESC
             ''')
             
-            projects_rows = cursor.fetchall()
+            # Insert or get existing project
+            cursor.execute('''
+                INSERT OR IGNORE INTO Projects (enquiry_number, customer_name, total_fans, sales_engineer)
+                VALUES (?, ?, ?, ?)
+            ''', (enquiry_number, customer_name, total_fans, sales_engineer))
             
-            # Get column names and convert to list of dictionaries
-            columns = ['id', 'enquiry_number', 'customer_name', 'total_fans', 'fans_added', 'created_at']
-            projects = [dict(zip(columns, row)) for row in projects_rows]
+            # Get the project ID
+            cursor.execute('SELECT id FROM Projects WHERE enquiry_number = ?', (enquiry_number,))
+            project_id = cursor.fetchone()[0]
             
-            conn.close()
-            return jsonify({
-                'success': True,
-                'projects': projects
-            })
-            
-        except Exception as e:
-            logger.error(f"Error getting all projects: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'message': f'Error getting all projects: {str(e)}'
-            }), 500
-    
-    @app.route('/edit_fan/<int:fan_index>')
-    def edit_fan(fan_index):
-        """Edit a specific fan from the summary page."""
-        try:
-            # Get the fan data from session
-            logger.info(f"Edit fan request received for fan index: {fan_index}")
-            
-            # Log session contents for debugging
-            logger.info(f"Session keys: {list(session.keys())}")
-            if 'fans' in session:
-                logger.info(f"Number of fans in session: {len(session['fans'])}")
-            else:
-                logger.error("No fans found in session")
-            
-            if 'fans' in session and fan_index < len(session['fans']):
-                fan_data = session['fans'][fan_index]
-                logger.info(f"Retrieved fan data for index {fan_index}: {json.dumps(fan_data)}")
-                
-                # Store the fan index being edited
-                session['editing_fan_index'] = fan_index
-                logger.info(f"Set editing_fan_index in session to {fan_index}")
-                session.modified = True  # Ensure session changes are saved
-                
-                # Load all dropdown options for the calculator
-                options = load_dropdown_options()
-                
-                # Get the specific fan specifications
-                fan_model = fan_data.get('specifications', {}).get('fan_model', '')
-                fan_size = fan_data.get('specifications', {}).get('size', '')
-                fan_class = fan_data.get('specifications', {}).get('class', '')
-                motor_kw = fan_data.get('motor', {}).get('kw', '')
-                motor_pole = fan_data.get('motor', {}).get('pole', '')
-                
-                logger.info(f"Fan specifications: model={fan_model}, size={fan_size}, class={fan_class}")
-                logger.info(f"Motor specifications: kW={motor_kw}, pole={motor_pole}")
-                
-                # Pre-fetch dependent dropdown options for this specific fan
-                with get_db_connection() as conn:
-                    cursor = conn.cursor()
-                    
-                    # Get available sizes for this model
-                    dependent_options = {}
-                    if fan_model:
-                        cursor.execute('''
-                            SELECT DISTINCT "Fan Size" 
-                            FROM FanWeights 
-                            WHERE "Fan Model" = ? 
-                            ORDER BY CAST("Fan Size" AS INTEGER)
-                        ''', (fan_model,))
-                        dependent_options['available_sizes'] = [str(row[0]) for row in cursor.fetchall()]
-                        logger.info(f"Available sizes for model {fan_model}: {dependent_options['available_sizes']}")
-                        
-                        # Get available classes for this model and size
-                        if fan_size:
-                            cursor.execute('''
-                                SELECT DISTINCT "Class" 
-                                FROM FanWeights 
-                                WHERE "Fan Model" = ? AND "Fan Size" = ? 
-                                ORDER BY "Class"
-                            ''', (fan_model, fan_size))
-                            dependent_options['available_classes'] = [str(row[0]) for row in cursor.fetchall()]
-                            logger.info(f"Available classes for model {fan_model}, size {fan_size}: {dependent_options['available_classes']}")
-                            
-                            # Get available arrangements for this model, size, and class
-                            if fan_class:
-                                cursor.execute('''
-                                    SELECT DISTINCT "Arrangement" 
-                                    FROM FanWeights 
-                                    WHERE "Fan Model" = ? AND "Fan Size" = ? AND "Class" = ? 
-                                    ORDER BY "Arrangement"
-                                ''', (fan_model, fan_size, fan_class))
-                                dependent_options['available_arrangements'] = [str(row[0]) for row in cursor.fetchall()]
-                
-                    # Get available poles for this motor kW
-                    if motor_kw:
-                        cursor.execute('''
-                            SELECT DISTINCT Pole 
-                            FROM MotorPrices 
-                            WHERE "Motor kW" = ? 
-                            ORDER BY Pole
-                        ''', (str(motor_kw),))
-                        dependent_options['available_poles'] = [str(row[0]) for row in cursor.fetchall()]
-                        logger.info(f"Available poles for motor kW {motor_kw}: {dependent_options['available_poles']}")
-                        
-                        # Get available efficiencies for this motor kW and pole
-                        if motor_pole:
-                            cursor.execute('''
-                                SELECT DISTINCT Efficiency 
-                                FROM MotorPrices 
-                                WHERE "Motor kW" = ? AND Pole = ? 
-                                ORDER BY Efficiency
-                            ''', (str(motor_kw), motor_pole))
-                            dependent_options['available_efficiencies'] = [str(row[0]) for row in cursor.fetchall()]
-                            logger.info(f"Available efficiencies: {dependent_options['available_efficiencies']}")
-            
-            # Ensure fan_data is properly structured for the frontend
-            # Convert any numerical values to strings if needed
-            if 'specifications' in fan_data:
-                for key, value in fan_data['specifications'].items():
-                    if isinstance(value, (int, float)):
-                        fan_data['specifications'][key] = str(value)
-            
-            if 'motor' in fan_data:
-                for key, value in fan_data['motor'].items():
-                    if isinstance(value, (int, float)):
-                        fan_data['motor'][key] = str(value)
-            
-            # Store an additional copy of data in the session for backup
-            session['last_edited_fan_data'] = fan_data
-            session['last_edited_dependent_options'] = dependent_options
-            session.modified = True
-            
-            # Log what we're sending to the template
-            logger.info(f"Rendering index.html with fan_data: {json.dumps(fan_data)}")
-            logger.info(f"Dependent options: {json.dumps(dependent_options)}")
-            
-            # Render the calculator template with the fan data for editing
-            return render_template('index.html', 
-                                  fan_data=fan_data,
-                                  editing_mode=True,
-                                  fan_index=fan_index,
-                                  dependent_options=dependent_options,
-                                  enquiry_number=session.get('enquiry_number'),
-                                  customer_name=session.get('customer_name'),
-                                  total_fans=session.get('total_fans'),
-                                  sales_engineer=session.get('sales_engineer'),
-                                  **options)
-        except Exception as e:
-            logger.error(f"Error editing fan: {str(e)}", exc_info=True)
-            return redirect(url_for('summary'))
-            
-    @app.route('/update_fan/<enquiry_number>/<int:fan_number>', methods=['POST'])
-    def update_fan(enquiry_number, fan_number):
-        """Update an existing fan in a project."""
-        try:
-            data = request.json
-            logger.info(f"Updating fan {fan_number} in project {enquiry_number}")
-            logger.info(f"Update data: {data}")
-            
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            
-            # Get project ID
-            cursor.execute(
-                'SELECT id FROM Projects WHERE enquiry_number = ?',
-                (enquiry_number,)
-            )
-            project_row = cursor.fetchone()
-            
-            if not project_row:
-                conn.close()
-                return jsonify({
-                    'success': False,
-                    'message': f'No project found with enquiry number: {enquiry_number}'
-                }), 404
-                
-            project_id = project_row[0]
-            
-            # Prepare data for update
-            fan_data = {
-                'fan_model': data.get('fan_model'),
-                'fan_size': data.get('fan_size'),
-                'class': data.get('class'),
-                'arrangement': data.get('arrangement'),
-                'vendor': data.get('vendor'),
-                'material': data.get('material'),
-                'bare_fan_weight': data.get('bare_fan_weight'),
-                'accessory_weights': data.get('accessory_weights'),
-                'total_weight': data.get('total_weight'),
-                'fabrication_cost': data.get('fabrication_cost'),
-                'bought_out_cost': data.get('bought_out_cost'),
-                'total_cost': data.get('total_cost'),
-                'bearing_brand': data.get('bearing_brand'),
-                'shaft_diameter': data.get('shaft_diameter'),
-                'motor_brand': data.get('motor_brand'),
-                'motor_kw': data.get('motor_kw'),
-                'pole': data.get('pole'),
-                'efficiency': data.get('efficiency'),
-                'accessories': json.dumps(data.get('accessories', {})),
-                'optional_items': json.dumps(data.get('optional_items', {}))
-            }
-            
-            # Only update non-None fields
-            update_fields = []
-            update_values = []
-            
-            for key, value in fan_data.items():
-                if value is not None:
-                    update_fields.append(f"{key} = ?")
-                    update_values.append(value)
-            
-            if not update_fields:
-                conn.close()
-                return jsonify({
-                    'success': False,
-                    'message': 'No fields to update'
-                }), 400
-                
-            # Add project_id and fan_number to values for WHERE clause
-            update_values.append(project_id)
-            update_values.append(fan_number)
-            
-            # Update the fan record
-            cursor.execute(
-                f'''
-                UPDATE ProjectFans
-                SET {', '.join(update_fields)}
-                WHERE project_id = ? AND fan_number = ?
-                ''',
-                update_values
-            )
+            # Insert fan data with project_id
+            cursor.execute('''
+                INSERT INTO ProjectFans (
+                    project_id, enquiry_number, fan_number, fan_model, size, class, arrangement, vendor, material,
+                    accessories, custom_accessories, optional_items, custom_option_items,
+                    bare_fan_weight, accessory_weight, total_weight, fabrication_weight, bought_out_weight,
+                    fabrication_cost, motor_cost, vibration_isolators_cost, drive_pack_cost, bearing_cost,
+                    optional_items_cost, flex_connectors_cost, bought_out_cost, total_cost,
+                    fabrication_selling_price, bought_out_selling_price, total_selling_price, total_job_margin,
+                    vibration_isolators, drive_pack_kw, motor_kw, motor_brand, motor_pole, motor_efficiency,
+                    motor_discount_rate, bearing_brand, shaft_diameter, no_of_isolators, fabrication_margin,
+                    bought_out_margin, material_name_0, material_weight_0, material_rate_0,
+                    material_name_1, material_weight_1, material_rate_1, material_name_2, material_weight_2,
+                    material_rate_2, material_name_3, material_weight_3, material_rate_3,
+                    material_name_4, material_weight_4, material_rate_4, custom_no_of_isolators, custom_shaft_diameter
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                project_id, fan_data['enquiry_number'], fan_data['fan_number'], fan_data['fan_model'],
+                fan_data['fan_size'], fan_data['class_'], fan_data['arrangement'], fan_data['vendor'],
+                fan_data['material'], fan_data['accessories'], fan_data['custom_accessories'],
+                fan_data['optional_items'], fan_data['custom_option_items'],
+                fan_data['bare_fan_weight'], fan_data['accessory_weights'], fan_data['total_weight'],
+                fan_data['fabrication_weight'], fan_data['bought_out_weight'], fan_data['fabrication_cost'],
+                fan_data['motor_cost'], fan_data['vibration_isolators_cost'], fan_data['drive_pack_cost'],
+                fan_data['bearing_cost'], fan_data['optional_items_cost'], fan_data['flex_connectors_cost'],
+                fan_data['bought_out_cost'], fan_data['total_cost'], fan_data['fabrication_selling_price'],
+                fan_data['bought_out_selling_price'], fan_data['total_selling_price'], fan_data['total_job_margin'],
+                fan_data['vibration_isolators'], fan_data['drive_pack_kw'], fan_data['motor_kw'],
+                fan_data['motor_brand'], fan_data['motor_pole'], fan_data['motor_efficiency'],
+                fan_data['motor_discount_rate'], fan_data['bearing_brand'], fan_data['shaft_diameter'],
+                fan_data.get('custom_no_of_isolators', 0), fan_data.get('fabrication_margin', 0),
+                fan_data.get('bought_out_margin', 0), fan_data['material_name_0'], fan_data['material_weight_0'],
+                fan_data['material_rate_0'], fan_data['material_name_1'], fan_data['material_weight_1'],
+                fan_data['material_rate_1'], fan_data['material_name_2'], fan_data['material_weight_2'],
+                fan_data['material_rate_2'], fan_data['material_name_3'], fan_data['material_weight_3'],
+                fan_data['material_rate_3'], fan_data['material_name_4'], fan_data['material_weight_4'],
+                fan_data['material_rate_4'], fan_data['custom_no_of_isolators'], fan_data['custom_shaft_diameter']
+            ))
             
             conn.commit()
             conn.close()
-            
-            return jsonify({
-                'success': True,
-                'message': f'Fan {fan_number} updated successfully',
-                'enquiry_number': enquiry_number
-            })
+            logger.info(f"Successfully saved fan data for project {enquiry_number}, fan #{fan_data['fan_number']}")
+            return True
             
         except Exception as e:
-            logger.error(f"Error updating fan: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'message': f'Error updating fan: {str(e)}'
-            }), 500
-
-    @app.route('/save_project_to_database/', methods=['POST'])
-    @app.route('/save_project_to_database/<enquiry_number>', methods=['POST'])
-    def save_project_to_database(enquiry_number=None):
-        """Save project data to the central database."""
+            logger.error(f"Error saving to local database: {str(e)}", exc_info=True)
+            return False
+    
+    def sync_to_central_database(project_data):
+        """Sync project data to the central database."""
         try:
             # Create a base directory for data and a subdirectory for the central database
             data_dir = 'data'
@@ -1673,1286 +895,192 @@ def register_routes(app):
                 shutil.copy(original_db_path, central_db_name)
                 logger.info(f"Copied central database to {central_db_name}")
             
-            # Connect to the central database
             conn = sqlite3.connect(central_db_name)
             cursor = conn.cursor()
             
-            # Get project data from request JSON
-            project_data = request.json
-            
-            if not project_data:
-                logger.error("No project data received in request")
-                return jsonify({'success': False, 'message': 'No project data received'})
-            
-            # If enquiry_number is not in URL, get it from the request data
-            if enquiry_number is None:
-                enquiry_number = project_data.get('enquiry_number')
-                if not enquiry_number:
-                    logger.error("No enquiry number provided")
-                    return jsonify({'success': False, 'message': 'No enquiry number provided'})
-            
-            logger.info(f"Saving project {enquiry_number} to database")
-            
-            # Validate required data
-            required_fields = ['customer_name', 'total_fans', 'sales_engineer', 'fans']
-            for field in required_fields:
-                if field not in project_data:
-                    logger.error(f"Missing required field in project data: {field}")
-                    return jsonify({'success': False, 'message': f'Missing required field: {field}'})
-            
-            # Log the received data
-            logger.info(f"Received project data: enquiry_number={enquiry_number}, "
-                        f"customer_name={project_data['customer_name']}, "
-                        f"total_fans={project_data['total_fans']}, "
-                        f"sales_engineer={project_data['sales_engineer']}, "
-                        f"fans_count={len(project_data['fans'])}")
-            
-            fans = project_data['fans']
-            if not fans:
-                logger.error("No fan data found in request")
-                return jsonify({'success': False, 'message': 'No fan data found in request'})
-            
-            # Calculate totals from the fans data
-            total_weight = sum(fan.get('weights', {}).get('total_weight', 0) for fan in fans)
-            total_fabrication_cost = sum(fan.get('costs', {}).get('fabrication_cost', 0) for fan in fans)
-            total_bought_out_cost = sum(fan.get('costs', {}).get('bought_out_cost', 0) for fan in fans)
-            total_cost = sum(fan.get('costs', {}).get('total_cost', 0) for fan in fans)
-            
-            # Calculate overall project margin
-            if total_fabrication_cost + total_bought_out_cost > 0:
-                total_job_margin = ((total_cost - (total_fabrication_cost + total_bought_out_cost)) / 
-                                    (total_fabrication_cost + total_bought_out_cost) * 100)
-            else:
-                total_job_margin = 0
-            
-            project_db_data = {
-                'enquiry_number': enquiry_number,
-                'customer_name': project_data['customer_name'],
-                'total_fans': project_data['total_fans'],
-                'sales_engineer': project_data['sales_engineer'],
-                'total_weight': total_weight,
-                'total_fabrication_cost': total_fabrication_cost,
-                'total_bought_out_cost': total_bought_out_cost,
-                'total_cost': total_cost,
-                'total_selling_price': total_fabrication_cost * (1 + project_data.get('fabrication_margin', 0) / 100) + 
-                                    total_bought_out_cost * (1 + project_data.get('bought_out_margin', 0) / 100),
-                'total_job_margin': total_job_margin
-            }
-            
-            try:
-                # Create tables if they don't exist
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS Projects (
-                        enquiry_number TEXT PRIMARY KEY,
-                        customer_name TEXT,
-                        total_fans INTEGER,
-                        sales_engineer TEXT,
-                        total_weight REAL,
-                        total_fabrication_cost REAL,
-                        total_bought_out_cost REAL,
-                        total_cost REAL,
-                        total_selling_price REAL,
-                        total_job_margin REAL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                ''')
-                
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS ProjectFans (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        enquiry_number TEXT,
-                        fan_number INTEGER,
-                        fan_model TEXT,
-                        size TEXT,
-                        class TEXT,
-                        arrangement TEXT,
-                        vendor TEXT,
-                        material TEXT,
-                        accessories TEXT,
-                        bare_fan_weight REAL,
-                        accessory_weight REAL,
-                        total_weight REAL,
-                        fabrication_weight REAL,
-                        bought_out_weight REAL,
-                        fabrication_cost REAL,
-                        motor_cost REAL,
-                        vibration_isolators_cost REAL,
-                        drive_pack_cost REAL,
-                        bearing_cost REAL,
-                        optional_items_cost REAL,
-                        flex_connectors_cost REAL,
-                        bought_out_cost REAL,
-                        total_cost REAL,
-                        fabrication_selling_price REAL,
-                        bought_out_selling_price REAL,
-                        total_selling_price REAL,
-                        total_job_margin REAL,
-                        vibration_isolators TEXT,
-                        drive_pack_kw REAL,
-                        custom_accessories TEXT,
-                        optional_items TEXT,
-                        custom_option_items TEXT,
-                        motor_kw REAL,
-                        motor_brand TEXT,
-                        motor_pole REAL,
-                        motor_efficiency TEXT,
-                        motor_discount_rate REAL,
-                        bearing_brand TEXT,
-                        shaft_diameter REAL,
-                        no_of_isolators INTEGER,
-                        fabrication_margin REAL,
-                        bought_out_margin REAL,
-                        material_name_0 TEXT,
-                        material_weight_0 REAL,
-                        material_rate_0 REAL,
-                        material_name_1 TEXT,
-                        material_weight_1 REAL,
-                        material_rate_1 REAL,
-                        material_name_2 TEXT,
-                        material_weight_2 REAL,
-                        material_rate_2 REAL,
-                        material_name_3 TEXT,
-                        material_weight_3 REAL,
-                        material_rate_3 REAL,
-                        material_name_4 TEXT,
-                        material_weight_4 REAL,
-                        material_rate_4 REAL,
-                        custom_no_of_isolators INTEGER,
-                        custom_shaft_diameter REAL,
-                        FOREIGN KEY (enquiry_number) REFERENCES Projects(enquiry_number)
-                    )
-                ''')
-                
-                # Check if project exists
-                cursor.execute('SELECT enquiry_number FROM Projects WHERE enquiry_number = ?', (enquiry_number,))
-                existing_project = cursor.fetchone()
-                
-                if existing_project:
-                    # Update existing project
-                    cursor.execute('''
-                        UPDATE Projects 
-                        SET customer_name = ?, total_fans = ?, sales_engineer = ?,
-                            total_weight = ?, total_fabrication_cost = ?, 
-                            total_bought_out_cost = ?, total_cost = ?, total_selling_price = ?, total_job_margin = ?
-                        WHERE enquiry_number = ?
-                    ''', (
-                        project_db_data['customer_name'], project_db_data['total_fans'],
-                        project_db_data['sales_engineer'], project_db_data['total_weight'],
-                        project_db_data['total_fabrication_cost'], project_db_data['total_bought_out_cost'],
-                        project_db_data['total_cost'], project_db_data['total_selling_price'], project_db_data['total_job_margin'], enquiry_number
-                    ))
-                    
-                    # Delete existing fans
-                    cursor.execute('DELETE FROM ProjectFans WHERE enquiry_number = ?', (enquiry_number,))
-                    logger.info(f"Updated existing project {enquiry_number}")
-                else:
-                    # Insert new project
-                    cursor.execute('''
-                        INSERT INTO Projects (
-                            enquiry_number, customer_name, total_fans, sales_engineer,
-                            total_weight, total_fabrication_cost, total_bought_out_cost, 
-                            total_cost, total_selling_price, total_job_margin
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
-                        project_db_data['enquiry_number'], project_db_data['customer_name'],
-                        project_db_data['total_fans'], project_db_data['sales_engineer'],
-                        project_db_data['total_weight'], project_db_data['total_fabrication_cost'],
-                        project_db_data['total_bought_out_cost'], project_db_data['total_cost'],
-                        project_db_data['total_selling_price'], project_db_data['total_job_margin']
-                    ))
-                    logger.info(f"Inserted new project {enquiry_number}")
-                
-                # Insert all fans
-                for i, fan in enumerate(fans, 1):
-                    # Extract values with consistent field names
-                    # Get specifications from nested structure
-                    specs = fan.get('specifications', {})
-                    weights = fan.get('weights', {})
-                    costs = fan.get('costs', {})
-                    motor = fan.get('motor', {})
-                    
-                    # Initialize a fan_data dictionary with default values for all custom material fields
-                    # This ensures these fields exist even if they're not in the original data
-                    fan_data = {
-                        'material_name_0': fan.get('material_name_0', ''),
-                        'material_weight_0': fan.get('material_weight_0', 0),
-                        'material_rate_0': fan.get('material_rate_0', 0),
-                        'material_name_1': fan.get('material_name_1', ''),
-                        'material_weight_1': fan.get('material_weight_1', 0),
-                        'material_rate_1': fan.get('material_rate_1', 0),
-                        'material_name_2': fan.get('material_name_2', ''),
-                        'material_weight_2': fan.get('material_weight_2', 0),
-                        'material_rate_2': fan.get('material_rate_2', 0),
-                        'material_name_3': fan.get('material_name_3', ''),
-                        'material_weight_3': fan.get('material_weight_3', 0),
-                        'material_rate_3': fan.get('material_rate_3', 0),
-                        'material_name_4': fan.get('material_name_4', ''),
-                        'material_weight_4': fan.get('material_weight_4', 0),
-                        'material_rate_4': fan.get('material_rate_4', 0),
-                        'custom_no_of_isolators': fan.get('custom_no_of_isolators', specs.get('no_of_isolators', 0)),
-                        'custom_shaft_diameter': fan.get('custom_shaft_diameter', specs.get('shaft_diameter', 0))
-                    }
-                    
-                    # Get the individual bought out costs from nested structure or top level
-                    vibration_isolators_cost = costs.get('vibration_isolators_cost', 
-                                               fan.get('vibration_isolators_cost', 
-                                               fan.get('vibration_isolators_price', 0)))
-                    
-                    bearing_cost = costs.get('bearing_cost', 
-                                 fan.get('bearing_cost', 
-                                 fan.get('bearing_price', 0)))
-                    
-                    drive_pack_cost = costs.get('drive_pack_cost', 
-                                    fan.get('drive_pack_cost', 
-                                    fan.get('drive_pack_price', 0)))
-                    
-                    motor_cost = costs.get('motor_cost', 
-                              fan.get('motor_cost', 
-                              fan.get('discounted_motor_price', 0)))
-                    
-                    optional_items_cost = costs.get('optional_items_cost',
-                                        fan.get('optional_items_cost', 0))
-                    
-                    flex_connectors_cost = costs.get('flex_connectors_cost',
-                                         fan.get('flex_connectors_cost', 0))
-                    
-                    # Log the bought out costs for debugging
-                    logger.info(f"Fan {i} bought out costs: " +
-                              f"vibration_isolators_cost={vibration_isolators_cost}, " +
-                              f"bearing_cost={bearing_cost}, " +
-                              f"drive_pack_cost={drive_pack_cost}, " +
-                              f"motor_cost={motor_cost}, " +
-                              f"optional_items_cost={optional_items_cost}, " +
-                              f"flex_connectors_cost={flex_connectors_cost}")
-                    
-                    # Format JSON fields 
-                    accessories = json.dumps(specs.get('accessories', {}))
-                    custom_accessories = json.dumps(specs.get('custom_accessories', {}))
-                    
-                    # Handle optional items - could be in different formats
-                    optional_items_data = specs.get('optional_items', {})
-                    
-                    # If it's not a dictionary, try to get from top level
-                    if not isinstance(optional_items_data, dict):
-                        optional_items_data = fan.get('optional_items', {})
-                    
-                    # Log the optional items data for debugging
-                    logger.info(f"Fan {i} optional items data from specs: {specs.get('optional_items', {})}")
-                    logger.info(f"Fan {i} optional items data from fan root: {fan.get('optional_items', {})}")
-                    logger.info(f"Fan {i} optional_item_prices: {fan.get('optional_item_prices', {})}")
-                    logger.info(f"Fan {i} optional_items_detail: {fan.get('optional_items_detail', {})}")
-                    
-                    # Check different possible data structures and normalize them
-                    if 'items' in optional_items_data and 'prices' in optional_items_data:
-                        # Already in the items/prices structure
-                        optional_items = json.dumps(optional_items_data)
-                        logger.info(f"Fan {i} using existing items/prices structure: {optional_items}")
-                    elif fan.get('optional_items') and isinstance(fan.get('optional_items'), dict) and any(isinstance(v, (int, float)) for v in fan.get('optional_items').values()):
-                        # We have optional_items as direct key:price mapping
-                        optional_items_dict = fan.get('optional_items')
-                        
-                        # Create items and prices structure
-                        items_dict = {}
-                        prices_dict = {}
-                        
-                        for item_id, price in optional_items_dict.items():
-                            # Use the item_id as both key and display name for now
-                            # In future, we could use optional_item_names if available
-                            display_name = item_id.replace('_', ' ').title()
-                            if fan.get('optional_item_names') and item_id in fan.get('optional_item_names'):
-                                display_name = fan.get('optional_item_names')[item_id]
-                            
-                            items_dict[item_id] = display_name
-                            prices_dict[item_id] = price
-                        
-                        optional_items = json.dumps({
-                            'items': items_dict,
-                            'prices': prices_dict
-                        })
-                        logger.info(f"Fan {i} created items/prices from direct mapping: {optional_items}")
-                    elif fan.get('optional_items') and fan.get('optional_item_prices'):
-                        # We have separate items and prices
-                        optional_items = json.dumps({
-                            'items': fan.get('optional_items', {}),
-                            'prices': fan.get('optional_item_prices', {})
-                        })
-                        logger.info(f"Fan {i} merging separate items and prices: {optional_items}")
-                    else:
-                        # Just use what we have as direct key:value if it's a dict, otherwise empty
-                        if isinstance(optional_items_data, dict) and optional_items_data:
-                            optional_items = json.dumps(optional_items_data)
-                            logger.info(f"Fan {i} using direct optional_items_data: {optional_items}")
-                        else:
-                            optional_items = json.dumps({})
-                            logger.info(f"Fan {i} no valid optional items found, using empty dict")
-                    
-                    custom_option_items = json.dumps(specs.get('custom_option_items', {}))
-                    
-                    # Insert fan data with consistent field names - use dynamic SQL to avoid mismatches
-                    fan_data_columns = [
-                        'enquiry_number', 'fan_number', 'fan_model', 'size', 'class', 'arrangement',
-                        'vendor', 'material', 'accessories', 'bare_fan_weight', 'accessory_weight',
-                        'total_weight', 'fabrication_weight', 'bought_out_weight',
-                        'fabrication_cost', 'motor_cost', 'vibration_isolators_cost',
-                        'drive_pack_cost', 'bearing_cost', 'optional_items_cost',
-                        'flex_connectors_cost', 'bought_out_cost', 'total_cost',
-                        'fabrication_selling_price', 'bought_out_selling_price',
-                        'total_selling_price', 'total_job_margin', 'vibration_isolators',
-                        'drive_pack_kw', 'custom_accessories', 'optional_items',
-                        'custom_option_items', 'motor_kw', 'motor_brand', 'motor_pole',
-                        'motor_efficiency', 'motor_discount_rate', 'bearing_brand', 'shaft_diameter',
-                        'no_of_isolators', 'fabrication_margin', 'bought_out_margin',
-                        'material_name_0', 'material_weight_0', 'material_rate_0',
-                        'material_name_1', 'material_weight_1', 'material_rate_1',
-                        'material_name_2', 'material_weight_2', 'material_rate_2',
-                        'material_name_3', 'material_weight_3', 'material_rate_3',
-                        'material_name_4', 'material_weight_4', 'material_rate_4',
-                        'custom_no_of_isolators', 'custom_shaft_diameter'
-                    ]
-                    
-                    fan_data_values = [
-                        enquiry_number,
-                        i,  # fan_number
-                        specs.get('fan_model', ''),
-                        specs.get('size', ''),
-                        specs.get('class', ''),
-                        specs.get('arrangement', ''),
-                        specs.get('vendor', ''),
-                        specs.get('material', ''),
-                        accessories,
-                        weights.get('bare_fan_weight', 0),
-                        weights.get('accessory_weight', 0),
-                        weights.get('total_weight', 0),
-                        weights.get('fabrication_weight', 0),
-                        weights.get('bought_out_weight', 0),
-                        costs.get('fabrication_cost', 0),
-                        motor_cost,
-                        vibration_isolators_cost,
-                        drive_pack_cost,
-                        bearing_cost,
-                        optional_items_cost,
-                        flex_connectors_cost,
-                        costs.get('bought_out_cost', 0),
-                        costs.get('total_cost', 0),
-                        costs.get('fabrication_selling_price', 0),
-                        costs.get('bought_out_selling_price', 0),
-                        costs.get('total_selling_price', 0),
-                        costs.get('total_job_margin', 0),
-                        specs.get('vibration_isolators', ''),
-                        specs.get('drive_pack_kw', 0),
-                        custom_accessories,
-                        optional_items,
-                        custom_option_items,
-                        motor.get('kw', 0),
-                        motor.get('brand', ''),
-                        motor.get('pole', 0),
-                        motor.get('efficiency', ''),
-                        motor.get('discount_rate', 0),
-                        specs.get('bearing_brand', ''),
-                        specs.get('shaft_diameter', 0),
-                        specs.get('no_of_isolators', fan.get('no_of_isolators', 0)),
-                        fan.get('fabrication_margin', costs.get('fabrication_margin', 0)),
-                        fan.get('bought_out_margin', costs.get('bought_out_margin', 0)),
-                        fan_data['material_name_0'],
-                        fan_data['material_weight_0'],
-                        fan_data['material_rate_0'],
-                        fan_data['material_name_1'],
-                        fan_data['material_weight_1'],
-                        fan_data['material_rate_1'],
-                        fan_data['material_name_2'],
-                        fan_data['material_weight_2'],
-                        fan_data['material_rate_2'],
-                        fan_data['material_name_3'],
-                        fan_data['material_weight_3'],
-                        fan_data['material_rate_3'],
-                        fan_data['material_name_4'],
-                        fan_data['material_weight_4'],
-                        fan_data['material_rate_4'],
-                        fan_data['custom_no_of_isolators'],
-                        fan_data['custom_shaft_diameter']
-                    ]
-                    
-                    # Create the SQL dynamically to ensure column count matches value count
-                    placeholders = ', '.join(['?' for _ in fan_data_values])
-                    columns = ', '.join(fan_data_columns)
-                    sql = f"INSERT INTO ProjectFans ({columns}) VALUES ({placeholders})"
-                    
-                    # Log the SQL before execution for debugging
-                    logger.info(f"Executing SQL with {len(fan_data_values)} values for {len(fan_data_columns)} columns")
-                    
-                    # Execute with the values
-                    cursor.execute(sql, fan_data_values)
-                    logger.info(f"Inserted fan {i} for project {enquiry_number}")
-                
-                conn.commit()
-                logger.info(f"Successfully saved project {enquiry_number} to database")
-                return jsonify({'success': True, 'message': 'Project saved successfully'})
-                
-            except sqlite3.Error as e:
-                conn.rollback()
-                logger.error(f"Database error while saving project: {str(e)}")
-                return jsonify({'success': False, 'message': f'Database error: {str(e)}'})
-            finally:
-                conn.close()
-            
-        except Exception as e:
-            logger.error(f"Error saving project to database: {str(e)}")
-            return jsonify({'success': False, 'message': str(e)})
-
-    @app.route('/get_saved_enquiries')
-    def get_saved_enquiries():
-        """Get all saved enquiries from the central database."""
-        try:
-            # Use the data directory for the central database
-            data_dir = 'data'
-            central_db_path = os.path.join(data_dir, 'central_database', 'all_projects.db')
-            
-            # If the central database doesn't exist in either location, return empty list
-            if not os.path.exists(central_db_path) and not os.path.exists('central_database/all_projects.db'):
-                return jsonify({
-                    'success': True,
-                    'enquiries': []
-                })
-            
-            # If the database exists in the original location but not in data dir, copy it
-            if not os.path.exists(central_db_path) and os.path.exists('central_database/all_projects.db'):
-                os.makedirs(os.path.dirname(central_db_path), exist_ok=True)
-                import shutil
-                shutil.copy('central_database/all_projects.db', central_db_path)
-                logger.info(f"Copied central database to {central_db_path}")
-            
-            conn = sqlite3.connect(central_db_path)
-            cursor = conn.cursor()
-            
+            # Create tables with the same schema as the main save_project_to_database function
             cursor.execute('''
-                SELECT enquiry_number, customer_name, total_fans, sales_engineer, created_at
-                FROM Projects
-                ORDER BY created_at DESC
+                CREATE TABLE IF NOT EXISTS Projects (
+                    enquiry_number TEXT PRIMARY KEY,
+                    customer_name TEXT,
+                    total_fans INTEGER,
+                    sales_engineer TEXT,
+                    total_weight REAL,
+                    total_fabrication_cost REAL,
+                    total_bought_out_cost REAL,
+                    total_cost REAL,
+                    total_selling_price REAL,
+                    total_job_margin REAL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
             ''')
             
-            enquiries = []
-            for row in cursor.fetchall():
-                enquiries.append({
-                    'enquiry_number': row[0],
-                    'customer_name': row[1],
-                    'total_fans': row[2],
-                    'sales_engineer': row[3],
-                    'created_at': row[4]
-                })
-            
-            conn.close()
-            return jsonify({
-                'success': True,
-                'enquiries': enquiries
-            })
-            
-        except Exception as e:
-            logger.error(f"Error getting saved enquiries: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'message': f'Error getting saved enquiries: {str(e)}'
-            }), 500
-
-    @app.route('/load_enquiry/<enquiry_number>')
-    def load_enquiry(enquiry_number):
-        """Load a project from the central database."""
-        try:
-            logger.info(f"Loading enquiry {enquiry_number} from database")
-            
-            # Use the data directory for the central database
-            data_dir = 'data'
-            central_db_path = os.path.join(data_dir, 'central_database', 'all_projects.db')
-            
-            # If the database doesn't exist in the data directory, check the original location
-            if not os.path.exists(central_db_path):
-                if os.path.exists('central_database/all_projects.db'):
-                    # Copy the database to the data directory
-                    os.makedirs(os.path.dirname(central_db_path), exist_ok=True)
-                    import shutil
-                    shutil.copy('central_database/all_projects.db', central_db_path)
-                    logger.info(f"Copied central database to {central_db_path}")
-                else:
-                    # No database found
-                    logger.error(f"No central database found at either {central_db_path} or central_database/all_projects.db")
-                    return jsonify({
-                        'success': False,
-                        'message': f'No enquiry found with number {enquiry_number}'
-                    }), 404
-            
-            conn = sqlite3.connect(central_db_path)
-            cursor = conn.cursor()
-            
-            # Get project details
             cursor.execute('''
-                SELECT enquiry_number, customer_name, total_fans, sales_engineer, created_at
-                FROM Projects
-                WHERE enquiry_number = ?
-            ''', (enquiry_number,))
+                CREATE TABLE IF NOT EXISTS ProjectFans (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    enquiry_number TEXT,
+                    fan_number INTEGER,
+                    fan_model TEXT,
+                    size TEXT,
+                    class TEXT,
+                    arrangement TEXT,
+                    vendor TEXT,
+                    material TEXT,
+                    accessories TEXT,
+                    bare_fan_weight REAL,
+                    accessory_weight REAL,
+                    total_weight REAL,
+                    fabrication_weight REAL,
+                    bought_out_weight REAL,
+                    fabrication_cost REAL,
+                    motor_cost REAL,
+                    vibration_isolators_cost REAL,
+                    drive_pack_cost REAL,
+                    bearing_cost REAL,
+                    optional_items_cost REAL,
+                    flex_connectors_cost REAL,
+                    bought_out_cost REAL,
+                    total_cost REAL,
+                    fabrication_selling_price REAL,
+                    bought_out_selling_price REAL,
+                    total_selling_price REAL,
+                    total_job_margin REAL,
+                    vibration_isolators TEXT,
+                    drive_pack_kw REAL,
+                    custom_accessories TEXT,
+                    optional_items TEXT,
+                    custom_option_items TEXT,
+                    motor_kw REAL,
+                    motor_brand TEXT,
+                    motor_pole REAL,
+                    motor_efficiency TEXT,
+                    motor_discount_rate REAL,
+                    bearing_brand TEXT,
+                    shaft_diameter REAL,
+                    no_of_isolators INTEGER,
+                    fabrication_margin REAL,
+                    bought_out_margin REAL,
+                    material_name_0 TEXT,
+                    material_weight_0 REAL,
+                    material_rate_0 REAL,
+                    material_name_1 TEXT,
+                    material_weight_1 REAL,
+                    material_rate_1 REAL,
+                    material_name_2 TEXT,
+                    material_weight_2 REAL,
+                    material_rate_2 REAL,
+                    material_name_3 TEXT,
+                    material_weight_3 REAL,
+                    material_rate_3 REAL,
+                    material_name_4 TEXT,
+                    material_weight_4 REAL,
+                    material_rate_4 REAL,
+                    custom_no_of_isolators INTEGER,
+                    custom_shaft_diameter REAL,
+                    FOREIGN KEY (enquiry_number) REFERENCES Projects(enquiry_number)
+                )
+            ''')
             
-            project = cursor.fetchone()
-            if not project:
-                logger.error(f"No project found with enquiry number: {enquiry_number}")
-                conn.close()
-                return jsonify({
-                    'success': False,
-                    'message': f'No project found with enquiry number: {enquiry_number}'
-                }), 404
+            enquiry_number = project_data['enquiry_number']
             
-            # Log the project details
-            logger.info(f"Found project: {project}")
+            # Check if project exists and update/insert
+            cursor.execute('SELECT enquiry_number FROM Projects WHERE enquiry_number = ?', (enquiry_number,))
+            existing_project = cursor.fetchone()
             
-            # Get all fans for this project using enquiry_number
-            try:
+            if existing_project:
+                # Update existing project
                 cursor.execute('''
-                    SELECT * FROM ProjectFans
+                    UPDATE Projects 
+                    SET customer_name = ?, total_fans = ?, sales_engineer = ?
                     WHERE enquiry_number = ?
-                    ORDER BY fan_number
-                ''', (enquiry_number,))
-            except sqlite3.Error as e:
-                logger.error(f"SQL error when retrieving fans: {str(e)}")
-                conn.close()
-                return jsonify({
-                    'success': False,
-                    'message': f'Error retrieving fans: {str(e)}'
-                }), 500
-            
-            fan_rows = cursor.fetchall()
-            if not fan_rows:
-                logger.warning(f"No fans found for project: {enquiry_number}")
+                ''', (project_data['customer_name'], project_data['total_fans'], project_data['sales_engineer'], enquiry_number))
             else:
-                logger.info(f"Found {len(fan_rows)} fans for project {enquiry_number}")
-                
-            # Get column names
-            column_names = [col[0] for col in cursor.description]
-            logger.debug(f"ProjectFans columns: {column_names}")
-                
-            fans = []
-            for row in fan_rows:
-                # Create a dictionary from the row using column names
-                fan_dict = dict(zip(column_names, row))
-                logger.debug(f"Fan data from database: {fan_dict}")
-                
-                # Build a proper fan structure with nested objects
-                fan_data = {
-                    'specifications': {
-                        'fan_model': fan_dict.get('fan_model', ''),
-                        'size': fan_dict.get('size', ''),
-                        'class': fan_dict.get('class', ''),
-                        'arrangement': fan_dict.get('arrangement', ''),
-                        'vendor': fan_dict.get('vendor', ''),
-                        'material': fan_dict.get('material', ''),
-                        'vibration_isolators': fan_dict.get('vibration_isolators', ''),
-                        'bearing_brand': fan_dict.get('bearing_brand', ''),
-                        'drive_pack_kw': float(fan_dict.get('drive_pack_kw', 0) or 0),
-                        'shaft_diameter': float(fan_dict.get('shaft_diameter', 0) or 0),
-                        'no_of_isolators': int(fan_dict.get('no_of_isolators', 0) or 0),
-                        'fabrication_margin': float(fan_dict.get('fabrication_margin', 0) or 0),
-                        'bought_out_margin': float(fan_dict.get('bought_out_margin', 0) or 0),
-                    },
-                    'weights': {
-                        'bare_fan_weight': float(fan_dict.get('bare_fan_weight', 0) or 0),
-                        'accessory_weight': float(fan_dict.get('accessory_weight', 0) or 0),
-                        'total_weight': float(fan_dict.get('total_weight', 0) or 0),
-                        'fabrication_weight': float(fan_dict.get('fabrication_weight', 0) or 0),
-                        'bought_out_weight': float(fan_dict.get('bought_out_weight', 0) or 0),
-                    },
-                    'costs': {
-                        'fabrication_cost': float(fan_dict.get('fabrication_cost', 0) or 0),
-                        'motor_cost': float(fan_dict.get('motor_cost', 0) or 0),
-                        'vibration_isolators_cost': float(fan_dict.get('vibration_isolators_cost', 0) or 0),
-                        'drive_pack_cost': float(fan_dict.get('drive_pack_cost', 0) or 0),
-                        'bearing_cost': float(fan_dict.get('bearing_cost', 0) or 0),
-                        'optional_items_cost': float(fan_dict.get('optional_items_cost', 0) or 0),
-                        'flex_connectors_cost': float(fan_dict.get('flex_connectors_cost', 0) or 0),
-                        'bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0),
-                        'total_cost': float(fan_dict.get('total_cost', 0) or 0),
-                        'fabrication_selling_price': float(fan_dict.get('fabrication_selling_price', 0) or 0),
-                        'bought_out_selling_price': float(fan_dict.get('bought_out_selling_price', 0) or 0),
-                        'total_selling_price': float(fan_dict.get('total_selling_price', 0) or 0),
-                        'total_job_margin': float(fan_dict.get('total_job_margin', 0) or 0),
-                    },
-                    'motor': {
-                        'kw': float(fan_dict.get('motor_kw', 0) or 0),
-                        'brand': fan_dict.get('motor_brand', ''),
-                        'pole': int(float(fan_dict.get('motor_pole', 0) or 0)),
-                        'efficiency': fan_dict.get('motor_efficiency', ''),
-                        'discount_rate': float(fan_dict.get('motor_discount_rate', 0) or 0),
-                    },
-                    'fabrication_margin': float(fan_dict.get('fabrication_margin', 0) or 0),
-                    'bought_out_margin': float(fan_dict.get('bought_out_margin', 0) or 0),
-                    'discounted_motor_price': float(fan_dict.get('motor_cost', 0) or 0),
-                    'total_bought_out_cost': float(fan_dict.get('bought_out_cost', 0) or 0)
+                # Insert new project
+                cursor.execute('''
+                    INSERT INTO Projects (enquiry_number, customer_name, total_fans, sales_engineer)
+                    VALUES (?, ?, ?, ?)
+                ''', (enquiry_number, project_data['customer_name'], project_data['total_fans'], project_data['sales_engineer']))
+            
+            # Process each fan in the project data
+            for fan_data in project_data['fans']:
+                # Convert nested fan data structure to flat database format
+                fan_db_data = {
+                    'enquiry_number': enquiry_number,
+                    'fan_number': fan_data.get('fan_number', 1),
+                    'fan_model': fan_data['specifications']['fan_model'],
+                    'size': fan_data['specifications']['size'],
+                    'class': fan_data['specifications']['class'],
+                    'arrangement': fan_data['specifications']['arrangement'],
+                    'vendor': fan_data['specifications']['vendor'],
+                    'material': fan_data['specifications']['material'],
+                    'accessories': json.dumps(fan_data['specifications'].get('accessories', {})),
+                    'custom_accessories': json.dumps(fan_data['specifications'].get('custom_accessories', {})),
+                    'optional_items': json.dumps(fan_data['specifications'].get('optional_items', {})),
+                    'custom_option_items': json.dumps(fan_data['specifications'].get('custom_optional_items', {})),
+                    'optional_items_json': json.dumps(fan_data['specifications'].get('optional_items', {})),
+                    'custom_optional_items_json': json.dumps(fan_data['specifications'].get('custom_option_items', {})),
+                    'bare_fan_weight': fan_data['weights']['bare_fan_weight'],
+                    'accessory_weight': fan_data['weights']['accessory_weight'],
+                    'total_weight': fan_data['weights']['total_weight'],
+                    'fabrication_weight': fan_data['weights']['fabrication_weight'],
+                    'bought_out_weight': fan_data['weights']['bought_out_weight'],
+                    'fabrication_cost': fan_data['costs']['fabrication_cost'],
+                    'motor_cost': fan_data['costs']['motor_cost'],
+                    'vibration_isolators_cost': fan_data['costs']['vibration_isolators_cost'],
+                    'drive_pack_cost': fan_data['costs']['drive_pack_cost'],
+                    'bearing_cost': fan_data['costs']['bearing_cost'],
+                    'optional_items_cost': fan_data['costs']['optional_items_cost'],
+                    'flex_connectors_cost': fan_data['costs']['flex_connectors_cost'],
+                    'bought_out_cost': fan_data['costs']['bought_out_cost'],
+                    'total_cost': fan_data['costs']['total_cost'],
+                    'fabrication_selling_price': fan_data['costs']['fabrication_selling_price'],
+                    'bought_out_selling_price': fan_data['costs']['bought_out_selling_price'],
+                    'total_selling_price': fan_data['costs']['total_selling_price'],
+                    'total_job_margin': fan_data['costs']['total_job_margin'],
+                    'vibration_isolators': fan_data['specifications']['vibration_isolators'],
+                    'drive_pack_kw': fan_data['specifications'].get('drive_pack_kw', 0),
+                    'motor_kw': fan_data['motor']['motor_kw'],
+                    'motor_brand': fan_data['motor']['motor_brand'],
+                    'motor_pole': fan_data['motor']['motor_pole'],
+                    'motor_efficiency': fan_data['motor']['motor_efficiency'],
+                    'motor_discount_rate': fan_data['motor'].get('motor_discount_rate', 0),
+                    'bearing_brand': fan_data['specifications']['bearing_brand'],
+                    'shaft_diameter': fan_data['specifications']['shaft_diameter'],
+                    'no_of_isolators': fan_data['specifications'].get('no_of_isolators', 0),
+                    'fabrication_margin': fan_data['specifications'].get('fabrication_margin', 25),
+                    'bought_out_margin': fan_data['specifications'].get('bought_out_margin', 25),
                 }
                 
-                # Add custom material fields from database for materials 0-4
+                # Handle material data
                 for i in range(5):
-                    name_key = f'material_name_{i}'
-                    weight_key = f'material_weight_{i}'
-                    rate_key = f'material_rate_{i}'
-                    
-                    if name_key in fan_dict:
-                        fan_data[name_key] = fan_dict.get(name_key, '')
-                    if weight_key in fan_dict:
-                        fan_data[weight_key] = float(fan_dict.get(weight_key, 0) or 0)
-                    if rate_key in fan_dict:
-                        fan_data[rate_key] = float(fan_dict.get(rate_key, 0) or 0)
+                    for key in ['material_name', 'material_weight', 'material_rate']:
+                        field_key = f'{key}_{i}'
+                        fan_db_data[field_key] = fan_data['specifications'].get(field_key, '')
                 
-                # Add custom fields for no_of_isolators and shaft_diameter
-                if 'custom_no_of_isolators' in fan_dict:
-                    fan_data['custom_no_of_isolators'] = int(fan_dict.get('custom_no_of_isolators', 0) or 0)
-                if 'custom_shaft_diameter' in fan_dict:
-                    fan_data['custom_shaft_diameter'] = float(fan_dict.get('custom_shaft_diameter', 0) or 0)
+                # Delete existing fan records for this enquiry and fan number
+                cursor.execute('DELETE FROM ProjectFans WHERE enquiry_number = ? AND fan_number = ?', 
+                             (enquiry_number, fan_db_data['fan_number']))
                 
-                # Parse JSON fields
-                for json_field, spec_field in [
-                    ('accessories', 'accessories'),
-                    ('custom_accessories', 'custom_accessories'),
-                    ('optional_items', 'optional_items'),
-                    ('custom_option_items', 'custom_option_items')
-                ]:
-                    if fan_dict.get(json_field):
-                        try:
-                            # Parse the JSON and add to specs
-                            parsed_json = json.loads(fan_dict[json_field])
-                            fan_data['specifications'][spec_field] = parsed_json
-                            
-                            # Also add to top level for compatibility
-                            fan_data[spec_field] = parsed_json
-                            
-                            # Handle special case for optional_items
-                            if json_field == 'optional_items' and isinstance(parsed_json, dict):
-                                logger.info(f"Loading optional_items for fan {fan_dict.get('fan_number')}: {parsed_json}")
-                                
-                                # If it contains items and prices structure
-                                if 'items' in parsed_json and 'prices' in parsed_json:
-                                    logger.info(f"Found items/prices structure - items: {parsed_json['items']}, prices: {parsed_json['prices']}")
-                                    # Merge items with their prices from the database
-                                    merged_optional_items = {}
-                                    for item_id, item_name in parsed_json['items'].items():
-                                        # Use the price from the prices structure, default to 0
-                                        price = parsed_json['prices'].get(item_id, 0)
-                                        merged_optional_items[item_id] = price
-                                    
-                                    fan_data['optional_items'] = merged_optional_items
-                                    fan_data['optional_item_prices'] = parsed_json['prices']
-                                    fan_data['specifications']['optional_items'] = merged_optional_items
-                                    logger.info(f"Merged optional items: {merged_optional_items}")
-                                # Otherwise use the structure directly if it's just key:value pairs
-                                elif not ('items' in parsed_json or 'prices' in parsed_json):
-                                    fan_data['optional_items'] = parsed_json
-                                    fan_data['specifications']['optional_items'] = parsed_json
-                                    logger.info(f"Using direct key:value optional items: {parsed_json}")
-                            
-                        except json.JSONDecodeError as e:
-                            logger.warning(f"Failed to parse JSON for {json_field}: {fan_dict.get(json_field)} - Error: {str(e)}")
-                            # If it's a simple string, try to use it directly
-                            if isinstance(fan_dict.get(json_field), str) and not fan_dict.get(json_field).startswith('[') and not fan_dict.get(json_field).startswith('{'):
-                                fan_data['specifications'][spec_field] = [fan_dict.get(json_field)]
-                                fan_data[spec_field] = [fan_dict.get(json_field)]
-                            else:
-                                fan_data['specifications'][spec_field] = {}
-                                fan_data[spec_field] = {}
-                    else:
-                        fan_data['specifications'][spec_field] = {}
-                        fan_data[spec_field] = {}
+                # Insert the fan data
+                columns = list(fan_db_data.keys())
+                placeholders = ', '.join(['?' for _ in columns])
+                values = list(fan_db_data.values())
                 
-                # Log reconstructed fan data for debugging
-                logger.info(f"Reconstructed fan data with bought out costs: vibration_isolators_cost={fan_data.get('vibration_isolators_cost', 0)}, " +
-                           f"bearing_cost={fan_data.get('bearing_cost', 0)}, drive_pack_cost={fan_data.get('drive_pack_cost', 0)}, " +
-                           f"motor_cost={fan_data.get('motor_cost', 0)}, optional_items_cost={fan_data.get('optional_items_cost', 0)}")
+                cursor.execute(f'''
+                    INSERT INTO ProjectFans ({', '.join(columns)})
+                    VALUES ({placeholders})
+                ''', values)
                 
-                # Add the fan to the list
-                fans.append(fan_data)
-                logger.debug(f"Processed fan #{fan_dict.get('fan_number')} - Model: {fan_data['specifications']['fan_model']}")
-            
+            conn.commit()
             conn.close()
-            
-            # Create project data to return
-            project_data = {
-                'success': True,
-                'project': {
-                    'enquiry_number': project[0],
-                    'customer_name': project[1],
-                    'total_fans': project[2],
-                    'sales_engineer': project[3],
-                    'created_at': project[4]
-                },
-                'fans': fans
-            }
-            
-            logger.info(f"Successfully loaded project {enquiry_number} with {len(fans)} fans")
-            return jsonify(project_data)
+            logger.info(f"Successfully synced project {enquiry_number} to central database")
+            return True
             
         except Exception as e:
-            logger.error(f"Error loading enquiry: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'message': f'Error loading enquiry: {str(e)}'
-            }), 500
-
-    @app.route('/summary')
-    def summary():
-        """Display the project summary of all entered fans."""
-        try:
-            # Get session data
-            enquiry_number = session.get('enquiry_number', 'Unknown')
-            customer_name = session.get('customer_name', 'Unknown')
-            sales_engineer = session.get('sales_engineer', 'Unknown')
-            total_fans = session.get('total_fans', 0)
-            fans = session.get('fans', [])
-            
-            logger.info(f"Rendering summary for {enquiry_number} with {len(fans)} fans")
-            
-            # DIAGNOSTIC: Check fan data for custom_optional_items
-            for i, fan in enumerate(fans):
-                if not isinstance(fan, dict):
-                    continue
-                    
-                logger.info(f"Checking fan {i+1} for custom_optional_items")
-                
-                # Check for all formats of custom optional items
-                formats_found = []
-                if 'custom_optional_items[]' in fan:
-                    formats_found.append(f"custom_optional_items[]: {fan['custom_optional_items[]']}")
-                
-                if 'specifications' in fan and 'custom_optional_items[]' in fan['specifications']:
-                    formats_found.append(f"specifications.custom_optional_items[]: {fan['specifications']['custom_optional_items[]']}")
-                
-                if 'custom_optional_items' in fan and isinstance(fan['custom_optional_items'], dict):
-                    formats_found.append(f"custom_optional_items dict: {fan['custom_optional_items']}")
-                
-                if 'specifications' in fan and 'custom_optional_items' in fan['specifications'] and isinstance(fan['specifications']['custom_optional_items'], dict):
-                    formats_found.append(f"specifications.custom_optional_items dict: {fan['specifications']['custom_optional_items']}")
-                
-                if 'specifications' in fan and 'custom_option_items' in fan['specifications']:
-                    formats_found.append(f"specifications.custom_option_items: {fan['specifications']['custom_option_items']}")
-                
-                if 'custom_optional_items_display_name' in fan:
-                    formats_found.append(f"custom_optional_items_display_name: {fan['custom_optional_items_display_name']}")
-                
-                if 'specifications' in fan and 'custom_optional_items_display_name' in fan['specifications']:
-                    formats_found.append(f"specifications.custom_optional_items_display_name: {fan['specifications']['custom_optional_items_display_name']}")
-                
-                if 'optional_items' in fan and fan['optional_items'] and isinstance(fan['optional_items'], dict):
-                    if 'amca_type_c_spark_proof_construction' in fan['optional_items']:
-                        formats_found.append(f"optional_items.amca_type_c_spark_proof_construction: {fan['optional_items']['amca_type_c_spark_proof_construction']}")
-                
-                if formats_found:
-                    logger.info(f"Fan {i+1} has these custom optional items formats: {formats_found}")
-                else:
-                    logger.warning(f"Fan {i+1} has NO custom optional items in any format")
-                
-                # Create an alias for optional_items to show up for sure
-                if 'custom_optional_items[]' in fan and fan['custom_optional_items[]'] == 'AMCA Type C Spark Proof Construction':
-                    if 'optional_items' not in fan:
-                        fan['optional_items'] = {}
-                    fan['optional_items']['amca_type_c_spark_proof_construction'] = '0'
-                    logger.info(f"Added amca_type_c_spark_proof_construction to fan {i+1} optional_items")
-                
-                # Force display via display name if all else fails
-                if 'custom_optional_items[]' in fan and fan['custom_optional_items[]'] == 'AMCA Type C Spark Proof Construction':
-                    fan['custom_optional_items_display_name'] = fan['custom_optional_items[]']
-                    if 'specifications' not in fan:
-                        fan['specifications'] = {}
-                    fan['specifications']['custom_optional_items_display_name'] = fan['custom_optional_items[]']
-                    logger.info(f"Added display name to fan {i+1}")
-            
-            # Validate and sanitize fan data
-            validated_fans = []
-            total_weight = 0
-            total_fabrication_cost = 0
-            total_bought_out_cost = 0
-            total_cost = 0
-            
-            for i, fan in enumerate(fans):
-                # Skip if not a dictionary
-                if not isinstance(fan, dict):
-                    logger.warning(f"Fan {i} is not a dictionary, skipping")
-                    continue
-                
-                # Fix missing structures if needed
-                for key in ['specifications', 'weights', 'costs', 'motor']:
-                    if key not in fan:
-                        fan[key] = {}
-                        
-                # IMPROVED HANDLING FOR CUSTOM OPTIONAL ITEMS - START
-                # 1. Handle custom_optional_items[] format - Make sure it exists in specifications
-                if 'custom_optional_items[]' in fan and not fan['specifications'].get('custom_optional_items[]'):
-                    logger.info(f"Fan {i}: Processing custom_optional_items[] at root level")
-                    fan['specifications']['custom_optional_items[]'] = fan['custom_optional_items[]']
-                    
-                    # Also make sure it's in the dictionary format for backward compatibility
-                    if 'custom_optional_items' not in fan['specifications']:
-                        fan['specifications']['custom_optional_items'] = {}
-                    
-                    # Convert the array notation to a dictionary entry with zero price
-                    item_name = fan['custom_optional_items[]']
-                    item_id = item_name.lower().replace(' ', '_')
-                    fan['specifications']['custom_optional_items'][item_id] = 0
-                    
-                    # DIRECT FIX: Add to optional_items directly so it's always displayed
-                    if 'optional_items' not in fan:
-                        fan['optional_items'] = {}
-                    fan['optional_items'][item_id] = 0
-                    
-                    # Also ensure it's in custom_optional_items_display_name for display
-                    fan['custom_optional_items_display_name'] = item_name
-                    fan['specifications']['custom_optional_items_display_name'] = item_name
-                    
-                    # Force it into a format that the template recognizes
-                    if 'amca' in item_name.lower() or 'spark' in item_name.lower():
-                        if 'optional_items' not in fan:
-                            fan['optional_items'] = {}
-                        fan['optional_items']['amca_type_c_spark_proof_construction'] = 0
-                
-                # 2. Copy display_name if it exists
-                if 'custom_optional_items_display_name' in fan and 'custom_optional_items_display_name' not in fan['specifications']:
-                    logger.info(f"Fan {i}: Processing custom_optional_items_display_name")
-                    fan['specifications']['custom_optional_items_display_name'] = fan['custom_optional_items_display_name']
-                
-                # 3. Handle potential string-encoded JSON
-                if 'custom_optional_items' in fan and isinstance(fan['custom_optional_items'], str):
-                    try:
-                        # Try to parse it as JSON
-                        logger.info(f"Fan {i}: Parsing string JSON custom_optional_items")
-                        parsed_items = json.loads(fan['custom_optional_items'])
-                        fan['custom_optional_items'] = parsed_items
-                        fan['specifications']['custom_optional_items'] = parsed_items
-                    except:
-                        logger.warning(f"Fan {i}: Failed to parse string custom_optional_items")
-                
-                # 4. Handle custom optional items for consistency
-                if 'specifications' in fan:
-                    # Ensure both naming formats exist for backward compatibility
-                    if 'custom_option_items' in fan['specifications'] and 'custom_optional_items' not in fan['specifications']:
-                        logger.info(f"Fan {i}: Converting custom_option_items to custom_optional_items")
-                        fan['specifications']['custom_optional_items'] = fan['specifications']['custom_option_items']
-                    elif 'custom_optional_items' in fan['specifications'] and 'custom_option_items' not in fan['specifications']:
-                        logger.info(f"Fan {i}: Converting custom_optional_items to custom_option_items")
-                        fan['specifications']['custom_option_items'] = fan['specifications']['custom_optional_items']
-                
-                # 5. Copy custom_optional_items from root to specifications if needed
-                if 'custom_optional_items' in fan and fan['custom_optional_items'] and isinstance(fan['custom_optional_items'], dict):
-                    if 'custom_optional_items' not in fan['specifications'] or not fan['specifications']['custom_optional_items']:
-                        logger.info(f"Fan {i}: Copying custom_optional_items from root to specifications")
-                        fan['specifications']['custom_optional_items'] = fan['custom_optional_items']
-                # IMPROVED HANDLING FOR CUSTOM OPTIONAL ITEMS - END
-                            
-                # Aggregate totals
-                total_weight += float(fan.get('weights', {}).get('total_weight', 0))
-                total_fabrication_cost += float(fan.get('costs', {}).get('fabrication_cost', 0))
-                total_bought_out_cost += float(fan.get('costs', {}).get('bought_out_cost', 0))
-                total_cost += float(fan.get('costs', {}).get('total_cost', 0))
-                
-                validated_fans.append(fan)
-                
-            # Replace original list with validated fans
-            fans = validated_fans
-            
-            return render_template('summary.html', 
-                                   fans=fans,
-                                   enquiry_number=enquiry_number,
-                                   customer_name=customer_name,
-                                   sales_engineer=sales_engineer,
-                                   total_fans=len(fans),
-                                   total_weight=total_weight,
-                                   total_fabrication_cost=total_fabrication_cost,
-                                   total_bought_out_cost=total_bought_out_cost,
-                                   total_cost=total_cost)
-        except Exception as e:
-            logger.error(f"Error rendering summary: {str(e)}", exc_info=True)
-            return render_template('error.html', error=str(e))
-
-    @app.route('/start_fan_entry', methods=['POST'])
-    def start_fan_entry():
-        """Store initial project data in session and start fan entry."""
-        try:
-            data = request.json
-            logger.info(f"Starting fan entry with data: {data}")
-            
-            # Validate required fields
-            required_fields = ['enquiry_number', 'customer_name', 'total_fans', 'sales_engineer']
-            for field in required_fields:
-                if not data.get(field):
-                    return jsonify({
-                        'success': False,
-                        'message': f'Missing required field: {field}'
-                    }), 400
-            
-            # Store data in session
-            session['enquiry_number'] = data['enquiry_number']
-            session['customer_name'] = data['customer_name']
-            session['total_fans'] = data['total_fans']
-            session['sales_engineer'] = data['sales_engineer']
-            session['fans'] = []  # Initialize empty fans list
-            
-            # Make session permanent
-            session.permanent = True
-            
-            return jsonify({
-                'success': True,
-                'message': 'Project data stored in session'
-            })
-            
-        except Exception as e:
-            logger.error(f"Error starting fan entry: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'message': f'Error starting fan entry: {str(e)}'
-            }), 500
-
-    @app.route('/get_session_data')
-    def get_session_data():
-        """Get all data stored in the session."""
-        try:
-            data = {
-                'success': True,
-                'enquiry_number': session.get('enquiry_number'),
-                'customer_name': session.get('customer_name'),
-                'total_fans': session.get('total_fans'),
-                'sales_engineer': session.get('sales_engineer'),
-                'fans': session.get('fans', [])
-            }
-            
-            # Log the session data being returned
-            logger.info(f"Returning session data: {data}")
-            
-            return jsonify(data)
-        except Exception as e:
-            logger.error(f"Error getting session data: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'message': f'Error getting session data: {str(e)}'
-            }), 500
-
-    @app.route('/get_fan_data/<int:fan_index>')
-    def get_fan_data(fan_index):
-        """Get fan data directly via AJAX."""
-        try:
-            logger.info(f"AJAX request for fan data at index {fan_index}")
-            
-            # Check if we have the fan data directly in the session
-            if 'fans' in session and fan_index < len(session['fans']):
-                fan_data = session['fans'][fan_index]
-                logger.info(f"Found fan data in main session array")
-            elif 'last_edited_fan_data' in session:
-                # Fall back to the backup copy
-                fan_data = session['last_edited_fan_data']
-                logger.info(f"Using backup fan data from last_edited_fan_data")
-            else:
-                logger.error("No fan data found in session")
-                return jsonify({
-                    'success': False,
-                    'message': 'No fan data found in session'
-                })
-            
-            # Get dependent options
-            dependent_options = {}
-            if 'last_edited_dependent_options' in session:
-                dependent_options = session['last_edited_dependent_options']
-                logger.info("Using cached dependent options")
-            else:
-                # Regenerate dependent options if not available
-                fan_model = fan_data.get('specifications', {}).get('fan_model', '')
-                fan_size = fan_data.get('specifications', {}).get('size', '')
-                fan_class = fan_data.get('specifications', {}).get('class', '')
-                motor_kw = fan_data.get('motor', {}).get('kw', '')
-                motor_pole = fan_data.get('motor', {}).get('pole', '')
-                
-                logger.info(f"Regenerating dependent options for model={fan_model}, size={fan_size}, class={fan_class}")
-                
-                # Pre-fetch dependent dropdown options for this specific fan
-                with get_db_connection() as conn:
-                    cursor = conn.cursor()
-                    
-                    # Get available sizes for this model
-                    if fan_model:
-                        cursor.execute('''
-                            SELECT DISTINCT "Fan Size" 
-                            FROM FanWeights 
-                            WHERE "Fan Model" = ? 
-                            ORDER BY CAST("Fan Size" AS INTEGER)
-                        ''', (fan_model,))
-                        dependent_options['available_sizes'] = [str(row[0]) for row in cursor.fetchall()]
-                        
-                        # Get available classes for this model and size
-                        if fan_size:
-                            cursor.execute('''
-                                SELECT DISTINCT "Class" 
-                                FROM FanWeights 
-                                WHERE "Fan Model" = ? AND "Fan Size" = ? 
-                                ORDER BY "Class"
-                            ''', (fan_model, fan_size))
-                            dependent_options['available_classes'] = [str(row[0]) for row in cursor.fetchall()]
-                            
-                            # Get available arrangements for this model, size, and class
-                            if fan_class:
-                                cursor.execute('''
-                                    SELECT DISTINCT "Arrangement" 
-                                    FROM FanWeights 
-                                    WHERE "Fan Model" = ? AND "Fan Size" = ? AND "Class" = ? 
-                                    ORDER BY "Arrangement"
-                                ''', (fan_model, fan_size, fan_class))
-                                dependent_options['available_arrangements'] = [str(row[0]) for row in cursor.fetchall()]
-                
-                    # Get available poles for this motor kW
-                    if motor_kw:
-                        cursor.execute('''
-                            SELECT DISTINCT Pole 
-                            FROM MotorPrices 
-                            WHERE "Motor kW" = ? 
-                            ORDER BY Pole
-                        ''', (str(motor_kw),))
-                        dependent_options['available_poles'] = [str(row[0]) for row in cursor.fetchall()]
-                        
-                        # Get available efficiencies for this motor kW and pole
-                        if motor_pole:
-                            cursor.execute('''
-                                SELECT DISTINCT Efficiency 
-                                FROM MotorPrices 
-                                WHERE "Motor kW" = ? AND Pole = ? 
-                                ORDER BY Efficiency
-                            ''', (str(motor_kw), motor_pole))
-                            dependent_options['available_efficiencies'] = [str(row[0]) for row in cursor.fetchall()]
-                            logger.info(f"Available efficiencies: {dependent_options['available_efficiencies']}")
-            
-            # Return the data as JSON
-            return jsonify({
-                'success': True,
-                'fan_data': fan_data,
-                'dependent_options': dependent_options
-            })
-            
-        except Exception as e:
-            logger.error(f"Error retrieving fan data: {str(e)}", exc_info=True)
-            return jsonify({
-                'success': False,
-                'message': f'Error retrieving fan data: {str(e)}'
-            })
-
-    @app.route('/save_project', methods=['POST'])
-    def save_project():
-        """Save project data to the database."""
-        try:
-            data = request.get_json()
-            logger.info(f"Received data to save project: {data.keys()}")
-            
-            # Validate required fields
-            required_fields = ['enquiry_number', 'customer_name', 'total_fans', 'fans', 'sales_engineer']
-            missing_fields = [field for field in required_fields if field not in data or not data[field]]
-            
-            if missing_fields:
-                logger.error(f"Missing required fields for saving project: {missing_fields}")
-                return jsonify({'status': 'error', 'message': f"Missing required fields: {', '.join(missing_fields)}"}), 400
-            
-            # Extract data
-            enquiry_number = data.get('enquiry_number')
-            customer_name = data.get('customer_name')
-            total_fans = data.get('total_fans')
-            fans = data.get('fans', [])
-            sales_engineer = data.get('sales_engineer')
-            
-            # Validate fans data
-            if not isinstance(fans, list):
-                logger.error(f"Fans data is not a list: {type(fans)}")
-                return jsonify({'status': 'error', 'message': "Fans data must be a list"}), 400
-            
-            # Validate each fan object
-            for i, fan in enumerate(fans):
-                if not isinstance(fan, dict):
-                    logger.error(f"Fan {i} is not a dictionary: {type(fan)}")
-                    return jsonify({'status': 'error', 'message': f"Fan {i} has invalid format"}), 400
-                
-                # Ensure required fan structures exist
-                for key in ['specifications', 'weights', 'costs', 'motor']:
-                    if key not in fan:
-                        logger.warning(f"Fan {i} is missing {key}, creating empty structure")
-                        fan[key] = {}
-            
-            # Connect to database
-            conn = get_db_connection()
-            if not conn:
-                logger.error("Failed to connect to database when saving project")
-                return jsonify({'status': 'error', 'message': "Database connection error"}), 500
-            
-            cursor = conn.cursor()
-            
-            try:
-                # Check if project already exists
-                cursor.execute('SELECT id FROM projects WHERE enquiry_number = ?', (enquiry_number,))
-                existing_project = cursor.fetchone()
-                
-                if existing_project:
-                    # Update existing project
-                    project_id = existing_project[0]
-                    logger.info(f"Updating existing project with ID {project_id}")
-                    
-                    cursor.execute('''
-                        UPDATE projects 
-                        SET customer_name = ?, total_fans = ?, sales_engineer = ?, updated_at = CURRENT_TIMESTAMP
-                        WHERE id = ?
-                    ''', (customer_name, total_fans, sales_engineer, project_id))
-                    
-                    # Delete existing fans for this project
-                    cursor.execute('DELETE FROM fans WHERE project_id = ?', (project_id,))
-                else:
-                    # Create new project
-                    logger.info(f"Creating new project for enquiry {enquiry_number}")
-                    cursor.execute('''
-                        INSERT INTO projects (enquiry_number, customer_name, total_fans, sales_engineer, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    ''', (enquiry_number, customer_name, total_fans, sales_engineer))
-                    
-                    project_id = cursor.lastrowid
-                
-                # Save fans data
-                for i, fan in enumerate(fans):
-                    specifications = json.dumps(fan.get('specifications', {}))
-                    weights = json.dumps(fan.get('weights', {}))
-                    costs = json.dumps(fan.get('costs', {}))
-                    motor = json.dumps(fan.get('motor', {}))
-                    
-                    cursor.execute('''
-                        INSERT INTO fans (project_id, fan_number, specifications, weights, costs, motor)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (project_id, i+1, specifications, weights, costs, motor))
-                
-                conn.commit()
-                logger.info(f"Successfully saved project {enquiry_number} with {len(fans)} fans")
-                
-                # Save data to session
-                session['enquiry_number'] = enquiry_number
-                session['customer_name'] = customer_name
-                session['total_fans'] = total_fans
-                session['fans'] = fans
-                session['sales_engineer'] = sales_engineer
-                
-                return jsonify({'status': 'success', 'message': "Project saved successfully"})
-                
-            except Exception as e:
-                conn.rollback()
-                logger.error(f"SQL error when saving project: {str(e)}", exc_info=True)
-                return jsonify({'status': 'error', 'message': f"Database error: {str(e)}"}), 500
-            finally:
-                cursor.close()
+            logger.error(f"Error syncing to central database: {str(e)}", exc_info=True)
+            if 'conn' in locals():
                 conn.close()
-                
-        except Exception as e:
-            logger.error(f"Error saving project: {str(e)}", exc_info=True)
-            return jsonify({'status': 'error', 'message': f"An error occurred: {str(e)}"}), 500
-
-    @app.route('/load_project', methods=['POST'])
-    def load_project():
-        """Load project data from the database."""
-        try:
-            data = request.get_json()
-            logger.info(f"Received request to load project: {data}")
-            
-            # Validate request
-            if 'enquiry_number' not in data or not data['enquiry_number']:
-                logger.error("Missing enquiry number for loading project")
-                return jsonify({'status': 'error', 'message': "Enquiry number is required"}), 400
-            
-            enquiry_number = data['enquiry_number']
-            
-            # Connect to database
-            conn = get_db_connection()
-            if not conn:
-                logger.error(f"Failed to connect to database when loading project {enquiry_number}")
-                return jsonify({'status': 'error', 'message': "Database connection error"}), 500
-            
-            cursor = conn.cursor()
-            
-            try:
-                # Get project details
-                cursor.execute('''
-                    SELECT id, customer_name, total_fans, sales_engineer
-                    FROM projects 
-                    WHERE enquiry_number = ?
-                ''', (enquiry_number,))
-                
-                project = cursor.fetchone()
-                
-                if not project:
-                    logger.warning(f"No project found with enquiry number {enquiry_number}")
-                    return jsonify({'status': 'error', 'message': f"No project found with enquiry number {enquiry_number}"}), 404
-                
-                project_id, customer_name, total_fans, sales_engineer = project
-                
-                # Get fans data
-                cursor.execute('SELECT fan_number, specifications, weights, costs, motor FROM fans WHERE project_id = ? ORDER BY fan_number', (project_id,))
-                fan_rows = cursor.fetchall()
-                
-                if not fan_rows:
-                    logger.warning(f"No fans found for project {enquiry_number}")
-                    fans = []
-                else:
-                    fans = []
-                    for fan_row in fan_rows:
-                        fan_number, specifications_json, weights_json, costs_json, motor_json = fan_row
-                        
-                        try:
-                            specifications = json.loads(specifications_json) if specifications_json else {}
-                        except json.JSONDecodeError:
-                            logger.error(f"Invalid JSON in specifications for fan {fan_number} in project {enquiry_number}")
-                            specifications = {}
-                        
-                        try:
-                            weights = json.loads(weights_json) if weights_json else {}
-                        except json.JSONDecodeError:
-                            logger.error(f"Invalid JSON in weights for fan {fan_number} in project {enquiry_number}")
-                            weights = {'total_weight': 0, 'bare_fan_weight': 0, 'accessory_weight': 0, 'fabrication_weight': 0, 'bought_out_weight': 0}
-                        
-                        try:
-                            costs = json.loads(costs_json) if costs_json else {}
-                        except json.JSONDecodeError:
-                            logger.error(f"Invalid JSON in costs for fan {fan_number} in project {enquiry_number}")
-                            costs = {'fabrication_cost': 0, 'bought_out_cost': 0, 'total_cost': 0}
-                        
-                        try:
-                            motor = json.loads(motor_json) if motor_json else {}
-                        except json.JSONDecodeError:
-                            logger.error(f"Invalid JSON in motor for fan {fan_number} in project {enquiry_number}")
-                            motor = {'kw': 0, 'brand': '', 'pole': 0, 'efficiency': 0, 'discount_rate': 0}
-                        
-                        fan = {
-                            'specifications': specifications,
-                            'weights': weights,
-                            'costs': costs,
-                            'motor': motor
-                        }
-                        fans.append(fan)
-                
-                # Save data to session
-                session['enquiry_number'] = enquiry_number
-                session['customer_name'] = customer_name
-                session['total_fans'] = total_fans
-                session['fans'] = fans
-                session['sales_engineer'] = sales_engineer
-                
-                logger.info(f"Successfully loaded project {enquiry_number} with {len(fans)} fans")
-                
-                return jsonify({
-                    'status': 'success',
-                    'project': {
-                        'enquiry_number': enquiry_number,
-                        'customer_name': customer_name,
-                        'total_fans': total_fans,
-                        'sales_engineer': sales_engineer,
-                        'fans': fans
-                    }
-                })
-                
-            except Exception as e:
-                logger.error(f"SQL error when loading project: {str(e)}", exc_info=True)
-                return jsonify({'status': 'error', 'message': f"Database error: {str(e)}"}), 500
-            finally:
-                cursor.close()
-                conn.close()
-                
-        except Exception as e:
-            logger.error(f"Error loading project: {str(e)}", exc_info=True)
-            return jsonify({'status': 'error', 'message': f"An error occurred: {str(e)}"}), 500
+            return False
 
     # Add route to get drive pack options for the dropdown
     @app.route('/get_drive_pack_options', methods=['GET'])
@@ -3301,127 +1429,475 @@ def register_routes(app):
             logger.error(f"Error getting project ID: {str(e)}")
             return jsonify({'error': str(e)}), 500
 
+    @app.route('/get_saved_enquiries')
+    @login_required
+    def get_saved_enquiries():
+        """Get all saved enquiries from both databases."""
+        try:
+            enquiries = []
+            
+            # Get from local database
+            try:
+                conn = sqlite3.connect('fan_pricing.db')
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT DISTINCT enquiry_number, customer_name, total_fans, sales_engineer, created_at
+                    FROM Projects 
+                    ORDER BY created_at DESC
+                ''')
+                local_enquiries = cursor.fetchall()
+                for enq in local_enquiries:
+                    enquiries.append({
+                        'enquiry_number': enq[0],
+                        'customer_name': enq[1] or '',
+                        'total_fans': enq[2] or 0,
+                        'sales_engineer': enq[3] or '',
+                        'created_at': enq[4] or '',
+                        'source': 'local'
+                    })
+                conn.close()
+            except Exception as e:
+                logger.warning(f"Could not load from local database: {str(e)}")
+            
+            # Get from central database
+            try:
+                central_db_path = 'data/central_database/all_projects.db'
+                if os.path.exists(central_db_path):
+                    conn = sqlite3.connect(central_db_path)
+                    cursor = conn.cursor()
+                    cursor.execute('''
+                        SELECT DISTINCT enquiry_number, customer_name, total_fans, sales_engineer, created_at
+                        FROM Projects 
+                        ORDER BY created_at DESC
+                    ''')
+                    central_enquiries = cursor.fetchall()
+                    
+                    # Add central enquiries that aren't already in the list
+                    existing_enquiries = {enq['enquiry_number'] for enq in enquiries}
+                    for enq in central_enquiries:
+                        if enq[0] not in existing_enquiries:
+                            enquiries.append({
+                                'enquiry_number': enq[0],
+                                'customer_name': enq[1] or '',
+                                'total_fans': enq[2] or 0,
+                                'sales_engineer': enq[3] or '',
+                                'created_at': enq[4] or '',
+                                'source': 'central'
+                            })
+                    conn.close()
+            except Exception as e:
+                logger.warning(f"Could not load from central database: {str(e)}")
+            
+            # Sort by enquiry number descending
+            enquiries.sort(key=lambda x: x['enquiry_number'], reverse=True)
+            
+            logger.info(f"Retrieved {len(enquiries)} saved enquiries")
+            return jsonify({
+                'success': True,
+                'enquiries': enquiries
+            })
+            
+        except Exception as e:
+            logger.error(f"Error getting saved enquiries: {str(e)}", exc_info=True)
+            return jsonify({
+                'success': False,
+                'message': str(e),
+                'enquiries': []
+            })
+
+    @app.route('/store_project_for_export', methods=['POST'])
+    @login_required
+    def store_project_for_export():
+        """Store current project data in session for Excel export"""
+        try:
+            data = request.get_json()
+            logger.info(f"Storing project data for export: {data}")
+            
+            # Store all project data in session
+            session['enquiry_number'] = data.get('enquiry_number', '')
+            session['customer_name'] = data.get('customer_name', '')
+            session['total_fans'] = data.get('total_fans', 1)
+            session['sales_engineer'] = data.get('sales_engineer', session.get('full_name', ''))
+            session['fans'] = data.get('fans', [])
+            
+            logger.info(f"Stored in session - fans count: {len(session.get('fans', []))}")
+            return jsonify({'success': True, 'message': 'Project data stored for export'})
+            
+        except Exception as e:
+            logger.error(f"Error storing project data for export: {str(e)}", exc_info=True)
+            return jsonify({'success': False, 'message': str(e)}), 500
+
     @app.route('/export_summary_excel', methods=['GET'])
     @login_required
     def export_summary_excel():
-        """Export project summary to Excel, matching the UI structure with breakdowns and correct totals, including all custom fields."""
+        """Export comprehensive project summary to Excel with all details including optional items, accessories, custom materials, and complete cost breakdowns."""
         try:
             enquiry_number = session.get('enquiry_number')
             customer_name = session.get('customer_name')
             total_fans = session.get('total_fans')
             fans = session.get('fans', [])
             sales_engineer = session.get('sales_engineer')
+            
+            logger.info(f"Export - enquiry: {enquiry_number}, fans count: {len(fans)}")
+            if fans:
+                logger.info(f"First fan data structure: {list(fans[0].keys()) if fans else 'No fans'}")
+            
             if not enquiry_number or not fans:
-                return jsonify({'error': 'No project data found'}), 400
+                return jsonify({'error': 'No project data found. Please ensure you have calculated fan data before exporting.'}), 400
 
-            # --- Define the structure as in the UI ---
-            # Section headers and fields (order matters)
+            # --- Enhanced structure with comprehensive details ---
             rows = []
             def section(title):
                 return {'type': 'section', 'label': title}
-            def field(label, key, is_numeric=False, total=True):
-                return {'type': 'field', 'label': label, 'key': key, 'is_numeric': is_numeric, 'total': total}
+            def field(label, key, is_numeric=False, total=True, format_type=None):
+                return {'type': 'field', 'label': label, 'key': key, 'is_numeric': is_numeric, 'total': total, 'format_type': format_type}
 
-            # Fan Details
-            rows.append(section('Fan Details'))
+            # Project Information
+            rows.append(section('Project Information'))
+            rows += [
+                field('Enquiry Number', 'enquiry_number'),
+                field('Customer Name', 'customer_name'),
+                field('Sales Engineer', 'sales_engineer'),
+                field('Total Fans', 'total_fans'),
+            ]
+
+            # Fan Specifications
+            rows.append(section('Fan Specifications'))
             rows += [
                 field('Fan Number', 'fan_number'),
-                field('Model', 'fan_model'),
-                field('Size', 'fan_size'),
+                field('Fan Model', 'fan_model'),
+                field('Fan Size', 'fan_size'),
                 field('Class', 'class_'),
                 field('Arrangement', 'arrangement'),
-                field('Material', 'material'),
+                field('Material of Construction', 'material'),
                 field('Vendor', 'vendor'),
-                field('Shaft Diameter (mm)', 'shaft_diameter'),
-                field('No. of Isolators', 'no_of_isolators'),
-                field('Isolator Brand/Type', 'vibration_isolators'),
+                field('Shaft Diameter (mm)', 'shaft_diameter', is_numeric=True),
+                field('No. of Isolators', 'no_of_isolators', is_numeric=True),
+                field('Vibration Isolators', 'vibration_isolators'),
                 field('Bearing Brand', 'bearing_brand'),
+            ]
+
+            # Motor Details
+            rows.append(section('Motor Details'))
+            rows += [
                 field('Motor Brand', 'motor_brand'),
-                field('Motor kW', 'motor_kw'),
-                field('Pole', 'pole'),
-                field('Efficiency', 'efficiency'),
-                field('Motor Discount (%)', 'motor_discount'),
-                field('Drive Pack kW', 'drive_pack_kw'),
+                field('Motor kW', 'motor_kw', is_numeric=True),
+                field('Motor Pole', 'pole', is_numeric=True),
+                field('Motor Efficiency', 'efficiency'),
+                field('Motor Discount (%)', 'motor_discount', is_numeric=True, format_type='percentage'),
+                field('Drive Pack kW', 'drive_pack_kw', is_numeric=True),
             ]
-            # Weights
-            rows.append(section('Weights'))
+
+            # Weights Breakdown
+            rows.append(section('Weights Breakdown'))
             rows += [
-                field('Bare Fan Weight (kg)', 'bare_fan_weight', is_numeric=True),
-                field('Accessory Weight (kg)', 'accessory_weights', is_numeric=True),
-                field('Total Weight (kg)', 'total_weight', is_numeric=True),
+                field('Bare Fan Weight (kg)', 'bare_fan_weight', is_numeric=True, format_type='weight'),
+                field('Accessory Weight (kg)', 'accessory_weights', is_numeric=True, format_type='weight'),
+                field('Total Weight (kg)', 'total_weight', is_numeric=True, format_type='weight'),
+                field('Fabrication Weight (kg)', 'fabrication_weight', is_numeric=True, format_type='weight'),
+                field('Bought Out Weight (kg)', 'bought_out_weight', is_numeric=True, format_type='weight'),
             ]
-            # Cost Summary
-            rows.append(section('Cost Summary'))
+
+            # Detailed Cost Breakdown
+            rows.append(section('Detailed Cost Breakdown'))
             rows += [
-                field('Fabrication Cost (₹)', 'fabrication_cost', is_numeric=True),
-                field('Fabrication Margin (%)', 'fabrication_margin', is_numeric=True, total=False),
-                field('Fabrication Selling Price (₹)', 'fabrication_selling_price', is_numeric=True),
-                field('Bought Out Cost (₹)', 'bought_out_cost', is_numeric=True),
-                field('Bought Out Margin (%)', 'bought_out_margin', is_numeric=True, total=False),
-                field('Bought Out Selling Price (₹)', 'bought_out_selling_price', is_numeric=True),
-                field('Total Cost (₹)', 'total_cost', is_numeric=True),
-                field('Total Selling Price (₹)', 'total_selling_price', is_numeric=True),
-                field('Job Margin (%)', 'total_job_margin', is_numeric=True, total=False),
+                field('Fabrication Cost (₹)', 'fabrication_cost', is_numeric=True, format_type='currency'),
+                field('Fabrication Margin (%)', 'fabrication_margin', is_numeric=True, total=False, format_type='percentage'),
+                field('Fabrication Selling Price (₹)', 'fabrication_selling_price', is_numeric=True, format_type='currency'),
+                field('Motor Cost (₹)', 'motor_cost', is_numeric=True, format_type='currency'),
+                field('Vibration Isolators Cost (₹)', 'vibration_isolators_cost', is_numeric=True, format_type='currency'),
+                field('Drive Pack Cost (₹)', 'drive_pack_cost', is_numeric=True, format_type='currency'),
+                field('Bearing Cost (₹)', 'bearing_cost', is_numeric=True, format_type='currency'),
+                field('Optional Items Cost (₹)', 'optional_items_cost', is_numeric=True, format_type='currency'),
+                field('Flex Connectors Cost (₹)', 'flex_connectors_cost', is_numeric=True, format_type='currency'),
+                field('Total Bought Out Cost (₹)', 'bought_out_cost', is_numeric=True, format_type='currency'),
+                field('Bought Out Margin (%)', 'bought_out_margin', is_numeric=True, total=False, format_type='percentage'),
+                field('Bought Out Selling Price (₹)', 'bought_out_selling_price', is_numeric=True, format_type='currency'),
+                field('Total Cost (₹)', 'total_cost', is_numeric=True, format_type='currency'),
+                field('Total Selling Price (₹)', 'total_selling_price', is_numeric=True, format_type='currency'),
+                field('Total Job Margin (%)', 'total_job_margin', is_numeric=True, total=False, format_type='percentage'),
             ]
-            # Bought Out Items breakdown
-            rows.append(section('Bought Out Items'))
-            rows += [
-                field('Vibration Isolators', 'vibration_isolators_cost', is_numeric=True),
-                field('Bearings', 'bearing_cost', is_numeric=True),
-                field('Drive Pack', 'drive_pack_cost', is_numeric=True),
-                field('Motor', 'motor_cost', is_numeric=True),
-            ]
-            # Accessories breakdown (show Included/blank)
-            rows.append(section('Accessories'))
-            accessories_set = set([
+
+            # Standard Accessories (show Included/Not Included)
+            rows.append(section('Standard Accessories'))
+            standard_accessories = [
                 'unitary_base_frame', 'isolation_base_frame', 'split_casing',
                 'inlet_companion_flange', 'outlet_companion_flange', 'inlet_butterfly_damper'
-            ])
-            # Collect all accessory keys (including custom)
+            ]
+            
+            # Collect all accessory keys from all fans
+            all_accessories = set(standard_accessories)
             for fan in fans:
                 accs = fan.get('accessories', {})
-                for k in accs.keys():
-                    accessories_set.add(k)
-            for acc in sorted(accessories_set):
+                if isinstance(accs, dict):
+                    for k in accs.keys():
+                        all_accessories.add(k)
+            
+            for acc in sorted(all_accessories):
                 label = acc.replace('_', ' ').title()
                 rows.append(field(label, f'accessories.{acc}', is_numeric=False, total=False))
-            # Optional Items breakdown (show price or blank)
-            rows.append(section('Optional Items'))
-            optional_items_set = set([
-                'flex_connectors', 'silencer', 'testing_charges', 'freight_charges', 'warranty_charges', 'packing_charges'
-            ])
-            # Collect all optional item keys (including custom)
-            for fan in fans:
-                opts = fan.get('optional_items', {})
-                for k in opts.keys():
-                    optional_items_set.add(k)
-            for opt in sorted(optional_items_set):
-                label = opt.replace('_', ' ').title()
-                rows.append(field(label, f'optional_items.{opt}', is_numeric=True))
-            # --- End of structure ---
 
-            # Build columns for each fan
-            fan_columns = []
+            # Custom Accessories (show name and weight)
+            rows.append(section('Custom Accessories'))
+            all_custom_accessories = set()
             for fan in fans:
-                col = {}
-                # Flat fields
-                for k in ['fan_number','fan_model','fan_size','class_','arrangement','material','vendor','shaft_diameter','no_of_isolators','vibration_isolators','bearing_brand','motor_brand','motor_kw','pole','efficiency','motor_discount','drive_pack_kw','bare_fan_weight','accessory_weights','total_weight','fabrication_cost','fabrication_margin','fabrication_selling_price','bought_out_cost','bought_out_margin','bought_out_selling_price','total_cost','total_selling_price','total_job_margin','vibration_isolators_cost','bearing_cost','drive_pack_cost','motor_cost']:
-                    val = fan.get(k)
-                    if val is None:
-                        for nest in ['specifications','weights','costs','motor']:
-                            if nest in fan and k in fan[nest]:
-                                val = fan[nest][k]
-                                break
-                    col[k] = val if val is not None else ''
-                # Accessories (show 'Included' if true)
-                accs = fan.get('accessories', {})
-                for acc in accessories_set:
-                    col[f'accessories.{acc}'] = 'Included' if accs.get(acc) else ''
-                # Optional items (show price or blank)
+                custom_accs = fan.get('custom_accessories', {})
+                if isinstance(custom_accs, dict):
+                    for k in custom_accs.keys():
+                        all_custom_accessories.add(k)
+                elif isinstance(custom_accs, str) and custom_accs:
+                    # Handle case where custom_accessories is a string (accessory name)
+                    all_custom_accessories.add(custom_accs)
+                
+                # Also check customAccessories field
+                custom_accs_alt = fan.get('customAccessories', {})
+                if isinstance(custom_accs_alt, dict):
+                    for k in custom_accs_alt.keys():
+                        all_custom_accessories.add(k)
+            
+            for custom_acc in sorted(all_custom_accessories):
+                rows.append(field(f'{custom_acc} (kg)', f'custom_accessories.{custom_acc}', is_numeric=True, format_type='weight'))
+
+            # Standard Optional Items (show cost or blank)
+            rows.append(section('Standard Optional Items'))
+            standard_optional_items = [
+                'flex_connectors', 'silencer', 'testing_charges', 'freight_charges', 
+                'warranty_charges', 'packing_charges', 'vibration_sensors', 'temperature_sensors'
+            ]
+            
+            # Collect all optional item keys from all fans with enhanced extraction
+            all_optional_items = set(standard_optional_items)
+            for fan in fans:
+                # First check regular optional_items
                 opts = fan.get('optional_items', {})
-                for opt in optional_items_set:
-                    v = opts.get(opt)
-                    col[f'optional_items.{opt}'] = v if v else ''
+                if isinstance(opts, dict):
+                    for k in opts.keys():
+                        all_optional_items.add(k)
+                
+                # Also check for standard_optional_items[] format
+                std_opt_item = fan.get('standard_optional_items[]', '')
+                if std_opt_item:
+                    all_optional_items.add(std_opt_item)
+            
+            for opt in sorted(all_optional_items):
+                label = opt.replace('_', ' ').title()
+                rows.append(field(f'{label} (₹)', f'optional_items.{opt}', is_numeric=True, format_type='currency'))
+
+            # Custom Optional Items (show cost)
+            rows.append(section('Custom Optional Items'))
+            all_custom_optional_items = set()
+            for fan in fans:
+                custom_opts = fan.get('custom_option_items', {})
+                for k in custom_opts.keys():
+                    all_custom_optional_items.add(k)
+            
+            for custom_opt in sorted(all_custom_optional_items):
+                rows.append(field(f'{custom_opt} (₹)', f'custom_option_items.{custom_opt}', is_numeric=True, format_type='currency'))
+
+            # Custom Materials (for fans with material='others')
+            rows.append(section('Custom Materials'))
+            has_custom_materials = any(fan.get('material') == 'others' for fan in fans)
+            if has_custom_materials:
+                for i in range(5):
+                    rows.append(field(f'Material {i+1} Name', f'material_name_{i}', is_numeric=False, total=False))
+                    rows.append(field(f'Material {i+1} Weight (kg)', f'material_weight_{i}', is_numeric=True, format_type='weight'))
+                    rows.append(field(f'Material {i+1} Rate (₹/kg)', f'material_rate_{i}', is_numeric=True, format_type='currency'))
+            # --- End of enhanced structure ---
+
+            # Build columns for each fan with comprehensive data
+            fan_columns = []
+            for i, fan in enumerate(fans):
+                col = {}
+                
+                # Helper function to safely get values with enhanced mapping
+                def safe_get(fan_data, *keys, default=''):
+                    # Try direct key access first
+                    for key_path in keys:
+                        if isinstance(key_path, str):
+                            if key_path in fan_data:
+                                value = fan_data[key_path]
+                                # Handle empty strings as defaults for certain fields
+                                if key_path in ['motor_brand', 'motor_kw', 'pole', 'efficiency'] and value == '':
+                                    continue
+                                return value
+                        elif isinstance(key_path, (list, tuple)):
+                            temp = fan_data
+                            try:
+                                for k in key_path:
+                                    temp = temp[k]
+                                return temp
+                            except (KeyError, TypeError):
+                                continue
+                    
+                    # Special handling for specific field mappings
+                    field_mappings = {
+                        'fan_model': ['Fan_Model', 'model'],
+                        'fan_size': ['Fan_Size', 'size'],
+                        'class_': ['Class', 'class'],
+                        'arrangement': ['Arrangement'],
+                        'motor_kw': ['motor_power'],
+                        'pole': ['poles'],
+                        'drive_pack_kw': ['drive_pack', 'drive_pack_kw']
+                    }
+                    
+                    # Check if this is a field that needs special mapping
+                    for key_path in keys:
+                        if isinstance(key_path, str) and key_path in field_mappings:
+                            for alt_key in field_mappings[key_path]:
+                                if alt_key in fan_data:
+                                    value = fan_data[alt_key]
+                                    if value != '':  # Don't return empty strings
+                                        return value
+                    
+                    return default
+                
+                # Project info (same for all fans)
+                col['enquiry_number'] = enquiry_number
+                col['customer_name'] = customer_name
+                col['sales_engineer'] = sales_engineer
+                col['total_fans'] = total_fans
+                
+                # Basic fan data
+                col['fan_number'] = i + 1
+                all_fields = [
+                    'fan_model', 'fan_size', 'class_', 'arrangement', 'material', 'vendor',
+                    'shaft_diameter', 'no_of_isolators', 'vibration_isolators', 'bearing_brand',
+                    'motor_brand', 'motor_kw', 'pole', 'efficiency', 'motor_discount', 'drive_pack_kw',
+                    'bare_fan_weight', 'accessory_weights', 'total_weight', 'fabrication_weight', 'bought_out_weight',
+                    'fabrication_cost', 'fabrication_margin', 'fabrication_selling_price',
+                    'motor_cost', 'vibration_isolators_cost', 'drive_pack_cost', 'bearing_cost',
+                    'optional_items_cost', 'flex_connectors_cost', 'bought_out_cost', 'bought_out_margin',
+                    'bought_out_selling_price', 'total_cost', 'total_selling_price', 'total_job_margin'
+                ]
+                
+                for field in all_fields:
+                    col[field] = safe_get(fan, field, ['specifications', field], ['weights', field], ['costs', field], ['motor', field.replace('motor_', '')])
+                
+                # Additional field mappings for specific cases
+                if not col.get('drive_pack_kw'):
+                    col['drive_pack_kw'] = safe_get(fan, 'drive_pack', 'drive_pack_kw', default='')
+                
+                # Handle motor data based on arrangement and whether motor fields are filled
+                arrangement = col.get('arrangement', '')
+                motor_brand = col.get('motor_brand', '')
+                
+                print(f"[DEBUG] Fan {i}: arrangement = '{arrangement}', motor_brand = '{motor_brand}'")
+                print(f"[DEBUG] Fan {i}: motor_kw = '{col.get('motor_kw', '')}'")
+                print(f"[DEBUG] Fan {i}: pole = '{col.get('pole', '')}'")
+                print(f"[DEBUG] Fan {i}: efficiency = '{col.get('efficiency', '')}'")
+                
+                if arrangement == '4':  # Direct drive - no motor
+                    col['motor_brand'] = 'Not Required (Direct Drive)'
+                    col['motor_kw'] = 'N/A'
+                    col['pole'] = 'N/A'
+                    col['efficiency'] = 'N/A'
+                    print(f"[DEBUG] Fan {i}: Set motor to Direct Drive mode")
+                elif not motor_brand or motor_brand == '':  # Motor fields not filled
+                    col['motor_brand'] = 'To Be Selected'
+                    col['motor_kw'] = 'TBD'
+                    col['pole'] = 'TBD'
+                    col['efficiency'] = 'TBD'
+                    print(f"[DEBUG] Fan {i}: Set motor to 'To Be Selected' mode")
+                else:
+                    print(f"[DEBUG] Fan {i}: Using actual motor data")
+                
+                # Standard Accessories (show 'Included' if true)
+                accs = safe_get(fan, 'accessories', default={})
+                if not isinstance(accs, dict):
+                    accs = {}
+                
+                print(f"[DEBUG] Fan {i}: Raw accessories data = {accs}")
+                accessories_processed = 0
+                for acc in all_accessories:
+                    is_included = accs.get(acc)
+                    col[f'accessories.{acc}'] = 'Included' if is_included else ''
+                    if is_included:
+                        accessories_processed += 1
+                        print(f"[DEBUG] Fan {i}: Accessory '{acc}' = Included")
+                
+                print(f"[DEBUG] Fan {i}: Total accessories processed = {accessories_processed}")
+                
+                # Custom Accessories (show weight) - Enhanced extraction
+                custom_accs = safe_get(fan, 'custom_accessories', default={})
+                if not isinstance(custom_accs, dict):
+                    # Handle case where custom_accessories is a string (accessory name)
+                    if isinstance(custom_accs, str) and custom_accs:
+                        # Create dict with the accessory name and try to get weight from accessories
+                        weight = safe_get(fan, 'accessories', {}).get(custom_accs, True)
+                        custom_accs = {custom_accs: weight}
+                    else:
+                        custom_accs = {}
+                
+                # Also check customAccessories field
+                custom_accs_alt = safe_get(fan, 'customAccessories', default={})
+                if isinstance(custom_accs_alt, dict):
+                    custom_accs.update(custom_accs_alt)
+                
+                for custom_acc in all_custom_accessories:
+                    weight = custom_accs.get(custom_acc, '')
+                    col[f'custom_accessories.{custom_acc}'] = weight if weight else ''
+                
+                # Standard Optional Items (show cost) - Enhanced extraction
+                opts = safe_get(fan, 'optional_items', default={})
+                if not isinstance(opts, dict):
+                    opts = {}
+                
+                # CRITICAL FIX: Handle standard_optional_items[] format correctly
+                std_opt_item = safe_get(fan, 'standard_optional_items[]', default='')
+                print(f"[DEBUG] Fan {i}: std_opt_item = '{std_opt_item}'")
+                print(f"[DEBUG] Fan {i}: optional_items = {opts}")
+                
+                if std_opt_item and std_opt_item not in opts:
+                    # If we have a standard optional item but no cost, try to get it from optional_items_cost
+                    item_cost = safe_get(fan, 'optional_items_cost', default=0)
+                    print(f"[DEBUG] Fan {i}: item_cost from optional_items_cost = {item_cost}")
+                    
+                    if item_cost > 0:
+                        opts[std_opt_item] = item_cost
+                        print(f"[DEBUG] Fan {i}: Using actual cost {item_cost} for {std_opt_item}")
+                    else:
+                        # Default costs for specific optional items if not specified
+                        default_costs = {
+                            'testing_charges': 2000,
+                            'silencer': 5000,
+                            'flex_connectors': 3000,
+                            'freight_charges': 1000,
+                            'warranty_charges': 1500,
+                            'packing_charges': 500,
+                            'vibration_sensors': 4000,
+                            'temperature_sensors': 3500
+                        }
+                        opts[std_opt_item] = default_costs.get(std_opt_item, 'Included')
+                        print(f"[DEBUG] Fan {i}: Using default cost {default_costs.get(std_opt_item, 'Included')} for {std_opt_item}")
+                
+                # Additional fix: Check if optional_items is empty but we have optional_items_cost > 0
+                if not opts and safe_get(fan, 'optional_items_cost', default=0) > 0:
+                    # If there's a cost but no items, check for any standard item reference
+                    if std_opt_item:
+                        opts[std_opt_item] = safe_get(fan, 'optional_items_cost', default=0)
+                        print(f"[DEBUG] Fan {i}: Recovered optional item {std_opt_item} from orphaned cost")
+                
+                print(f"[DEBUG] Fan {i}: Final optional_items = {opts}")
+                
+                for opt in all_optional_items:
+                    cost = opts.get(opt, '')
+                    col[f'optional_items.{opt}'] = cost if cost else ''
+                
+                # Custom Optional Items (show cost)
+                custom_opts = safe_get(fan, 'custom_option_items', default={})
+                if not isinstance(custom_opts, dict):
+                    custom_opts = {}
+                for custom_opt in all_custom_optional_items:
+                    cost = custom_opts.get(custom_opt, '')
+                    col[f'custom_option_items.{custom_opt}'] = cost if cost else ''
+                
+                # Custom Materials (if applicable)
+                if has_custom_materials:
+                    for j in range(5):
+                        col[f'material_name_{j}'] = safe_get(fan, f'material_name_{j}', ['specifications', f'material_name_{j}'])
+                        col[f'material_weight_{j}'] = safe_get(fan, f'material_weight_{j}', ['specifications', f'material_weight_{j}'])
+                        col[f'material_rate_{j}'] = safe_get(fan, f'material_rate_{j}', ['specifications', f'material_rate_{j}'])
+                
                 fan_columns.append(col)
 
             # Build Excel rows
@@ -3445,7 +1921,7 @@ def register_routes(app):
                     if row['type'] == 'field' and row.get('is_numeric') and row.get('total', True):
                         v = fan_columns[i].get(row['key'])
                         try:
-                            v = float(v)
+                            v = float(v) if v not in ['', None] else 0
                         except (TypeError, ValueError):
                             v = 0
                         total += v
@@ -3481,40 +1957,72 @@ def register_routes(app):
                     if r > 0 and rows[r-1]['type'] == 'section' and c == 0:
                         cell.font = Font(bold=True, color='FFFFFF')
                         cell.fill = PatternFill(start_color='4a90e2', end_color='4a90e2', fill_type='solid')
+                        cell.alignment = Alignment(horizontal='center')
                     # Header formatting
                     if r == 0:
                         cell.font = Font(bold=True, color='FFFFFF')
-                        cell.fill = PatternFill(start_color='4a90e2', end_color='4a90e2', fill_type='solid')
+                        cell.fill = PatternFill(start_color='2c3e50', end_color='2c3e50', fill_type='solid')
                         cell.alignment = Alignment(horizontal='center')
                     # Totals formatting
                     if r == len(excel_rows) - 1:
                         cell.font = Font(bold=True)
-                    # Number formatting
-                    if isinstance(value, (int, float)):
-                        if 'Cost' in row[0] or 'Price' in row[0]:
-                            cell.number_format = '₹#,##0.00'
-                        elif 'Weight' in row[0]:
-                            cell.number_format = '#,##0.00" kg"'
-                        elif 'Margin' in row[0]:
-                            cell.number_format = '#,##0.00"%"'
-                        else:
-                            cell.number_format = '#,##0.00'
-            # Add borders and auto-fit columns
-            thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
-            for row in ws.iter_rows(min_row=start_row, max_row=start_row+len(excel_rows)-1):
-                for cell in row:
+                        cell.fill = PatternFill(start_color='e8f4fd', end_color='e8f4fd', fill_type='solid')
+                    
+                    # Enhanced number formatting based on format_type
+                    if isinstance(value, (int, float)) and value != 0:
+                        if r > 0 and r < len(rows) + 1:  # Skip header and totals
+                            row_def = rows[r-1]
+                            format_type = row_def.get('format_type', None)
+                            
+                            if format_type == 'currency':
+                                cell.number_format = '₹#,##0.00'
+                            elif format_type == 'weight':
+                                cell.number_format = '#,##0.00" kg"'
+                            elif format_type == 'percentage':
+                                cell.number_format = '#,##0.00"%"'
+                            else:
+                                # Legacy formatting for backward compatibility
+                                if any(keyword in row[0] for keyword in ['Cost', 'Price', '₹']):
+                                    cell.number_format = '₹#,##0.00'
+                                elif any(keyword in row[0] for keyword in ['Weight', 'kg']):
+                                    cell.number_format = '#,##0.00" kg"'
+                                elif any(keyword in row[0] for keyword in ['Margin', '%']):
+                                    cell.number_format = '#,##0.00"%"'
+                                else:
+                                    cell.number_format = '#,##0.00'
+                    
+                    # Add borders for better readability
+                    thin_border = Border(
+                        left=Side(style='thin'),
+                        right=Side(style='thin'),
+                        top=Side(style='thin'),
+                        bottom=Side(style='thin')
+                    )
                     cell.border = thin_border
-            for column in ws.columns:
+            
+            # Auto-fit columns with better width management
+            for column_cells in ws.columns:
                 max_length = 0
-                column = list(column)
-                for cell in column:
+                column_letter = column_cells[0].column_letter
+                for cell in column_cells:
                     try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
+                        cell_value_length = len(str(cell.value)) if cell.value is not None else 0
+                        if cell_value_length > max_length:
+                            max_length = cell_value_length
                     except:
                         pass
-                adjusted_width = (max_length + 2)
-                ws.column_dimensions[column[0].column_letter].width = adjusted_width
+                # Set reasonable column widths
+                if max_length < 10:
+                    adjusted_width = 12
+                elif max_length > 60:
+                    adjusted_width = 60
+                else:
+                    adjusted_width = max_length + 4
+                ws.column_dimensions[column_letter].width = adjusted_width
+                
+            # Freeze panes for better navigation
+            ws.freeze_panes = 'B9'  # Freeze first column and header rows
+            
             wb.save(filename)
             return send_file(
                 filename,
@@ -3525,6 +2033,588 @@ def register_routes(app):
         except Exception as e:
             logger.error(f"Error exporting project summary to Excel: {str(e)}", exc_info=True)
             return jsonify({'error': str(e)}), 500
+
+    @app.route('/export_project_summary_excel', methods=['POST'])
+    @login_required
+    def export_project_summary_excel():
+        """Export the project summary table sent from fixes.js to Excel with proper formatting."""
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+            
+            table = data.get('table', [])
+            enquiry_number = data.get('enquiry_number', 'PROJECT')
+            customer_name = data.get('customer_name', 'Customer')
+            sales_engineer = data.get('sales_engineer', 'Sales Engineer')
+            
+            print(f"[DEBUG] Received table data: {len(table)} rows")
+            print(f"[DEBUG] First few rows: {table[:3] if table else 'No data'}")
+            
+            if not table:
+                return jsonify({'error': 'No table data provided'}), 400
+
+            # Create Excel file
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+            from datetime import datetime
+            
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Project Summary"
+            
+            # Add project header
+            ws['A1'] = 'Project Summary'
+            ws['A1'].font = Font(bold=True, size=16)
+            ws.merge_cells('A1:H1')
+            
+            ws['A3'] = 'Enquiry Number:'
+            ws['B3'] = enquiry_number
+            ws['A4'] = 'Customer Name:'
+            ws['B4'] = customer_name
+            ws['A5'] = 'Sales Engineer:'
+            ws['B5'] = sales_engineer
+            ws['A6'] = 'Date:'
+            ws['B6'] = datetime.now().strftime('%d-%m-%Y')
+            
+            # Write table data starting from row 8
+            start_row = 8
+            
+            for r, row_data in enumerate(table):
+                for c, cell_value in enumerate(row_data):
+                    cell = ws.cell(row=start_row + r, column=1 + c)
+                    cell.value = cell_value
+                    
+                    # Format header row
+                    if r == 0:
+                        cell.font = Font(bold=True, color='FFFFFF')
+                        cell.fill = PatternFill(start_color='2c3e50', end_color='2c3e50', fill_type='solid')
+                        cell.alignment = Alignment(horizontal='center')
+                    
+                    # Format section headers (rows with only first column filled)
+                    elif c == 0 and cell_value and all(not cell for cell in row_data[1:]):
+                        cell.font = Font(bold=True, color='FFFFFF')
+                        cell.fill = PatternFill(start_color='4a90e2', end_color='4a90e2', fill_type='solid')
+                        cell.alignment = Alignment(horizontal='center')
+                    
+                    # Format currency values
+                    elif isinstance(cell_value, str) and cell_value.startswith('₹'):
+                        try:
+                            # Extract numeric value and format as currency
+                            numeric_value = float(cell_value.replace('₹', '').replace(',', ''))
+                            cell.value = numeric_value
+                            cell.number_format = '₹#,##0.00'
+                        except ValueError:
+                            pass  # Keep as text if can't convert
+                    
+                    # Add borders
+                    thin_border = Border(
+                        left=Side(style='thin'),
+                        right=Side(style='thin'),
+                        top=Side(style='thin'),
+                        bottom=Side(style='thin')
+                    )
+                    cell.border = thin_border
+            
+            # Auto-fit columns
+            for column_cells in ws.columns:
+                max_length = 0
+                column_letter = column_cells[0].column_letter
+                for cell in column_cells:
+                    try:
+                        cell_value_length = len(str(cell.value)) if cell.value is not None else 0
+                        if cell_value_length > max_length:
+                            max_length = cell_value_length
+                    except:
+                        pass
+                # Set reasonable column widths
+                if max_length < 10:
+                    adjusted_width = 12
+                elif max_length > 60:
+                    adjusted_width = 60
+                else:
+                    adjusted_width = max_length + 4
+                ws.column_dimensions[column_letter].width = adjusted_width
+            
+            # Freeze panes
+            ws.freeze_panes = 'B9'
+            
+            # Save to memory
+            from io import BytesIO
+            output = BytesIO()
+            wb.save(output)
+            output.seek(0)
+            
+            filename = f"{enquiry_number}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            
+            return send_file(
+                output,
+                as_attachment=True,
+                download_name=filename,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            
+        except Exception as e:
+            logger.error(f"Error exporting project summary from fixes.js: {str(e)}", exc_info=True)
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/load_enquiry/<enquiry_number>')
+    @login_required
+    def load_enquiry(enquiry_number):
+        """Load a specific enquiry and all its fan data."""
+        try:
+            logger.info(f"Loading enquiry: {enquiry_number}")
+            
+            # Try to load from central database first (most up-to-date)
+            central_db_path = 'data/central_database/all_projects.db'
+            project_data = None
+            fans_data = []
+            
+            if os.path.exists(central_db_path):
+                try:
+                    conn = sqlite3.connect(central_db_path)
+                    cursor = conn.cursor()
+                    
+                    # Get project info
+                    cursor.execute('''
+                        SELECT enquiry_number, customer_name, total_fans, sales_engineer
+                        FROM Projects 
+                        WHERE enquiry_number = ?
+                    ''', (enquiry_number,))
+                    
+                    project_result = cursor.fetchone()
+                    if project_result:
+                        project_data = {
+                            'enquiry_number': project_result[0],
+                            'customer_name': project_result[1],
+                            'total_fans': project_result[2],
+                            'sales_engineer': project_result[3]
+                        }
+                        
+                        # Get all fans for this enquiry
+                        cursor.execute('''
+                            SELECT * FROM ProjectFans 
+                            WHERE enquiry_number = ?
+                            ORDER BY fan_number
+                        ''', (enquiry_number,))
+                        
+                        fan_columns = [description[0] for description in cursor.description]
+                        fan_results = cursor.fetchall()
+                        
+                        for fan_row in fan_results:
+                            fan_dict = dict(zip(fan_columns, fan_row))
+                            
+                            # Process JSON fields
+                            json_fields = ['accessories', 'custom_accessories', 'optional_items', 'custom_option_items']
+                            for json_field in json_fields:
+                                if json_field in fan_dict and fan_dict[json_field]:
+                                    try:
+                                        parsed_json = json.loads(fan_dict[json_field])
+                                        fan_dict[json_field] = parsed_json
+                                    except (json.JSONDecodeError, TypeError):
+                                        logger.warning(f"Could not parse {json_field} JSON: {fan_dict[json_field]}")
+                                        fan_dict[json_field] = {}
+                            
+                            # Also try JSON versions of optional items
+                            if 'optional_items_json' in fan_dict and fan_dict['optional_items_json']:
+                                try:
+                                    parsed_json = json.loads(fan_dict['optional_items_json'])
+                                    fan_dict['optional_items'] = parsed_json
+                                except (json.JSONDecodeError, TypeError):
+                                    pass
+                            
+                            if 'custom_optional_items_json' in fan_dict and fan_dict['custom_optional_items_json']:
+                                try:
+                                    parsed_json = json.loads(fan_dict['custom_optional_items_json'])
+                                    fan_dict['custom_option_items'] = parsed_json
+                                except (json.JSONDecodeError, TypeError):
+                                    pass
+                            
+                            fans_data.append(fan_dict)
+                    
+                    conn.close()
+                    logger.info(f"Loaded enquiry {enquiry_number} from central database")
+                    
+                except Exception as e:
+                    logger.warning(f"Could not load from central database: {str(e)}")
+            
+            # If not found in central database, try local database
+            if not project_data:
+                try:
+                    conn = sqlite3.connect('fan_pricing.db')
+                    cursor = conn.cursor()
+                    
+                    # Get project info
+                    cursor.execute('''
+                        SELECT enquiry_number, customer_name, total_fans, sales_engineer
+                        FROM Projects 
+                        WHERE enquiry_number = ?
+                    ''', (enquiry_number,))
+                    
+                    project_result = cursor.fetchone()
+                    if project_result:
+                        project_data = {
+                            'enquiry_number': project_result[0],
+                            'customer_name': project_result[1],
+                            'total_fans': project_result[2],
+                            'sales_engineer': project_result[3]
+                        }
+                        
+                        # Get all fans for this enquiry
+                        cursor.execute('''
+                            SELECT * FROM ProjectFans 
+                            WHERE enquiry_number = ?
+                            ORDER BY fan_number
+                        ''', (enquiry_number,))
+                        
+                        fan_columns = [description[0] for description in cursor.description]
+                        fan_results = cursor.fetchall()
+                        
+                        for fan_row in fan_results:
+                            fan_dict = dict(zip(fan_columns, fan_row))
+                            
+                            # Process JSON fields
+                            json_fields = ['accessories', 'custom_accessories', 'optional_items', 'custom_option_items']
+                            for json_field in json_fields:
+                                if json_field in fan_dict and fan_dict[json_field]:
+                                    try:
+                                        parsed_json = json.loads(fan_dict[json_field])
+                                        fan_dict[json_field] = parsed_json
+                                    except (json.JSONDecodeError, TypeError):
+                                        logger.warning(f"Could not parse {json_field} JSON: {fan_dict[json_field]}")
+                                        fan_dict[json_field] = {}
+                            
+                            # Also try JSON versions of optional items
+                            if 'optional_items_json' in fan_dict and fan_dict['optional_items_json']:
+                                try:
+                                    parsed_json = json.loads(fan_dict['optional_items_json'])
+                                    fan_dict['optional_items'] = parsed_json
+                                except (json.JSONDecodeError, TypeError):
+                                    pass
+                            
+                            if 'custom_optional_items_json' in fan_dict and fan_dict['custom_optional_items_json']:
+                                try:
+                                    parsed_json = json.loads(fan_dict['custom_optional_items_json'])
+                                    fan_dict['custom_option_items'] = parsed_json
+                                except (json.JSONDecodeError, TypeError):
+                                    pass
+                            
+                            fans_data.append(fan_dict)
+                    
+                    conn.close()
+                    logger.info(f"Loaded enquiry {enquiry_number} from local database")
+                    
+                except Exception as e:
+                    logger.warning(f"Could not load from local database: {str(e)}")
+            
+            if not project_data:
+                return jsonify({
+                    'success': False,
+                    'message': f'Enquiry {enquiry_number} not found'
+                }), 404
+            
+            logger.info(f"Successfully loaded enquiry {enquiry_number} with {len(fans_data)} fans")
+            return jsonify({
+                'success': True,
+                'project': project_data,
+                'fans': fans_data
+            })
+            
+        except Exception as e:
+            logger.error(f"Error loading enquiry {enquiry_number}: {str(e)}", exc_info=True)
+            return jsonify({
+                'success': False,
+                'message': str(e)
+            }), 500
+
+    @app.route('/save_project_to_database/', methods=['POST'])
+    @login_required
+    def save_project_to_database():
+        """Save complete project data to database."""
+        try:
+            data = request.get_json()
+            logger.info(f"Received project data for saving: {data}")
+            
+            # Extract project information
+            enquiry_number = data.get('enquiry_number')
+            customer_name = data.get('customer_name')
+            total_fans = data.get('total_fans', 1)
+            sales_engineer = data.get('sales_engineer', session.get('full_name', ''))
+            fans_data = data.get('fans_data', [])
+            
+            # Also try 'fans' key as that's what the frontend sends
+            if not fans_data:
+                fans_data = data.get('fans', [])
+            
+            if not enquiry_number:
+                return jsonify({
+                    'success': False,
+                    'message': 'Enquiry number is required'
+                }), 400
+            
+            if not fans_data:
+                return jsonify({
+                    'success': False,
+                    'message': 'At least one fan is required'
+                }), 400
+            
+            logger.info(f"Saving project: {enquiry_number} with {len(fans_data)} fans")
+            
+            # Save to local database first
+            try:
+                conn = sqlite3.connect('fan_pricing.db')
+                cursor = conn.cursor()
+                
+                # Create Projects table if it doesn't exist
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS Projects (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        enquiry_number TEXT UNIQUE,
+                        customer_name TEXT,
+                        total_fans INTEGER,
+                        sales_engineer TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                
+                # Insert or update project
+                cursor.execute('''
+                    INSERT OR REPLACE INTO Projects (enquiry_number, customer_name, total_fans, sales_engineer)
+                    VALUES (?, ?, ?, ?)
+                ''', (enquiry_number, customer_name, total_fans, sales_engineer))
+                
+                # Get the project ID
+                cursor.execute('SELECT id FROM Projects WHERE enquiry_number = ?', (enquiry_number,))
+                project_result = cursor.fetchone()
+                if not project_result:
+                    raise Exception("Failed to get project ID after insertion")
+                project_id = project_result[0]
+                
+                # Delete existing fan records for this enquiry
+                cursor.execute('DELETE FROM ProjectFans WHERE enquiry_number = ?', (enquiry_number,))
+                
+                # Process each fan
+                for fan_number, fan_data in enumerate(fans_data, 1):
+                    # Extract optional items from multiple possible sources
+                    optional_items = {}
+                    
+                    # First check if optional_items is directly in fan_data
+                    direct_optional = fan_data.get('optional_items', {})
+                    if isinstance(direct_optional, dict):
+                        optional_items.update(direct_optional)
+                    elif isinstance(direct_optional, list):
+                        # Convert list to dict with default prices
+                        for item in direct_optional:
+                            optional_items[item] = 0
+                    
+                    # Check if optional_items is nested in specifications
+                    specs_optional = fan_data.get('specifications', {}).get('optional_items', {})
+                    if isinstance(specs_optional, dict):
+                        optional_items.update(specs_optional)
+                    elif isinstance(specs_optional, list):
+                        # Convert list to dict with default prices
+                        for item in specs_optional:
+                            optional_items[item] = 0
+                    
+                    # Handle standard_optional_items[] format from frontend
+                    standard_items = fan_data.get('standard_optional_items[]', [])
+                    if isinstance(standard_items, str):
+                        standard_items = [standard_items]
+                    elif not isinstance(standard_items, list):
+                        standard_items = []
+                    
+                    # Add standard optional items to the optional_items dict
+                    for item in standard_items:
+                        if item and item not in optional_items:
+                            # Set a default value or get from optional_item_prices if available
+                            item_price = fan_data.get('optional_item_prices', {}).get(item, 0)
+                            if not item_price:
+                                # Try to get cost from the fan data directly
+                                if item == 'flex_connectors' and fan_data.get('flex_connectors_cost'):
+                                    item_price = fan_data.get('flex_connectors_cost', 0)
+                                else:
+                                    item_price = 0
+                            optional_items[item] = item_price
+                    
+                    # Also check costs section for optional items cost
+                    costs_optional_cost = fan_data.get('costs', {}).get('optional_items_cost', 0)
+                    if costs_optional_cost and not optional_items:
+                        # If we have cost but no items, try to extract from other sources
+                        if fan_data.get('flex_connectors_cost'):
+                            optional_items['flex_connectors'] = fan_data.get('flex_connectors_cost', 0)
+                    
+                    # Helper function to safely get nested values
+                    def get_nested_value(data, *keys, default=''):
+                        """Get nested value from dict, trying multiple key paths"""
+                        for key_path in keys:
+                            if isinstance(key_path, str):
+                                if key_path in data:
+                                    return data[key_path]
+                            elif isinstance(key_path, (list, tuple)):
+                                temp = data
+                                try:
+                                    for k in key_path:
+                                        temp = temp[k]
+                                    return temp
+                                except (KeyError, TypeError):
+                                    continue
+                        return default
+                    
+                    # Extract custom optional items from multiple sources
+                    custom_option_items = {}
+                    custom_direct = fan_data.get('custom_option_items', {})
+                    if isinstance(custom_direct, dict):
+                        custom_option_items.update(custom_direct)
+                    
+                    custom_specs = fan_data.get('specifications', {}).get('custom_option_items', {})
+                    if isinstance(custom_specs, dict):
+                        custom_option_items.update(custom_specs)
+                    
+                    # Extract accessories from multiple sources
+                    accessories = {}
+                    acc_direct = fan_data.get('accessories', {})
+                    if isinstance(acc_direct, dict):
+                        accessories.update(acc_direct)
+                    elif isinstance(acc_direct, list):
+                        # Convert list to dict
+                        for acc in acc_direct:
+                            accessories[acc] = True
+                            
+                    acc_specs = fan_data.get('specifications', {}).get('accessories', {})
+                    if isinstance(acc_specs, dict):
+                        accessories.update(acc_specs)
+                    elif isinstance(acc_specs, list):
+                        # Convert list to dict
+                        for acc in acc_specs:
+                            accessories[acc] = True
+                    
+                    # Extract custom accessories
+                    custom_accessories = {}
+                    custom_acc_direct = fan_data.get('custom_accessories', {})
+                    if isinstance(custom_acc_direct, dict):
+                        custom_accessories.update(custom_acc_direct)
+                    elif isinstance(custom_acc_direct, list):
+                        # Convert list to dict with default weights
+                        for acc in custom_acc_direct:
+                            custom_accessories[acc] = 0
+                            
+                    custom_acc_specs = fan_data.get('specifications', {}).get('custom_accessories', {})
+                    if isinstance(custom_acc_specs, dict):
+                        custom_accessories.update(custom_acc_specs)
+                    elif isinstance(custom_acc_specs, list):
+                        # Convert list to dict with default weights
+                        for acc in custom_acc_specs:
+                            custom_accessories[acc] = 0
+                    
+                    # Prepare fan data for database insertion
+                    fan_db_data = {
+                        'project_id': project_id,
+                        'enquiry_number': enquiry_number,
+                        'fan_number': fan_number,
+                        'fan_model': get_nested_value(fan_data, 'fan_model', ['specifications', 'fan_model']),
+                        'fan_size': get_nested_value(fan_data, 'fan_size', ['specifications', 'size'], ['specifications', 'fan_size']),
+                        'size': get_nested_value(fan_data, 'fan_size', ['specifications', 'size'], ['specifications', 'fan_size']),
+                        'class': get_nested_value(fan_data, 'class_', 'class', ['specifications', 'class']),
+                        'arrangement': get_nested_value(fan_data, 'arrangement', ['specifications', 'arrangement']),
+                        'vendor': get_nested_value(fan_data, 'vendor', ['specifications', 'vendor']),
+                        'material': get_nested_value(fan_data, 'material', 'moc', ['specifications', 'material']),
+                        'accessories': json.dumps(accessories),
+                        'custom_accessories': json.dumps(custom_accessories),
+                        'optional_items': json.dumps(optional_items),
+                        'custom_option_items': json.dumps(custom_option_items),
+                        'optional_items_json': json.dumps(optional_items),
+                        'custom_optional_items_json': json.dumps(custom_option_items),
+                        'bare_fan_weight': get_nested_value(fan_data, 'bare_fan_weight', ['weights', 'bare_fan_weight'], default=0),
+                        'accessory_weight': get_nested_value(fan_data, 'accessory_weights', 'accessory_weight', ['weights', 'accessory_weight'], default=0),
+                        'accessory_weights': get_nested_value(fan_data, 'accessory_weights', 'accessory_weight', ['weights', 'accessory_weight'], default=0),
+                        'total_weight': get_nested_value(fan_data, 'total_weight', ['weights', 'total_weight'], default=0),
+                        'fabrication_weight': get_nested_value(fan_data, 'fabrication_weight', ['weights', 'fabrication_weight'], default=0),
+                        'bought_out_weight': get_nested_value(fan_data, 'bought_out_weight', ['weights', 'bought_out_weight'], default=0),
+                        'fabrication_cost': get_nested_value(fan_data, 'fabrication_cost', ['costs', 'fabrication_cost'], default=0),
+                        'motor_cost': get_nested_value(fan_data, 'motor_cost', ['costs', 'motor_cost'], default=0),
+                        'vibration_isolators_cost': get_nested_value(fan_data, 'vibration_isolators_cost', ['costs', 'vibration_isolators_cost'], default=0),
+                        'drive_pack_cost': get_nested_value(fan_data, 'drive_pack_cost', ['costs', 'drive_pack_cost'], default=0),
+                        'bearing_cost': get_nested_value(fan_data, 'bearing_cost', ['costs', 'bearing_cost'], default=0),
+                        'optional_items_cost': get_nested_value(fan_data, 'optional_items_cost', ['costs', 'optional_items_cost'], default=0),
+                        'flex_connectors_cost': get_nested_value(fan_data, 'flex_connectors_cost', ['costs', 'flex_connectors_cost'], default=0),
+                        'bought_out_cost': get_nested_value(fan_data, 'bought_out_cost', ['costs', 'bought_out_cost'], default=0),
+                        'total_cost': get_nested_value(fan_data, 'total_cost', ['costs', 'total_cost'], default=0),
+                        'fabrication_selling_price': get_nested_value(fan_data, 'fabrication_selling_price', ['costs', 'fabrication_selling_price'], default=0),
+                        'bought_out_selling_price': get_nested_value(fan_data, 'bought_out_selling_price', ['costs', 'bought_out_selling_price'], default=0),
+                        'total_selling_price': get_nested_value(fan_data, 'total_selling_price', ['costs', 'total_selling_price'], default=0),
+                        'total_job_margin': get_nested_value(fan_data, 'total_job_margin', ['costs', 'total_job_margin'], default=0),
+                        'vibration_isolators': get_nested_value(fan_data, 'vibration_isolators', ['specifications', 'vibration_isolators']),
+                        'drive_pack_kw': get_nested_value(fan_data, 'drive_pack_kw', ['specifications', 'drive_pack_kw'], default=0),
+                        'motor_kw': get_nested_value(fan_data, 'motor_kw', ['motor', 'kw'], ['specifications', 'motor_kw'], default=0),
+                        'motor_brand': get_nested_value(fan_data, 'motor_brand', ['motor', 'brand'], ['specifications', 'motor_brand']),
+                        'motor_pole': get_nested_value(fan_data, 'pole', 'motor_pole', ['motor', 'pole'], ['specifications', 'motor_pole'], default=0),
+                        'motor_efficiency': get_nested_value(fan_data, 'efficiency', 'motor_efficiency', ['motor', 'efficiency'], ['specifications', 'motor_efficiency']),
+                        'motor_discount_rate': get_nested_value(fan_data, 'motor_discount', 'motor_discount_rate', ['motor', 'discount_rate'], ['specifications', 'motor_discount'], default=0),
+                        'bearing_brand': get_nested_value(fan_data, 'bearing_brand', ['specifications', 'bearing_brand']),
+                        'shaft_diameter': get_nested_value(fan_data, 'shaft_diameter', 'custom_shaft_diameter', ['specifications', 'shaft_diameter'], default=0),
+                        'no_of_isolators': get_nested_value(fan_data, 'no_of_isolators', 'custom_no_of_isolators', ['specifications', 'no_of_isolators'], default=0),
+                        'fabrication_margin': get_nested_value(fan_data, 'fabrication_margin', ['specifications', 'fabrication_margin'], default=25),
+                        'bought_out_margin': get_nested_value(fan_data, 'bought_out_margin', ['specifications', 'bought_out_margin'], default=25),
+                        'custom_no_of_isolators': get_nested_value(fan_data, 'custom_no_of_isolators', ['specifications', 'custom_no_of_isolators'], default=0),
+                        'custom_shaft_diameter': get_nested_value(fan_data, 'custom_shaft_diameter', ['specifications', 'custom_shaft_diameter'], default=0),
+                    }
+                    
+                    # Handle material data (for custom materials)
+                    for i in range(5):
+                        for key in ['material_name', 'material_weight', 'material_rate']:
+                            field_key = f'{key}_{i}'
+                            fan_db_data[field_key] = get_nested_value(fan_data, field_key, ['specifications', field_key], default='')
+                    
+                    # Insert fan data
+                    columns = list(fan_db_data.keys())
+                    placeholders = ', '.join(['?' for _ in columns])
+                    values = list(fan_db_data.values())
+                    
+                    cursor.execute(f'''
+                        INSERT INTO ProjectFans ({', '.join(columns)})
+                        VALUES ({placeholders})
+                    ''', values)
+                
+                conn.commit()
+                conn.close()
+                logger.info(f"Successfully saved project {enquiry_number} to local database")
+                
+            except Exception as e:
+                logger.error(f"Error saving to local database: {str(e)}", exc_info=True)
+                return jsonify({
+                    'success': False,
+                    'message': f'Failed to save to local database: {str(e)}'
+                }), 500
+            
+            # Also sync to central database
+            try:
+                sync_project_data = {
+                    'enquiry_number': enquiry_number,
+                    'customer_name': customer_name,
+                    'total_fans': total_fans,
+                    'sales_engineer': sales_engineer,
+                    'fans': fans_data
+                }
+                
+                sync_success = sync_to_central_database(sync_project_data)
+                if not sync_success:
+                    logger.warning("Failed to sync to central database, but local save succeeded")
+            
+            except Exception as e:
+                logger.warning(f"Failed to sync to central database: {str(e)}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Project {enquiry_number} saved successfully',
+                'enquiry_number': enquiry_number
+            })
+            
+        except Exception as e:
+            logger.error(f"Error saving project to database: {str(e)}", exc_info=True)
+            return jsonify({
+                'success': False,
+                'message': str(e)
+            }), 500
 
     @app.route('/get_vendor_rate')
     def get_vendor_rate():
@@ -3547,259 +2637,5 @@ def register_routes(app):
                 return jsonify({'rate': row['SS304Price']})
             else:
                 return jsonify({'rate': row['MSPrice']})
-
-    @app.route('/export_summary_excel_full', methods=['GET'])
-    @login_required
-    def export_summary_excel_full():
-        """Export a true replica of the project summary page, including all fields and custom data, to Excel."""
-        try:
-            enquiry_number = session.get('enquiry_number')
-            customer_name = session.get('customer_name')
-            total_fans = session.get('total_fans')
-            fans = session.get('fans', [])
-            sales_engineer = session.get('sales_engineer')
-            if not enquiry_number or not fans:
-                return jsonify({'error': 'No project data found'}), 400
-
-            # Dynamically collect all possible fields from all fans
-            all_fields = set()
-            all_accessories = set()
-            all_optional_items = set()
-            for fan in fans:
-                all_fields.update(fan.keys())
-                if 'accessories' in fan and isinstance(fan['accessories'], dict):
-                    all_accessories.update(fan['accessories'].keys())
-                if 'optional_items' in fan and isinstance(fan['optional_items'], dict):
-                    all_optional_items.update(fan['optional_items'].keys())
-
-            # Define sections and their likely fields (order matters, but add any extras at the end)
-            sections = [
-                ('Fan Details', [
-                    'fan_number','fan_model','fan_size','class_','arrangement','material','vendor','shaft_diameter','no_of_isolators','vibration_isolators','bearing_brand','motor_brand','motor_kw','pole','efficiency','motor_discount','drive_pack_kw'
-                ]),
-                ('Weights', [
-                    'bare_fan_weight','accessory_weights','total_weight'
-                ]),
-                ('Cost Summary', [
-                    'fabrication_cost','fabrication_margin','fabrication_selling_price','bought_out_cost','bought_out_margin','bought_out_selling_price','total_cost','total_selling_price','total_job_margin'
-                ]),
-                ('Bought Out Items', [
-                    'vibration_isolators_cost','bearing_cost','drive_pack_cost','motor_cost'
-                ]),
-                ('Accessories', sorted(all_accessories)),
-                ('Optional Items', sorted(all_optional_items)),
-            ]
-            # Add any extra fields not in the above
-            used_fields = set()
-            for _, fields in sections:
-                used_fields.update(fields)
-            extra_fields = sorted(all_fields - used_fields - {'accessories','optional_items'})
-            if extra_fields:
-                sections.append(('Other Fields', extra_fields))
-
-            # Build rows for Excel
-            rows = []
-            for section_name, field_list in sections:
-                rows.append({'type': 'section', 'label': section_name})
-                for field in field_list:
-                    label = field.replace('_', ' ').replace('.', ' ').title()
-                    rows.append({'type': 'field', 'label': label, 'key': field})
-
-            # Build columns for each fan
-            fan_columns = []
-            for fan in fans:
-                col = {}
-                for field in all_fields:
-                    val = fan.get(field, '')
-                    # For accessories and optional_items, flatten
-                    if field == 'accessories' and isinstance(val, dict):
-                        for acc in all_accessories:
-                            col[f'accessories.{acc}'] = 'Included' if val.get(acc) else ''
-                    elif field == 'optional_items' and isinstance(val, dict):
-                        for opt in all_optional_items:
-                            v = val.get(opt)
-                            col[f'optional_items.{opt}'] = v if v else ''
-                    else:
-                        col[field] = val
-                fan_columns.append(col)
-
-            # Build Excel rows
-            excel_rows = []
-            header = ['Field'] + [f"Fan {i+1}" for i in range(len(fan_columns))]
-            excel_rows.append(header)
-            for row in rows:
-                if row['type'] == 'section':
-                    excel_rows.append([row['label']] + ['']*len(fan_columns))
-                else:
-                    vals = [row['label']]
-                    for col in fan_columns:
-                        v = col.get(row['key'], '')
-                        # For accessories/optional_items, use flattened keys
-                        if row['key'].startswith('accessories.'):
-                            v = col.get(row['key'], '')
-                        if row['key'].startswith('optional_items.'):
-                            v = col.get(row['key'], '')
-                        vals.append(v)
-                    excel_rows.append(vals)
-            # Totals row (only for numeric fields)
-            totals_row = ['TOTALS']
-            for i in range(len(fan_columns)):
-                total = 0
-                for row in rows:
-                    if row['type'] == 'field':
-                        v = fan_columns[i].get(row['key'])
-                        try:
-                            v = float(v)
-                        except (TypeError, ValueError):
-                            v = 0
-                        if isinstance(v, (int, float)) and not isinstance(v, bool):
-                            total += v
-                totals_row.append(total if total != 0 else '')
-            excel_rows.append(totals_row)
-
-            # Create Excel file
-            filename = f"{enquiry_number}_summary_full_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "Project Summary Full"
-            # Add project details
-            ws['A1'] = 'Project Summary (Full Export)'
-            ws['A1'].font = Font(bold=True, size=16)
-            ws.merge_cells('A1:H1')
-            ws['A3'] = 'Enquiry Number:'
-            ws['B3'] = enquiry_number
-            ws['A4'] = 'Customer Name:'
-            ws['B4'] = customer_name
-            ws['A5'] = 'Sales Engineer:'
-            ws['B5'] = sales_engineer
-            ws['A6'] = 'Date:'
-            ws['B6'] = datetime.now().strftime('%d-%m-%Y')
-            ws['D3'] = 'Total Fans:'
-            ws['E3'] = total_fans
-            # Write rows to Excel
-            start_row = 8
-            for r, row in enumerate(excel_rows):
-                for c, value in enumerate(row):
-                    cell = ws.cell(row=start_row + r, column=1 + c)
-                    cell.value = value
-                    # Section header formatting
-                    if r > 0 and excel_rows[r-1][0] in [s[0] for s in sections] and c == 0:
-                        cell.font = Font(bold=True, color='FFFFFF')
-                        cell.fill = PatternFill(start_color='4a90e2', end_color='4a90e2', fill_type='solid')
-                    # Header formatting
-                    if r == 0:
-                        cell.font = Font(bold=True, color='FFFFFF')
-                        cell.fill = PatternFill(start_color='4a90e2', end_color='4a90e2', fill_type='solid')
-                        cell.alignment = Alignment(horizontal='center')
-                    # Totals formatting
-                    if r == len(excel_rows) - 1:
-                        cell.font = Font(bold=True)
-                    # Number formatting
-                    if isinstance(value, (int, float)):
-                        if 'Cost' in row[0] or 'Price' in row[0]:
-                            cell.number_format = '₹#,##0.00'
-                        elif 'Weight' in row[0]:
-                            cell.number_format = '#,##0.00" kg"'
-                        elif 'Margin' in row[0]:
-                            cell.number_format = '#,##0.00"%"'
-                        else:
-                            cell.number_format = '#,##0.00'
-            # Add borders and auto-fit columns
-            thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
-            for row in ws.iter_rows(min_row=start_row, max_row=start_row+len(excel_rows)-1):
-                for cell in row:
-                    cell.border = thin_border
-            for column in ws.columns:
-                max_length = 0
-                column = list(column)
-                for cell in column:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
-                    except:
-                        pass
-                adjusted_width = (max_length + 2)
-                ws.column_dimensions[column[0].column_letter].width = adjusted_width
-            wb.save(filename)
-            return send_file(
-                filename,
-                as_attachment=True,
-                download_name=filename,
-                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-        except Exception as e:
-            logger.error(f"Error exporting full project summary to Excel: {str(e)}", exc_info=True)
-            return jsonify({'error': str(e)}), 500
-
-    @app.route('/export_project_summary_excel', methods=['POST'])
-    @login_required
-    def export_project_summary_excel():
-        """Export the exact project summary table sent from the frontend as an Excel file."""
-        try:
-            data = request.get_json()
-            table = data.get('table', [])
-            enquiry_number = data.get('enquiry_number', 'Project')
-            customer_name = data.get('customer_name', '')
-            sales_engineer = data.get('sales_engineer', '')
-            filename = f"{enquiry_number}_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "Project Summary (UI Copy)"
-            # Add project details at the top
-            ws['A1'] = 'Project Summary (UI Copy)'
-            ws['A1'].font = Font(bold=True, size=16)
-            ws.merge_cells('A1:H1')
-            ws['A3'] = 'Enquiry Number:'
-            ws['B3'] = enquiry_number
-            ws['A4'] = 'Customer Name:'
-            ws['B4'] = customer_name
-            ws['A5'] = 'Sales Engineer:'
-            ws['B5'] = sales_engineer
-            ws['A6'] = 'Date:'
-            ws['B6'] = datetime.now().strftime('%d-%m-%Y')
-            # Write the table as-is
-            start_row = 8
-            for r, row in enumerate(table):
-                for c, value in enumerate(row):
-                    cell = ws.cell(row=start_row + r, column=1 + c)
-                    cell.value = value
-                    # Header formatting
-                    if r == 0:
-                        cell.font = Font(bold=True, color='FFFFFF')
-                        cell.fill = PatternFill(start_color='4a90e2', end_color='4a90e2', fill_type='solid')
-                        cell.alignment = Alignment(horizontal='center')
-                    # Section header formatting
-                    if r > 0 and (len(row) == 1 or (row[0] and not row[1:])):
-                        cell.font = Font(bold=True, color='FFFFFF')
-                        cell.fill = PatternFill(start_color='4a90e2', end_color='4a90e2', fill_type='solid')
-                    # Totals formatting
-                    if 'TOTAL' in str(row[0]).upper():
-                        cell.font = Font(bold=True)
-            # Add borders and auto-fit columns
-            thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
-            for row in ws.iter_rows(min_row=start_row, max_row=start_row+len(table)-1):
-                for cell in row:
-                    cell.border = thin_border
-            for column in ws.columns:
-                max_length = 0
-                column = list(column)
-                for cell in column:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
-                    except:
-                        pass
-                adjusted_width = (max_length + 2)
-                ws.column_dimensions[column[0].column_letter].width = adjusted_width
-            wb.save(filename)
-            return send_file(
-                filename,
-                as_attachment=True,
-                download_name=filename,
-                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-        except Exception as e:
-            logger.error(f"Error exporting UI project summary to Excel: {str(e)}", exc_info=True)
-            return jsonify({'error': str(e)}), 500
 
     return app 
