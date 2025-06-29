@@ -2579,6 +2579,15 @@ def register_routes(app):
                 conn.close()
                 logger.info(f"Successfully saved project {enquiry_number} to local database")
                 
+                # Also save to data directory for admin interface
+                try:
+                    import shutil
+                    os.makedirs('data', exist_ok=True)
+                    shutil.copy2('fan_pricing.db', 'data/fan_pricing.db')
+                    logger.info("Successfully synced to admin interface database")
+                except Exception as sync_error:
+                    logger.warning(f"Failed to sync to admin interface database: {sync_error}")
+                
             except Exception as e:
                 logger.error(f"Error saving to local database: {str(e)}", exc_info=True)
                 return jsonify({
