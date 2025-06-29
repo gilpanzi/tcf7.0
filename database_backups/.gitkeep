@@ -1,0 +1,2 @@
+# This file keeps the database_backups directory in git
+# The actual backup files are excluded by .gitignore 
