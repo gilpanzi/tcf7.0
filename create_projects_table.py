@@ -112,6 +112,39 @@ def create_projects_tables():
         logger.error(f"Error creating projects tables: {str(e)}")
         return False
 
+def create_users_table():
+    """Create the users table and insert default users if not present."""
+    try:
+        conn = sqlite3.connect('fan_pricing.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                full_name TEXT NOT NULL,
+                is_admin BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('''
+            INSERT OR IGNORE INTO users (username, password, full_name, is_admin) VALUES
+                ('abdul', 'tcfsales', 'Abdul Basidh', 1),
+                ('pradeep', 'tcfsales', 'Pradeep', 0),
+                ('satish', 'tcfsales', 'Satish', 0),
+                ('franklin', 'tcfsales', 'Franklin', 0),
+                ('muthu', 'tcfsales', 'Muthu', 0),
+                ('raghul', 'tcfsales', 'Raghul', 0)
+        ''')
+        conn.commit()
+        conn.close()
+        logger.info("Users table created or already exists.")
+    except Exception as e:
+        logger.error(f"Error creating users table: {e}")
+
+# Ensure users table is created on import
+create_users_table()
+
 if __name__ == "__main__":
     if create_projects_tables():
         print("Projects tables created successfully.")
