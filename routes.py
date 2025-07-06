@@ -496,14 +496,13 @@ def register_routes(app):
             'accessories': data.get('new_accessories', {})
         }
 
-        # Insert into the database - FIXED: Connect to the correct database containing FanWeights table
+        # FIXED: Use unified database connection
         try:
-            # Connect to the main database containing FanWeights table
-            main_db_path = 'database/fan_weights.db'
-            conn = sqlite3.connect(main_db_path)
+            # Connect to the unified database
+            conn = get_db_connection()
             cursor = conn.cursor()
             
-            logger.info(f"Connected to main database: {main_db_path}")
+            logger.info(f"Connected to unified database for saving fan model")
             
             # Check if this combination already exists
             cursor.execute('''
@@ -579,7 +578,7 @@ def register_routes(app):
             
             conn.commit()
             conn.close()
-            logger.info(f"{message} - Saved to main database: {main_db_path}")
+            logger.info(f"{message} - Saved to unified database")
             return jsonify({'success': True, 'message': message})
                 
         except Exception as e:
@@ -917,9 +916,10 @@ def register_routes(app):
             }), 500
 
     def save_to_database(fan_data, enquiry_number, customer_name, total_fans, sales_engineer):
-        """Save fan data to the local database."""
+        """Save fan data to the unified database."""
         try:
-            conn = sqlite3.connect('fan_pricing.db')
+            # FIXED: Use unified database connection
+            conn = get_db_connection()
             cursor = conn.cursor()
             
             # Create Projects table if it doesn't exist
@@ -985,11 +985,11 @@ def register_routes(app):
             
             conn.commit()
             conn.close()
-            logger.info(f"Successfully saved fan data for project {enquiry_number}, fan #{fan_data['fan_number']}")
+            logger.info(f"Successfully saved fan data for project {enquiry_number}, fan #{fan_data['fan_number']} to unified database")
             return True
             
         except Exception as e:
-            logger.error(f"Error saving to local database: {str(e)}", exc_info=True)
+            logger.error(f"Error saving to unified database: {str(e)}", exc_info=True)
             return False
     
     # REMOVED: sync_to_central_database function - no longer needed with unified database
