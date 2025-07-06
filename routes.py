@@ -387,86 +387,91 @@ def register_routes(app):
             'accessories': data.get('new_accessories', {})
         }
 
-        # Insert into the database
+        # Insert into the database - FIXED: Connect to the correct database containing FanWeights table
         try:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                
-                # Check if this combination already exists
+            # Connect to the main database containing FanWeights table
+            main_db_path = 'database/fan_weights.db'
+            conn = sqlite3.connect(main_db_path)
+            cursor = conn.cursor()
+            
+            logger.info(f"Connected to main database: {main_db_path}")
+            
+            # Check if this combination already exists
+            cursor.execute('''
+                SELECT COUNT(*) FROM FanWeights 
+                WHERE "Fan Model" = ? AND "Fan Size" = ? AND "Class" = ? AND "Arrangement" = ?
+            ''', (
+                fan_data['fan_model'], 
+                fan_data['fan_size'], 
+                fan_data['class_'], 
+                fan_data['arrangement']
+            ))
+            
+            exists = cursor.fetchone()[0] > 0
+            
+            if exists:
+                # Update existing entry
+                logger.info(f"Updating existing fan model: {fan_data['fan_model']}/{fan_data['fan_size']}/{fan_data['class_']}/{fan_data['arrangement']}")
                 cursor.execute('''
-                    SELECT COUNT(*) FROM FanWeights 
+                    UPDATE FanWeights SET 
+                    "Bare Fan Weight" = ?, 
+                    "Shaft Diameter" = ?,
+                    "No. of Isolators" = ?,
+                    "Unitary Base Frame" = ?,
+                    "Isolation Base Frame" = ?,
+                    "Split Casing" = ?,
+                    "Inlet Companion Flange" = ?,
+                    "Outlet Companion Flange" = ?,
+                    "Inlet Butterfly Damper" = ?
                     WHERE "Fan Model" = ? AND "Fan Size" = ? AND "Class" = ? AND "Arrangement" = ?
                 ''', (
+                    fan_data['bare_fan_weight'], 
+                    fan_data['shaft_diameter'],
+                    fan_data['no_of_isolators'],
+                    fan_data['accessories'].get('Unitary Base Frame', 0),
+                    fan_data['accessories'].get('Isolation Base Frame', 0),
+                    fan_data['accessories'].get('Split Casing', 0),
+                    fan_data['accessories'].get('Inlet Companion Flange', 0),
+                    fan_data['accessories'].get('Outlet Companion Flange', 0),
+                    fan_data['accessories'].get('Inlet Butterfly Damper', 0),
                     fan_data['fan_model'], 
                     fan_data['fan_size'], 
                     fan_data['class_'], 
                     fan_data['arrangement']
                 ))
                 
-                exists = cursor.fetchone()[0] > 0
+                message = 'Fan model updated successfully!'
+            else:
+                # Insert new entry
+                logger.info(f"Inserting new fan model: {fan_data['fan_model']}/{fan_data['fan_size']}/{fan_data['class_']}/{fan_data['arrangement']}")
+                cursor.execute('''
+                    INSERT INTO FanWeights (
+                        "Fan Model", "Fan Size", "Class", "Arrangement", "Bare Fan Weight", "Shaft Diameter",
+                        "No. of Isolators", "Unitary Base Frame", "Isolation Base Frame", "Split Casing", 
+                        "Inlet Companion Flange", "Outlet Companion Flange", "Inlet Butterfly Damper"
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    fan_data['fan_model'], 
+                    fan_data['fan_size'], 
+                    fan_data['class_'], 
+                    fan_data['arrangement'],
+                    fan_data['bare_fan_weight'], 
+                    fan_data['shaft_diameter'],
+                    fan_data['no_of_isolators'],
+                    fan_data['accessories'].get('Unitary Base Frame', 0),
+                    fan_data['accessories'].get('Isolation Base Frame', 0),
+                    fan_data['accessories'].get('Split Casing', 0),
+                    fan_data['accessories'].get('Inlet Companion Flange', 0),
+                    fan_data['accessories'].get('Outlet Companion Flange', 0),
+                    fan_data['accessories'].get('Inlet Butterfly Damper', 0)
+                ))
                 
-                if exists:
-                    # Update existing entry
-                    logger.info(f"Updating existing fan model: {fan_data['fan_model']}/{fan_data['fan_size']}/{fan_data['class_']}/{fan_data['arrangement']}")
-                    cursor.execute('''
-                        UPDATE FanWeights SET 
-                        "Bare Fan Weight" = ?, 
-                        "Shaft Diameter" = ?,
-                        "No. of Isolators" = ?,
-                        "Unitary Base Frame" = ?,
-                        "Isolation Base Frame" = ?,
-                        "Split Casing" = ?,
-                        "Inlet Companion Flange" = ?,
-                        "Outlet Companion Flange" = ?,
-                        "Inlet Butterfly Damper" = ?
-                        WHERE "Fan Model" = ? AND "Fan Size" = ? AND "Class" = ? AND "Arrangement" = ?
-                    ''', (
-                        fan_data['bare_fan_weight'], 
-                        fan_data['shaft_diameter'],
-                        fan_data['no_of_isolators'],
-                        fan_data['accessories'].get('Unitary Base Frame', 0),
-                        fan_data['accessories'].get('Isolation Base Frame', 0),
-                        fan_data['accessories'].get('Split Casing', 0),
-                        fan_data['accessories'].get('Inlet Companion Flange', 0),
-                        fan_data['accessories'].get('Outlet Companion Flange', 0),
-                        fan_data['accessories'].get('Inlet Butterfly Damper', 0),
-                        fan_data['fan_model'], 
-                        fan_data['fan_size'], 
-                        fan_data['class_'], 
-                        fan_data['arrangement']
-                    ))
-                    
-                    message = 'Fan model updated successfully!'
-                else:
-                    # Insert new entry
-                    logger.info(f"Inserting new fan model: {fan_data['fan_model']}/{fan_data['fan_size']}/{fan_data['class_']}/{fan_data['arrangement']}")
-                    cursor.execute('''
-                        INSERT INTO FanWeights (
-                            "Fan Model", "Fan Size", "Class", "Arrangement", "Bare Fan Weight", "Shaft Diameter",
-                            "No. of Isolators", "Unitary Base Frame", "Isolation Base Frame", "Split Casing", 
-                            "Inlet Companion Flange", "Outlet Companion Flange", "Inlet Butterfly Damper"
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
-                        fan_data['fan_model'], 
-                        fan_data['fan_size'], 
-                        fan_data['class_'], 
-                        fan_data['arrangement'],
-                        fan_data['bare_fan_weight'], 
-                        fan_data['shaft_diameter'],
-                        fan_data['no_of_isolators'],
-                        fan_data['accessories'].get('Unitary Base Frame', 0),
-                        fan_data['accessories'].get('Isolation Base Frame', 0),
-                        fan_data['accessories'].get('Split Casing', 0),
-                        fan_data['accessories'].get('Inlet Companion Flange', 0),
-                        fan_data['accessories'].get('Outlet Companion Flange', 0),
-                        fan_data['accessories'].get('Inlet Butterfly Damper', 0)
-                    ))
-                    
-                    message = 'New fan model added successfully!'
-                
-                conn.commit()
-                logger.info(message)
-                return jsonify({'success': True, 'message': message})
+                message = 'New fan model added successfully!'
+            
+            conn.commit()
+            conn.close()
+            logger.info(f"{message} - Saved to main database: {main_db_path}")
+            return jsonify({'success': True, 'message': message})
                 
         except Exception as e:
             logger.error(f"Error adding/updating fan model: {str(e)}", exc_info=True)
@@ -2359,6 +2364,74 @@ def register_routes(app):
                 }), 400
             
             logger.info(f"Saving project: {enquiry_number} with {len(fans_data)} fans")
+            
+            # CRITICAL FIX: Add new fan models to FanWeights table
+            try:
+                with get_db_connection() as conn:
+                    cursor = conn.cursor()
+                    
+                    # Process each fan to ensure it exists in FanWeights table
+                    for fan_data in fans_data:
+                        fan_model = fan_data.get('fan_model') or fan_data.get('specifications', {}).get('fan_model')
+                        fan_size = fan_data.get('fan_size') or fan_data.get('specifications', {}).get('fan_size') or fan_data.get('specifications', {}).get('size')
+                        class_ = fan_data.get('class_') or fan_data.get('class') or fan_data.get('specifications', {}).get('class')
+                        arrangement = fan_data.get('arrangement') or fan_data.get('specifications', {}).get('arrangement')
+                        
+                        if all([fan_model, fan_size, class_, arrangement]):
+                            # Check if this fan combination exists in FanWeights
+                            cursor.execute('''
+                                SELECT COUNT(*) FROM FanWeights 
+                                WHERE "Fan Model" = ? AND "Fan Size" = ? AND "Class" = ? AND "Arrangement" = ?
+                            ''', (fan_model, fan_size, class_, arrangement))
+                            
+                            exists = cursor.fetchone()[0] > 0
+                            
+                            if not exists:
+                                # Add this fan to FanWeights table
+                                logger.info(f"Adding new fan to FanWeights: {fan_model}/{fan_size}/{class_}/{arrangement}")
+                                
+                                # Extract fan weights and specifications
+                                bare_fan_weight = fan_data.get('bare_fan_weight') or fan_data.get('weights', {}).get('bare_fan_weight', 0)
+                                shaft_diameter = fan_data.get('shaft_diameter') or fan_data.get('custom_shaft_diameter', 0)
+                                no_of_isolators = fan_data.get('no_of_isolators') or fan_data.get('custom_no_of_isolators', 0)
+                                
+                                # Extract accessory weights
+                                accessories = fan_data.get('accessories', {})
+                                if isinstance(accessories, str):
+                                    try:
+                                        accessories = json.loads(accessories)
+                                    except:
+                                        accessories = {}
+                                
+                                cursor.execute('''
+                                    INSERT INTO FanWeights (
+                                        "Fan Model", "Fan Size", "Class", "Arrangement", "Bare Fan Weight", "Shaft Diameter",
+                                        "No. of Isolators", "Unitary Base Frame", "Isolation Base Frame", "Split Casing", 
+                                        "Inlet Companion Flange", "Outlet Companion Flange", "Inlet Butterfly Damper"
+                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                ''', (
+                                    fan_model, 
+                                    fan_size, 
+                                    class_, 
+                                    arrangement,
+                                    float(bare_fan_weight) if bare_fan_weight else 0, 
+                                    float(shaft_diameter) if shaft_diameter else 0,
+                                    int(no_of_isolators) if no_of_isolators else 0,
+                                    accessories.get('Unitary Base Frame', 0),
+                                    accessories.get('Isolation Base Frame', 0),
+                                    accessories.get('Split Casing', 0),
+                                    accessories.get('Inlet Companion Flange', 0),
+                                    accessories.get('Outlet Companion Flange', 0),
+                                    accessories.get('Inlet Butterfly Damper', 0)
+                                ))
+                                
+                                logger.info(f"Successfully added new fan to FanWeights: {fan_model}/{fan_size}/{class_}/{arrangement}")
+                    
+                    conn.commit()
+                    
+            except Exception as e:
+                logger.error(f"Error adding fans to FanWeights table: {str(e)}", exc_info=True)
+                # Continue with project saving even if FanWeights update fails
             
             # Save to local database first
             try:
