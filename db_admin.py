@@ -9,10 +9,9 @@ import html
 # Simple database admin interface
 logger = logging.getLogger(__name__)
 
-# Dictionary to store the database paths
+# Dictionary to store the database paths - now using unified database
 DATABASE_PATHS = {
-    'main': 'data/fan_pricing.db',
-    'central': 'data/central_database/all_projects.db'
+    'unified': 'data/fan_pricing.db'
 }
 
 # Create Blueprint for database admin routes
@@ -21,49 +20,8 @@ db_admin_bp = Blueprint('db_admin', __name__)
 # Define routes on the blueprint before it gets registered
 @db_admin_bp.route('/')
 def index():
-    """Display the database selection page."""
-    html_content = """
-    <html>
-    <head>
-        <title>TCF Database Admin</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                margin: 40px;
-                line-height: 1.6;
-            }
-            h1 {
-                color: #333;
-            }
-            .database-links {
-                margin-top: 20px;
-            }
-            .database-links a {
-                display: inline-block;
-                background-color: #4CAF50;
-                color: white;
-                padding: 10px 15px;
-                text-decoration: none;
-                border-radius: 4px;
-                margin-right: 10px;
-                margin-bottom: 10px;
-            }
-            .database-links a:hover {
-                background-color: #45a049;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>TCF Database Administration</h1>
-        <p>Select a database to manage:</p>
-        <div class="database-links">
-            <a href="/db-admin/view/main">Main Database (fan_pricing.db)</a>
-            <a href="/db-admin/view/central">Central Database (all_projects.db)</a>
-        </div>
-    </body>
-    </html>
-    """
-    return html_content
+    """Redirect to unified database view."""
+    return redirect('/db-admin/view/unified')
 
 @db_admin_bp.route('/view/<db_name>')
 def view_db(db_name):
@@ -73,17 +31,9 @@ def view_db(db_name):
     
     db_path = DATABASE_PATHS[db_name]
     
-    # Ensure the database exists
+    # Ensure the unified database exists
     if not os.path.exists(db_path):
-        # Check original path for central database
-        if db_name == 'central' and os.path.exists('central_database/all_projects.db'):
-            # Make sure the directory exists
-            os.makedirs(os.path.dirname(db_path), exist_ok=True)
-            # Copy the database
-            shutil.copy('central_database/all_projects.db', db_path)
-            logger.info(f"Copied central database to {db_path}")
-        else:
-            return f"Database file not found at {db_path}", 404
+        return f"Unified database file not found at {db_path}", 404
     
     # Get list of tables
     conn = sqlite3.connect(db_path)
@@ -98,7 +48,7 @@ def view_db(db_name):
         table_links += f'<li><a href="/db-admin/view-table/{db_name}/{table}">{table}</a></li>'
     
     # Create HTML content
-    db_title = "Main Database" if db_name == "main" else "Central Database"
+    db_title = "Unified Database"
     html_content = f"""
     <html>
     <head>
@@ -127,7 +77,7 @@ def view_db(db_name):
     <body>
         <h1>{db_title}</h1>
         <div class="back-link">
-            <a href="/db-admin/">← Back to Database Selection</a>
+            <a href="/">← Back to Main App</a>
         </div>
         
         <div>

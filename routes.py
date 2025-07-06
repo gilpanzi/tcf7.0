@@ -38,32 +38,75 @@ def admin_required(f):
 
 # Run migration immediately when module is loaded
 def migrate_database():
-    """Migrate the database schema."""
+    """Migrate the database schema safely without losing data."""
     try:
-        # Create a base directory for data and a subdirectory for the central database
-        data_dir = 'data'
-        central_db_dir = os.path.join(data_dir, 'central_database')
-        os.makedirs(central_db_dir, exist_ok=True)
-        central_db_name = os.path.join(central_db_dir, 'all_projects.db')
+        # Detect environment
+        is_production = os.environ.get('RENDER') is not None
+        is_local = not is_production
         
-        # If the central database doesn't exist in the data directory but exists in the original location,
-        # copy it to the data directory
-        original_db_path = 'central_database/all_projects.db'
-        if not os.path.exists(central_db_name) and os.path.exists(original_db_path):
+        logger.info(f"Environment: {'Production (Render)' if is_production else 'Local Development'}")
+        
+        # Use unified database at data/fan_pricing.db
+        unified_db_path = 'data/fan_pricing.db'
+        
+        # Ensure data directory exists
+        os.makedirs('data', exist_ok=True)
+        
+        # If unified database doesn't exist, try to copy from main location
+        if not os.path.exists(unified_db_path) and os.path.exists('fan_pricing.db'):
             import shutil
-            shutil.copy(original_db_path, central_db_name)
-            logger.info(f"Copied central database to {central_db_name}")
+            shutil.copy('fan_pricing.db', unified_db_path)
+            logger.info(f"Copied main database to unified location: {unified_db_path}")
         
-        # Connect to the central database
-        conn = sqlite3.connect(central_db_name)
+        # Connect to the unified database
+        conn = sqlite3.connect(unified_db_path)
         cursor = conn.cursor()
         
-        # Drop and recreate ProjectFans table with all required columns
-        cursor.execute("DROP TABLE IF EXISTS ProjectFans")
+        # Check if ProjectFans table exists and has data
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ProjectFans'")
+        table_exists = cursor.fetchone()
         
-        cursor.execute('''
-            CREATE TABLE ProjectFans (
+        if table_exists:
+            # Table exists - check if it has data
+            cursor.execute("SELECT COUNT(*) FROM ProjectFans")
+            row_count = cursor.fetchone()[0]
+            
+            if row_count > 0:
+                logger.info(f"ProjectFans table exists with {row_count} records - preserving data")
+                # Add any missing columns without dropping the table
+                _add_missing_columns(cursor)
+            else:
+                # Empty table - safe to recreate, but be extra careful in production
+                if is_production:
+                    logger.info("Production environment: Adding missing columns to empty table")
+                    _add_missing_columns(cursor)
+                else:
+                    # SAFE: Use column addition instead of dangerous DROP TABLE
+                    logger.info("Table is empty - using safe column addition to preserve any structure")
+                    _add_missing_columns(cursor)
+        else:
+            logger.info("ProjectFans table doesn't exist - creating new table")
+            _create_projectfans_table(cursor)
+        
+        # Create indexes for better performance
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_projectfans_enquiry ON ProjectFans(enquiry_number)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_projectfans_fan_number ON ProjectFans(fan_number)')
+        
+        conn.commit()
+        conn.close()
+        logger.info("Unified database migration completed successfully")
+        
+    except Exception as e:
+        logger.error(f"Error during database migration: {str(e)}")
+        if 'conn' in locals():
+            conn.close()
+
+def _create_projectfans_table(cursor):
+    """Create the ProjectFans table with full schema."""
+    cursor.execute('''
+        CREATE TABLE ProjectFans (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER,
                 enquiry_number TEXT,
                 fan_number INTEGER,
                 fan_model TEXT,
@@ -123,22 +166,88 @@ def migrate_database():
                 material_rate_4 REAL,
                 custom_no_of_isolators INTEGER,
                 custom_shaft_diameter REAL,
-                FOREIGN KEY (enquiry_number) REFERENCES Projects(enquiry_number)
+                FOREIGN KEY (project_id) REFERENCES Projects(id)
             )
         ''')
-        
-        # Create indexes for better performance
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_projectfans_enquiry ON ProjectFans(enquiry_number)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_projectfans_fan_number ON ProjectFans(fan_number)')
-        
-        conn.commit()
-        conn.close()
-        logger.info("Database migration completed successfully")
-        
-    except Exception as e:
-        logger.error(f"Error during database migration: {str(e)}")
-        if 'conn' in locals():
-            conn.close()
+
+def _add_missing_columns(cursor):
+    """Add any missing columns to existing ProjectFans table without losing data."""
+    # Get existing columns
+    cursor.execute("PRAGMA table_info(ProjectFans)")
+    existing_columns = {row[1] for row in cursor.fetchall()}
+    
+    # Define all required columns with their types
+    required_columns = {
+        'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',
+        'enquiry_number': 'TEXT',
+        'fan_number': 'INTEGER',
+        'fan_model': 'TEXT',
+        'size': 'TEXT',
+        'class': 'TEXT',
+        'arrangement': 'TEXT',
+        'vendor': 'TEXT',
+        'material': 'TEXT',
+        'accessories': 'TEXT',
+        'bare_fan_weight': 'REAL',
+        'accessory_weight': 'REAL',
+        'total_weight': 'REAL',
+        'fabrication_weight': 'REAL',
+        'bought_out_weight': 'REAL',
+        'fabrication_cost': 'REAL',
+        'motor_cost': 'REAL',
+        'vibration_isolators_cost': 'REAL',
+        'drive_pack_cost': 'REAL',
+        'bearing_cost': 'REAL',
+        'optional_items_cost': 'REAL',
+        'flex_connectors_cost': 'REAL',
+        'bought_out_cost': 'REAL',
+        'total_cost': 'REAL',
+        'fabrication_selling_price': 'REAL',
+        'bought_out_selling_price': 'REAL',
+        'total_selling_price': 'REAL',
+        'total_job_margin': 'REAL',
+        'vibration_isolators': 'TEXT',
+        'drive_pack_kw': 'REAL',
+        'custom_accessories': 'TEXT',
+        'optional_items': 'TEXT',
+        'custom_option_items': 'TEXT',
+        'motor_kw': 'REAL',
+        'motor_brand': 'TEXT',
+        'motor_pole': 'REAL',
+        'motor_efficiency': 'TEXT',
+        'motor_discount_rate': 'REAL',
+        'bearing_brand': 'TEXT',
+        'shaft_diameter': 'REAL',
+        'no_of_isolators': 'INTEGER',
+        'fabrication_margin': 'REAL',
+        'bought_out_margin': 'REAL',
+        'material_name_0': 'TEXT',
+        'material_weight_0': 'REAL',
+        'material_rate_0': 'REAL',
+        'material_name_1': 'TEXT',
+        'material_weight_1': 'REAL',
+        'material_rate_1': 'REAL',
+        'material_name_2': 'TEXT',
+        'material_weight_2': 'REAL',
+        'material_rate_2': 'REAL',
+        'material_name_3': 'TEXT',
+        'material_weight_3': 'REAL',
+        'material_rate_3': 'REAL',
+        'material_name_4': 'TEXT',
+        'material_weight_4': 'REAL',
+        'material_rate_4': 'REAL',
+        'custom_no_of_isolators': 'INTEGER',
+        'custom_shaft_diameter': 'REAL'
+    }
+    
+    # Add missing columns
+    for column_name, column_type in required_columns.items():
+        if column_name not in existing_columns and column_name != 'id':  # Skip primary key
+            try:
+                cursor.execute(f"ALTER TABLE ProjectFans ADD COLUMN {column_name} {column_type}")
+                logger.info(f"Added missing column: {column_name}")
+            except Exception as e:
+                logger.warning(f"Could not add column {column_name}: {str(e)}")
 
 # Run migration immediately
 migrate_database()
@@ -883,209 +992,7 @@ def register_routes(app):
             logger.error(f"Error saving to local database: {str(e)}", exc_info=True)
             return False
     
-    def sync_to_central_database(project_data):
-        """Sync project data to the central database."""
-        try:
-            # Create a base directory for data and a subdirectory for the central database
-            data_dir = 'data'
-            central_db_dir = os.path.join(data_dir, 'central_database')
-            os.makedirs(central_db_dir, exist_ok=True)
-            central_db_name = os.path.join(central_db_dir, 'all_projects.db')
-            
-            # If the central database doesn't exist in the data directory but exists in the original location,
-            # copy it to the data directory
-            original_db_path = 'central_database/all_projects.db'
-            if not os.path.exists(central_db_name) and os.path.exists(original_db_path):
-                import shutil
-                shutil.copy(original_db_path, central_db_name)
-                logger.info(f"Copied central database to {central_db_name}")
-            
-            conn = sqlite3.connect(central_db_name)
-            cursor = conn.cursor()
-            
-            # Create tables with the same schema as the main save_project_to_database function
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS Projects (
-                    enquiry_number TEXT PRIMARY KEY,
-                    customer_name TEXT,
-                    total_fans INTEGER,
-                    sales_engineer TEXT,
-                    total_weight REAL,
-                    total_fabrication_cost REAL,
-                    total_bought_out_cost REAL,
-                    total_cost REAL,
-                    total_selling_price REAL,
-                    total_job_margin REAL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS ProjectFans (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    enquiry_number TEXT,
-                    fan_number INTEGER,
-                    fan_model TEXT,
-                    size TEXT,
-                    class TEXT,
-                    arrangement TEXT,
-                    vendor TEXT,
-                    material TEXT,
-                    accessories TEXT,
-                    bare_fan_weight REAL,
-                    accessory_weight REAL,
-                    total_weight REAL,
-                    fabrication_weight REAL,
-                    bought_out_weight REAL,
-                    fabrication_cost REAL,
-                    motor_cost REAL,
-                    vibration_isolators_cost REAL,
-                    drive_pack_cost REAL,
-                    bearing_cost REAL,
-                    optional_items_cost REAL,
-                    flex_connectors_cost REAL,
-                    bought_out_cost REAL,
-                    total_cost REAL,
-                    fabrication_selling_price REAL,
-                    bought_out_selling_price REAL,
-                    total_selling_price REAL,
-                    total_job_margin REAL,
-                    vibration_isolators TEXT,
-                    drive_pack_kw REAL,
-                    custom_accessories TEXT,
-                    optional_items TEXT,
-                    custom_option_items TEXT,
-                    motor_kw REAL,
-                    motor_brand TEXT,
-                    motor_pole REAL,
-                    motor_efficiency TEXT,
-                    motor_discount_rate REAL,
-                    bearing_brand TEXT,
-                    shaft_diameter REAL,
-                    no_of_isolators INTEGER,
-                    fabrication_margin REAL,
-                    bought_out_margin REAL,
-                    material_name_0 TEXT,
-                    material_weight_0 REAL,
-                    material_rate_0 REAL,
-                    material_name_1 TEXT,
-                    material_weight_1 REAL,
-                    material_rate_1 REAL,
-                    material_name_2 TEXT,
-                    material_weight_2 REAL,
-                    material_rate_2 REAL,
-                    material_name_3 TEXT,
-                    material_weight_3 REAL,
-                    material_rate_3 REAL,
-                    material_name_4 TEXT,
-                    material_weight_4 REAL,
-                    material_rate_4 REAL,
-                    custom_no_of_isolators INTEGER,
-                    custom_shaft_diameter REAL,
-                    FOREIGN KEY (enquiry_number) REFERENCES Projects(enquiry_number)
-                )
-            ''')
-            
-            enquiry_number = project_data['enquiry_number']
-            
-            # Check if project exists and update/insert
-            cursor.execute('SELECT enquiry_number FROM Projects WHERE enquiry_number = ?', (enquiry_number,))
-            existing_project = cursor.fetchone()
-            
-            if existing_project:
-                # Update existing project
-                cursor.execute('''
-                    UPDATE Projects 
-                    SET customer_name = ?, total_fans = ?, sales_engineer = ?
-                    WHERE enquiry_number = ?
-                ''', (project_data['customer_name'], project_data['total_fans'], project_data['sales_engineer'], enquiry_number))
-            else:
-                # Insert new project
-                cursor.execute('''
-                    INSERT INTO Projects (enquiry_number, customer_name, total_fans, sales_engineer)
-                    VALUES (?, ?, ?, ?)
-                ''', (enquiry_number, project_data['customer_name'], project_data['total_fans'], project_data['sales_engineer']))
-            
-            # Process each fan in the project data
-            for fan_data in project_data['fans']:
-                # Convert nested fan data structure to flat database format
-                fan_db_data = {
-                    'enquiry_number': enquiry_number,
-                    'fan_number': fan_data.get('fan_number', 1),
-                    'fan_model': fan_data['specifications']['fan_model'],
-                    'size': fan_data['specifications']['size'],
-                    'class': fan_data['specifications']['class'],
-                    'arrangement': fan_data['specifications']['arrangement'],
-                    'vendor': fan_data['specifications']['vendor'],
-                    'material': fan_data['specifications']['material'],
-                    'accessories': json.dumps(fan_data['specifications'].get('accessories', {})),
-                    'custom_accessories': json.dumps(fan_data['specifications'].get('custom_accessories', {})),
-                    'optional_items': json.dumps(fan_data['specifications'].get('optional_items', {})),
-                    'custom_option_items': json.dumps(fan_data['specifications'].get('custom_optional_items', {})),
-                    'optional_items_json': json.dumps(fan_data['specifications'].get('optional_items', {})),
-                    'custom_optional_items_json': json.dumps(fan_data['specifications'].get('custom_option_items', {})),
-                    'bare_fan_weight': fan_data['weights']['bare_fan_weight'],
-                    'accessory_weight': fan_data['weights']['accessory_weight'],
-                    'total_weight': fan_data['weights']['total_weight'],
-                    'fabrication_weight': fan_data['weights']['fabrication_weight'],
-                    'bought_out_weight': fan_data['weights']['bought_out_weight'],
-                    'fabrication_cost': fan_data['costs']['fabrication_cost'],
-                    'motor_cost': fan_data['costs']['motor_cost'],
-                    'vibration_isolators_cost': fan_data['costs']['vibration_isolators_cost'],
-                    'drive_pack_cost': fan_data['costs']['drive_pack_cost'],
-                    'bearing_cost': fan_data['costs']['bearing_cost'],
-                    'optional_items_cost': fan_data['costs']['optional_items_cost'],
-                    'flex_connectors_cost': fan_data['costs']['flex_connectors_cost'],
-                    'bought_out_cost': fan_data['costs']['bought_out_cost'],
-                    'total_cost': fan_data['costs']['total_cost'],
-                    'fabrication_selling_price': fan_data['costs']['fabrication_selling_price'],
-                    'bought_out_selling_price': fan_data['costs']['bought_out_selling_price'],
-                    'total_selling_price': fan_data['costs']['total_selling_price'],
-                    'total_job_margin': fan_data['costs']['total_job_margin'],
-                    'vibration_isolators': fan_data['specifications']['vibration_isolators'],
-                    'drive_pack_kw': fan_data['specifications'].get('drive_pack_kw', 0),
-                    'motor_kw': fan_data['motor']['kw'],
-                    'motor_brand': fan_data['motor']['brand'],
-                    'motor_pole': fan_data['motor']['pole'],
-                    'motor_efficiency': fan_data['motor']['efficiency'],
-                    'motor_discount_rate': fan_data['motor'].get('discount_rate', 0),
-                    'bearing_brand': fan_data['specifications']['bearing_brand'],
-                    'shaft_diameter': fan_data['specifications']['shaft_diameter'],
-                    'no_of_isolators': fan_data['specifications'].get('no_of_isolators', 0),
-                    'fabrication_margin': fan_data['specifications'].get('fabrication_margin', 25),
-                    'bought_out_margin': fan_data['specifications'].get('bought_out_margin', 25),
-                }
-                
-                # Handle material data
-                for i in range(5):
-                    for key in ['material_name', 'material_weight', 'material_rate']:
-                        field_key = f'{key}_{i}'
-                        fan_db_data[field_key] = fan_data['specifications'].get(field_key, '')
-                
-                # Delete existing fan records for this enquiry and fan number
-                cursor.execute('DELETE FROM ProjectFans WHERE enquiry_number = ? AND fan_number = ?', 
-                             (enquiry_number, fan_db_data['fan_number']))
-                
-                # Insert the fan data
-                columns = list(fan_db_data.keys())
-                placeholders = ', '.join(['?' for _ in columns])
-                values = list(fan_db_data.values())
-                
-                cursor.execute(f'''
-                    INSERT INTO ProjectFans ({', '.join(columns)})
-                    VALUES ({placeholders})
-                ''', values)
-                
-            conn.commit()
-            conn.close()
-            logger.info(f"Successfully synced project {enquiry_number} to central database")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error syncing to central database: {str(e)}", exc_info=True)
-            if 'conn' in locals():
-                conn.close()
-            return False
+    # REMOVED: sync_to_central_database function - no longer needed with unified database
 
     # Add route to get drive pack options for the dropdown
     @app.route('/get_drive_pack_options', methods=['GET'])
@@ -1437,66 +1344,34 @@ def register_routes(app):
     @app.route('/get_saved_enquiries')
     @login_required
     def get_saved_enquiries():
-        """Get all saved enquiries from both databases."""
+        """Get all saved enquiries from unified database."""
         try:
             enquiries = []
             
-            # Get from local database
-            try:
-                conn = sqlite3.connect('fan_pricing.db')
-                cursor = conn.cursor()
-                cursor.execute('''
-                    SELECT DISTINCT enquiry_number, customer_name, total_fans, sales_engineer, created_at
-                    FROM Projects 
-                    ORDER BY created_at DESC
-                ''')
-                local_enquiries = cursor.fetchall()
-                for enq in local_enquiries:
-                    enquiries.append({
-                        'enquiry_number': enq[0],
-                        'customer_name': enq[1] or '',
-                        'total_fans': enq[2] or 0,
-                        'sales_engineer': enq[3] or '',
-                        'created_at': enq[4] or '',
-                        'source': 'local'
-                    })
-                conn.close()
-            except Exception as e:
-                logger.warning(f"Could not load from local database: {str(e)}")
-            
-            # Get from central database
-            try:
-                central_db_path = 'data/central_database/all_projects.db'
-                if os.path.exists(central_db_path):
-                    conn = sqlite3.connect(central_db_path)
-                    cursor = conn.cursor()
-                    cursor.execute('''
-                        SELECT DISTINCT enquiry_number, customer_name, total_fans, sales_engineer, created_at
-                        FROM Projects 
-                        ORDER BY created_at DESC
-                    ''')
-                    central_enquiries = cursor.fetchall()
-                    
-                    # Add central enquiries that aren't already in the list
-                    existing_enquiries = {enq['enquiry_number'] for enq in enquiries}
-                    for enq in central_enquiries:
-                        if enq[0] not in existing_enquiries:
-                            enquiries.append({
-                                'enquiry_number': enq[0],
-                                'customer_name': enq[1] or '',
-                                'total_fans': enq[2] or 0,
-                                'sales_engineer': enq[3] or '',
-                                'created_at': enq[4] or '',
-                                'source': 'central'
-                            })
-                    conn.close()
-            except Exception as e:
-                logger.warning(f"Could not load from central database: {str(e)}")
+            # Get from unified database
+            conn = sqlite3.connect('data/fan_pricing.db')
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT DISTINCT enquiry_number, customer_name, total_fans, sales_engineer, created_at
+                FROM Projects 
+                ORDER BY created_at DESC
+            ''')
+            unified_enquiries = cursor.fetchall()
+            for enq in unified_enquiries:
+                enquiries.append({
+                    'enquiry_number': enq[0],
+                    'customer_name': enq[1] or '',
+                    'total_fans': enq[2] or 0,
+                    'sales_engineer': enq[3] or '',
+                    'created_at': enq[4] or '',
+                    'source': 'unified'
+                })
+            conn.close()
             
             # Sort by enquiry number descending
             enquiries.sort(key=lambda x: x['enquiry_number'], reverse=True)
             
-            logger.info(f"Retrieved {len(enquiries)} saved enquiries")
+            logger.info(f"Retrieved {len(enquiries)} saved enquiries from unified database")
             return jsonify({
                 'success': True,
                 'enquiries': enquiries
@@ -2166,151 +2041,76 @@ def register_routes(app):
     @app.route('/load_enquiry/<enquiry_number>')
     @login_required
     def load_enquiry(enquiry_number):
-        """Load a specific enquiry and all its fan data."""
+        """Load a specific enquiry and all its fan data from unified database."""
         try:
             logger.info(f"Loading enquiry: {enquiry_number}")
             
-            # Try to load from central database first (most up-to-date)
-            central_db_path = 'data/central_database/all_projects.db'
+            # Load from unified database
+            unified_db_path = 'data/fan_pricing.db'
             project_data = None
             fans_data = []
             
-            if os.path.exists(central_db_path):
-                try:
-                    conn = sqlite3.connect(central_db_path)
-                    cursor = conn.cursor()
-                    
-                    # Get project info
-                    cursor.execute('''
-                        SELECT enquiry_number, customer_name, total_fans, sales_engineer
-                        FROM Projects 
-                        WHERE enquiry_number = ?
-                    ''', (enquiry_number,))
-                    
-                    project_result = cursor.fetchone()
-                    if project_result:
-                        project_data = {
-                            'enquiry_number': project_result[0],
-                            'customer_name': project_result[1],
-                            'total_fans': project_result[2],
-                            'sales_engineer': project_result[3]
-                        }
-                        
-                        # Get all fans for this enquiry
-                        cursor.execute('''
-                            SELECT * FROM ProjectFans 
-                            WHERE enquiry_number = ?
-                            ORDER BY fan_number
-                        ''', (enquiry_number,))
-                        
-                        fan_columns = [description[0] for description in cursor.description]
-                        fan_results = cursor.fetchall()
-                        
-                        for fan_row in fan_results:
-                            fan_dict = dict(zip(fan_columns, fan_row))
-                            
-                            # Process JSON fields
-                            json_fields = ['accessories', 'custom_accessories', 'optional_items', 'custom_option_items']
-                            for json_field in json_fields:
-                                if json_field in fan_dict and fan_dict[json_field]:
-                                    try:
-                                        parsed_json = json.loads(fan_dict[json_field])
-                                        fan_dict[json_field] = parsed_json
-                                    except (json.JSONDecodeError, TypeError):
-                                        logger.warning(f"Could not parse {json_field} JSON: {fan_dict[json_field]}")
-                                        fan_dict[json_field] = {}
-                            
-                            # Also try JSON versions of optional items
-                            if 'optional_items_json' in fan_dict and fan_dict['optional_items_json']:
-                                try:
-                                    parsed_json = json.loads(fan_dict['optional_items_json'])
-                                    fan_dict['optional_items'] = parsed_json
-                                except (json.JSONDecodeError, TypeError):
-                                    pass
-                            
-                            if 'custom_optional_items_json' in fan_dict and fan_dict['custom_optional_items_json']:
-                                try:
-                                    parsed_json = json.loads(fan_dict['custom_optional_items_json'])
-                                    fan_dict['custom_option_items'] = parsed_json
-                                except (json.JSONDecodeError, TypeError):
-                                    pass
-                            
-                            fans_data.append(fan_dict)
-                    
-                    conn.close()
-                    logger.info(f"Loaded enquiry {enquiry_number} from central database")
-                    
-                except Exception as e:
-                    logger.warning(f"Could not load from central database: {str(e)}")
+            conn = sqlite3.connect(unified_db_path)
+            cursor = conn.cursor()
             
-            # If not found in central database, try local database
-            if not project_data:
-                try:
-                    conn = sqlite3.connect('fan_pricing.db')
-                    cursor = conn.cursor()
+            # Get project info
+            cursor.execute('''
+                SELECT enquiry_number, customer_name, total_fans, sales_engineer
+                FROM Projects 
+                WHERE enquiry_number = ?
+            ''', (enquiry_number,))
+            
+            project_result = cursor.fetchone()
+            if project_result:
+                project_data = {
+                    'enquiry_number': project_result[0],
+                    'customer_name': project_result[1],
+                    'total_fans': project_result[2],
+                    'sales_engineer': project_result[3]
+                }
+                
+                # Get all fans for this enquiry
+                cursor.execute('''
+                    SELECT * FROM ProjectFans 
+                    WHERE enquiry_number = ?
+                    ORDER BY fan_number
+                ''', (enquiry_number,))
+                
+                fan_columns = [description[0] for description in cursor.description]
+                fan_results = cursor.fetchall()
+                
+                for fan_row in fan_results:
+                    fan_dict = dict(zip(fan_columns, fan_row))
                     
-                    # Get project info
-                    cursor.execute('''
-                        SELECT enquiry_number, customer_name, total_fans, sales_engineer
-                        FROM Projects 
-                        WHERE enquiry_number = ?
-                    ''', (enquiry_number,))
+                    # Process JSON fields
+                    json_fields = ['accessories', 'custom_accessories', 'optional_items', 'custom_option_items']
+                    for json_field in json_fields:
+                        if json_field in fan_dict and fan_dict[json_field]:
+                            try:
+                                parsed_json = json.loads(fan_dict[json_field])
+                                fan_dict[json_field] = parsed_json
+                            except (json.JSONDecodeError, TypeError):
+                                logger.warning(f"Could not parse {json_field} JSON: {fan_dict[json_field]}")
+                                fan_dict[json_field] = {}
                     
-                    project_result = cursor.fetchone()
-                    if project_result:
-                        project_data = {
-                            'enquiry_number': project_result[0],
-                            'customer_name': project_result[1],
-                            'total_fans': project_result[2],
-                            'sales_engineer': project_result[3]
-                        }
-                        
-                        # Get all fans for this enquiry
-                        cursor.execute('''
-                            SELECT * FROM ProjectFans 
-                            WHERE enquiry_number = ?
-                            ORDER BY fan_number
-                        ''', (enquiry_number,))
-                        
-                        fan_columns = [description[0] for description in cursor.description]
-                        fan_results = cursor.fetchall()
-                        
-                        for fan_row in fan_results:
-                            fan_dict = dict(zip(fan_columns, fan_row))
-                            
-                            # Process JSON fields
-                            json_fields = ['accessories', 'custom_accessories', 'optional_items', 'custom_option_items']
-                            for json_field in json_fields:
-                                if json_field in fan_dict and fan_dict[json_field]:
-                                    try:
-                                        parsed_json = json.loads(fan_dict[json_field])
-                                        fan_dict[json_field] = parsed_json
-                                    except (json.JSONDecodeError, TypeError):
-                                        logger.warning(f"Could not parse {json_field} JSON: {fan_dict[json_field]}")
-                                        fan_dict[json_field] = {}
-                            
-                            # Also try JSON versions of optional items
-                            if 'optional_items_json' in fan_dict and fan_dict['optional_items_json']:
-                                try:
-                                    parsed_json = json.loads(fan_dict['optional_items_json'])
-                                    fan_dict['optional_items'] = parsed_json
-                                except (json.JSONDecodeError, TypeError):
-                                    pass
-                            
-                            if 'custom_optional_items_json' in fan_dict and fan_dict['custom_optional_items_json']:
-                                try:
-                                    parsed_json = json.loads(fan_dict['custom_optional_items_json'])
-                                    fan_dict['custom_option_items'] = parsed_json
-                                except (json.JSONDecodeError, TypeError):
-                                    pass
-                            
-                            fans_data.append(fan_dict)
+                    # Also try JSON versions of optional items
+                    if 'optional_items_json' in fan_dict and fan_dict['optional_items_json']:
+                        try:
+                            parsed_json = json.loads(fan_dict['optional_items_json'])
+                            fan_dict['optional_items'] = parsed_json
+                        except (json.JSONDecodeError, TypeError):
+                            pass
                     
-                    conn.close()
-                    logger.info(f"Loaded enquiry {enquiry_number} from local database")
+                    if 'custom_optional_items_json' in fan_dict and fan_dict['custom_optional_items_json']:
+                        try:
+                            parsed_json = json.loads(fan_dict['custom_optional_items_json'])
+                            fan_dict['custom_option_items'] = parsed_json
+                        except (json.JSONDecodeError, TypeError):
+                            pass
                     
-                except Exception as e:
-                    logger.warning(f"Could not load from local database: {str(e)}")
+                    fans_data.append(fan_dict)
+            
+            conn.close()
             
             if not project_data:
                 return jsonify({
@@ -2318,7 +2118,7 @@ def register_routes(app):
                     'message': f'Enquiry {enquiry_number} not found'
                 }), 404
             
-            logger.info(f"Successfully loaded enquiry {enquiry_number} with {len(fans_data)} fans")
+            logger.info(f"Successfully loaded enquiry {enquiry_number} with {len(fans_data)} fans from unified database")
             return jsonify({
                 'success': True,
                 'project': project_data,
@@ -2433,9 +2233,9 @@ def register_routes(app):
                 logger.error(f"Error adding fans to FanWeights table: {str(e)}", exc_info=True)
                 # Continue with project saving even if FanWeights update fails
             
-            # Save to local database first
+            # Save to unified database
             try:
-                conn = sqlite3.connect('fan_pricing.db')
+                conn = sqlite3.connect('data/fan_pricing.db')
                 cursor = conn.cursor()
                 
                 # Create Projects table if it doesn't exist
@@ -2650,40 +2450,14 @@ def register_routes(app):
                 
                 conn.commit()
                 conn.close()
-                logger.info(f"Successfully saved project {enquiry_number} to local database")
-                
-                # Also save to data directory for admin interface
-                try:
-                    import shutil
-                    os.makedirs('data', exist_ok=True)
-                    shutil.copy2('fan_pricing.db', 'data/fan_pricing.db')
-                    logger.info("Successfully synced to admin interface database")
-                except Exception as sync_error:
-                    logger.warning(f"Failed to sync to admin interface database: {sync_error}")
+                logger.info(f"Successfully saved project {enquiry_number} to unified database")
                 
             except Exception as e:
-                logger.error(f"Error saving to local database: {str(e)}", exc_info=True)
+                logger.error(f"Error saving to unified database: {str(e)}", exc_info=True)
                 return jsonify({
                     'success': False,
-                    'message': f'Failed to save to local database: {str(e)}'
+                    'message': f'Failed to save to unified database: {str(e)}'
                 }), 500
-            
-            # Also sync to central database
-            try:
-                sync_project_data = {
-                    'enquiry_number': enquiry_number,
-                    'customer_name': customer_name,
-                    'total_fans': total_fans,
-                    'sales_engineer': sales_engineer,
-                    'fans': fans_data
-                }
-                
-                sync_success = sync_to_central_database(sync_project_data)
-                if not sync_success:
-                    logger.warning("Failed to sync to central database, but local save succeeded")
-            
-            except Exception as e:
-                logger.warning(f"Failed to sync to central database: {str(e)}")
             
             return jsonify({
                 'success': True,

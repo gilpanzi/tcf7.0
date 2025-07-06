@@ -65,18 +65,39 @@ def create_app():
     else:
         logger.error("Failed to create project tables")
     
-    # Also apply schema.sql if it exists
+    # Apply schema.sql only if database is empty (safe initialization)
     if os.path.exists('schema.sql'):
-        logger.info("Found schema.sql - applying to database...")
+        logger.info("Found schema.sql - checking if database needs initialization...")
         try:
             from database import get_db_connection
             conn = get_db_connection()
-            with open('schema.sql', 'r') as f:
-                conn.executescript(f.read())
+            cursor = conn.cursor()
+            
+            # Check if any tables exist with data
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+            tables = cursor.fetchall()
+            
+            has_data = False
+            for table in tables:
+                table_name = table[0]
+                cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+                count = cursor.fetchone()[0]
+                if count > 0:
+                    has_data = True
+                    logger.info(f"Found {count} records in {table_name} - skipping schema.sql")
+                    break
+            
+            if not has_data:
+                logger.info("Database is empty - applying schema.sql for initialization...")
+                with open('schema.sql', 'r') as f:
+                    conn.executescript(f.read())
+                logger.info("Successfully applied schema.sql to database")
+            else:
+                logger.info("Database has data - skipping schema.sql to preserve existing data")
+            
             conn.close()
-            logger.info("Successfully applied schema.sql to database")
         except Exception as e:
-            logger.error(f"Error applying schema.sql: {str(e)}")
+            logger.error(f"Error checking/applying schema.sql: {str(e)}")
     
     # Create or update BearingLookup table
     logger.info("Creating BearingLookup table if needed...")
