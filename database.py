@@ -40,8 +40,15 @@ def get_db_connection():
             shutil.copy('fan_pricing.db', db_path)
             logger.info(f"Copied database to {db_path}")
         
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, timeout=30.0)
         conn.row_factory = sqlite3.Row
+        
+        # Enable WAL mode for better concurrency
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA cache_size=10000")
+        conn.execute("PRAGMA temp_store=MEMORY")
+        
         logger.info(f"Connected to database at: {db_path}")
         return conn
     except sqlite3.Error as e:
@@ -124,6 +131,50 @@ def get_sales_engineers(limit: int = 100):
         logger.error(f"Error getting sales engineers: {str(e)}")
         raise
 
+def fix_database_schema():
+    """Fix database schema issues - add missing columns."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if Fans table exists and has required columns
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Fans'")
+        if cursor.fetchone():
+            cursor.execute("PRAGMA table_info(Fans)")
+            fan_columns = {row[1] for row in cursor.fetchall()}
+            
+            # Add missing columns one by one
+            if 'status' not in fan_columns:
+                cursor.execute("ALTER TABLE Fans ADD COLUMN status TEXT DEFAULT 'draft'")
+                logger.info("Added status column to Fans table")
+            
+            if 'specifications' not in fan_columns:
+                cursor.execute("ALTER TABLE Fans ADD COLUMN specifications TEXT")
+                logger.info("Added specifications column to Fans table")
+                
+            if 'weights' not in fan_columns:
+                cursor.execute("ALTER TABLE Fans ADD COLUMN weights TEXT")
+                logger.info("Added weights column to Fans table")
+                
+            if 'costs' not in fan_columns:
+                cursor.execute("ALTER TABLE Fans ADD COLUMN costs TEXT")
+                logger.info("Added costs column to Fans table")
+                
+            if 'motor' not in fan_columns:
+                cursor.execute("ALTER TABLE Fans ADD COLUMN motor TEXT")
+                logger.info("Added motor column to Fans table")
+        
+        conn.commit()
+        logger.info("Database schema fixed successfully")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error fixing database schema: {str(e)}")
+        return False
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 def migrate_to_unified_schema():
     """Migrate to unified Projects/Fans schema and deprecate ProjectFans."""
     try:
@@ -138,8 +189,8 @@ def migrate_to_unified_schema():
                 customer_name TEXT NOT NULL,
                 total_fans INTEGER NOT NULL,
                 sales_engineer TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP,
+                updated_at TIMESTAMP
             )
         ''')
 
@@ -147,9 +198,9 @@ def migrate_to_unified_schema():
         cursor.execute("PRAGMA table_info(Projects)")
         project_columns = {row[1] for row in cursor.fetchall()}
         if 'created_at' not in project_columns:
-            cursor.execute("ALTER TABLE Projects ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            cursor.execute("ALTER TABLE Projects ADD COLUMN created_at TIMESTAMP")
         if 'updated_at' not in project_columns:
-            cursor.execute("ALTER TABLE Projects ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            cursor.execute("ALTER TABLE Projects ADD COLUMN updated_at TIMESTAMP")
         
         # Create Fans table if it doesn't exist
         cursor.execute('''
@@ -162,8 +213,8 @@ def migrate_to_unified_schema():
                 weights TEXT,
                 costs TEXT,
                 motor TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP,
+                updated_at TIMESTAMP,
                 FOREIGN KEY (project_id) REFERENCES Projects(id),
                 UNIQUE(project_id, fan_number)
             )
@@ -183,9 +234,9 @@ def migrate_to_unified_schema():
         if 'motor' not in fan_columns:
             cursor.execute("ALTER TABLE Fans ADD COLUMN motor TEXT")
         if 'created_at' not in fan_columns:
-            cursor.execute("ALTER TABLE Fans ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            cursor.execute("ALTER TABLE Fans ADD COLUMN created_at TIMESTAMP")
         if 'updated_at' not in fan_columns:
-            cursor.execute("ALTER TABLE Fans ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            cursor.execute("ALTER TABLE Fans ADD COLUMN updated_at TIMESTAMP")
         
         # Create indexes
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_projects_enquiry ON Projects(enquiry_number)')

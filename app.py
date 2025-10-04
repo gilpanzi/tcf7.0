@@ -113,6 +113,14 @@ def create_app():
     else:
         logger.error("Failed to update central database")
     
+    # Fix database schema first
+    logger.info("Fixing database schema...")
+    from database import fix_database_schema, migrate_to_unified_schema
+    if fix_database_schema():
+        logger.info("Database schema fixed successfully")
+    else:
+        logger.error("Failed to fix database schema")
+    
     # Migrate to unified schema
     logger.info("Migrating to unified schema...")
     if migrate_to_unified_schema():
