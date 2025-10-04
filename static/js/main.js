@@ -4661,16 +4661,7 @@ async function loadSelectedEnquiry() {
             window.salesEngineer = data.project.sales_engineer;
             window.fanData = new Array(window.totalFans).fill(null);
             
-            // Populate and update fields if they exist
-            const enquiryNumberField = document.getElementById('enquiry_number');
-            const customerNameField = document.getElementById('customer_name');
-            const totalFansField = document.getElementById('total_fans');
-            const salesEngineerField = document.getElementById('sales_engineer');
-            
-            if (enquiryNumberField) enquiryNumberField.value = data.project.enquiry_number;
-            if (customerNameField) customerNameField.value = data.project.customer_name;
-            if (totalFansField) totalFansField.value = data.project.total_fans;
-            if (salesEngineerField) salesEngineerField.value = data.project.sales_engineer;
+            // Don't populate form fields - redirect directly to Project Summary as per requirement
             
             // Process fan data
             if (data.fans && data.fans.length > 0) {
@@ -4953,24 +4944,9 @@ async function loadSelectedEnquiry() {
                 });
             }
             
-            // Navigate to the appropriate section
-            if (typeof navigateTo === 'function') {
-                console.log('Navigating to project summary after loading enquiry');
-                navigateTo('project-summary');
-                
-                // Display the project summary if available
-                if (typeof showProjectSummary === 'function') {
-                    showProjectSummary();
-                }
-            } else {
-                console.warn('Navigation function not found');
-                // Try to show/hide sections directly if elements exist
-                const enquiryForm = document.getElementById('enquiry-form');
-                const fanFormSection = document.getElementById('fan-form-section');
-                
-                if (enquiryForm) enquiryForm.style.display = 'none';
-                if (fanFormSection) fanFormSection.style.display = 'block';
-            }
+            // Redirect to the server-side rendered project summary page
+            console.log('Redirecting to project summary page after loading enquiry');
+            window.location.href = `/enquiries/${enquiryNumber}/summary`;
             
             console.log('Successfully loaded enquiry with optional items:', window.enquiryNumber);
             
@@ -5026,12 +5002,12 @@ function startFanEntry() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Show the fan form section
-            const fanFormSection = document.getElementById('fan-form-section');
-            if (fanFormSection) {
-                fanFormSection.style.display = 'block';
-                // Update progress indicator
-                updateProgressIndicator(1, totalFans);
+            // Redirect to the first fan calculator
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                // Fallback: construct URL manually
+                window.location.href = `/fan/1?enquiry=${enquiryNumber}`;
             }
         } else {
             showError(data.message || 'Failed to start fan entry');

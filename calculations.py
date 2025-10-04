@@ -103,8 +103,10 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
                 rate_key = f'material_rate_{i}'
                 name_key = f'material_name_{i}'
                 
-                # Check if both weight and rate are present
-                if weight_key in fan_data and rate_key in fan_data:
+                # Check if both weight and rate are present and not empty
+                if (weight_key in fan_data and rate_key in fan_data and 
+                    fan_data[weight_key] and fan_data[rate_key] and
+                    str(fan_data[weight_key]).strip() and str(fan_data[rate_key]).strip()):
                     try:
                         material_weight = float(fan_data[weight_key])
                         material_rate = float(fan_data[rate_key])
@@ -219,8 +221,25 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
         else:
             fabrication_cost = total_weight * ms_price
         
+        # Price custom accessories at per-kg fabrication rate
+        custom_accessory_costs = {}
+        try:
+            rate_for_material = ms_price if material == 'ms' else ss304_price if material == 'ss304' else ms_price
+            # Accept both camel and snake keys from frontend
+            custom_acc = fan_data.get('customAccessories') or fan_data.get('custom_accessories') or {}
+            if isinstance(custom_acc, dict):
+                for acc_name, acc_weight in custom_acc.items():
+                    try:
+                        w = float(acc_weight)
+                        if w > 0:
+                            custom_accessory_costs[acc_name] = w * rate_for_material
+                    except Exception:
+                        pass
+        except Exception:
+            custom_accessory_costs = {}
+
         logger.info(f"Fabrication cost calculated: {fabrication_cost}")
-        return fabrication_cost, total_weight, {}, None
+        return fabrication_cost, total_weight, custom_accessory_costs, None
         
     except Exception as e:
         logger.error(f"Error calculating fabrication cost: {str(e)}", exc_info=True)

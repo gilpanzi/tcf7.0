@@ -665,9 +665,9 @@ def delete_record(db_name, table_name, rowid):
 
 def register_db_admin_routes(app):
     """Register database admin routes."""
-    # Setup Basic Authentication
-    app.config['BASIC_AUTH_USERNAME'] = 'admin'
-    app.config['BASIC_AUTH_PASSWORD'] = 'tcfadmin2024'
+    # Setup Basic Authentication - Use environment variables for production
+    app.config['BASIC_AUTH_USERNAME'] = os.environ.get('DB_ADMIN_USERNAME', 'admin')
+    app.config['BASIC_AUTH_PASSWORD'] = os.environ.get('DB_ADMIN_PASSWORD', 'tcfadmin2024')
     app.config['BASIC_AUTH_FORCE'] = False  # Don't force it globally
     
     # Create basic auth instance

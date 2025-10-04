@@ -77,96 +77,6 @@ def register_routes(app):
             logger.error(f"Error loading index page: {str(e)}")
             return "An error occurred while loading the page", 500
 
-    @app.route('/api/sales_engineers')
-    @login_required
-    def api_sales_engineers():
-        try:
-            from database import get_sales_engineers
-            limit = int(request.args.get('limit', 100))
-            return jsonify({'sales_engineers': get_sales_engineers(limit)})
-        except Exception as e:
-            logger.error(f"Error getting sales engineers: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-
-    @app.route('/api/enquiries')
-    @login_required
-    def api_saved_enquiries():
-        try:
-            from database import search_projects
-            q = request.args.get('q', '')
-            limit = int(request.args.get('limit', 100))
-            projects = search_projects(q, limit)
-            # Return minimal info for dropdown
-            return jsonify({'enquiries': [
-                {
-                    'enquiry_number': p['enquiry_number'],
-                    'customer_name': p['customer_name'],
-                    'sales_engineer': p['sales_engineer'],
-                    'total_fans': p['total_fans']
-                } for p in projects
-            ]})
-        except Exception as e:
-            logger.error(f"Error getting saved enquiries: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-
-    @app.route('/load_enquiry/<enquiry_number>')
-    @login_required
-    def load_enquiry(enquiry_number):
-        """Load a specific enquiry and all its fan data from unified database."""
-        try:
-            logger.info(f"Loading enquiry: {enquiry_number}")
-            
-            # Load from unified database using get_project function
-            from database import get_project
-            project = get_project(enquiry_number)
-            
-            if not project:
-                logger.warning(f"Project not found: {enquiry_number}")
-                return jsonify({
-                    'success': False,
-                    'message': f'No enquiry found with number {enquiry_number}'
-                }), 404
-            
-            logger.info(f"Project loaded successfully: {enquiry_number}, fans: {len(project.get('fans', []))}")
-            
-            # Convert project data to the format expected by the frontend
-            project_data = {
-                'enquiry_number': project['enquiry_number'],
-                'customer_name': project['customer_name'],
-                'total_fans': project['total_fans'],
-                'sales_engineer': project['sales_engineer']
-            }
-            
-            # Convert fan data to the format expected by the frontend
-            fans_data = []
-            for fan in project.get('fans', []):
-                fan_data = {
-                    'fan_number': fan['fan_number'],
-                    'status': fan['status'],
-                    'specifications': fan['specifications'],
-                    'weights': fan['weights'],
-                    'costs': fan['costs'],
-                    'motor': fan['motor']
-                }
-                fans_data.append(fan_data)
-            
-            logger.info(f"Successfully loaded project {enquiry_number} with {len(fans_data)} fans")
-            
-            return jsonify({
-                'success': True,
-                'project': project_data,
-                'fans': fans_data
-            })
-            
-        except Exception as e:
-            logger.error(f"Error loading enquiry {enquiry_number}: {str(e)}")
-            import traceback
-            logger.error(f"Full traceback: {traceback.format_exc()}")
-            return jsonify({
-                'success': False,
-                'message': f'Error loading enquiry: {str(e)}'
-            }), 500
-
     @app.route('/calculate_fan', methods=['POST'])
     def calculate_fan():
         """Calculate weight and cost based on form data."""
@@ -183,13 +93,13 @@ def register_routes(app):
                 'vendor': data.get('vendor', 'TCF Factory'),
                 'material': data.get('material', 'ms'),
                 'vibration_isolators': data.get('vibration_isolators', 'not_required'),
-                'fabrication_margin': float(data.get('fabrication_margin', 25) or 25),
-                'bought_out_margin': float(data.get('bought_out_margin', 25) or 25),
+                'fabrication_margin': float(data.get('fabrication_margin', 25)),
+                'bought_out_margin': float(data.get('bought_out_margin', 25)),
                 'motor_brand': data.get('motor_brand', ''),
                 'motor_kw': data.get('motor_kw', ''),
                 'pole': data.get('pole', ''),
                 'efficiency': data.get('efficiency', ''),
-                'motor_discount': float(data.get('motor_discount', 0) or 0),
+                'motor_discount': float(data.get('motor_discount', 0)),
                 'drive_pack': data.get('drive_pack'),
                 'customAccessories': data.get('customAccessories', {}),
                 'optional_items': data.get('optional_items', {})
@@ -209,11 +119,11 @@ def register_routes(app):
                     weight_key = f'material_weight_{i}'
                     name_key = f'material_name_{i}'
                     rate_key = f'material_rate_{i}'
-                    if weight_key in data and data[weight_key] and str(data[weight_key]).strip():
+                    if weight_key in data:
                         fan_data[weight_key] = float(data[weight_key])
                     if name_key in data:
                         fan_data[name_key] = data[name_key]
-                    if rate_key in data and data[rate_key] and str(data[rate_key]).strip():
+                    if rate_key in data:
                         fan_data[rate_key] = float(data[rate_key])
                 no_of_isolators = data.get('no_of_isolators')
                 shaft_diameter = data.get('shaft_diameter')
@@ -269,7 +179,7 @@ def register_routes(app):
                 
                 if 'optional_items' in fan_data:
                     for item_name, item_price in fan_data['optional_items'].items():
-                        if item_price and str(item_price).strip() and float(item_price) > 0:
+                        if item_price and float(item_price) > 0:
                             optional_items_cost += float(item_price)
                             optional_items_detail[item_name] = float(item_price)
                 
@@ -351,9 +261,13 @@ def register_routes(app):
             
             from database import create_or_update_project
             project_id = create_or_update_project(enquiry_number, customer_name, total_fans, sales_engineer)
-
-            return jsonify({'success': True, 'project_id': project_id, 'enquiry_number': enquiry_number})
-                
+            
+            return jsonify({
+                'success': True,
+                'project_id': project_id,
+                'enquiry_number': enquiry_number
+            })
+            
         except Exception as e:
             logger.error(f"Error creating project: {str(e)}")
             return jsonify({'error': str(e)}), 500
@@ -370,7 +284,7 @@ def register_routes(app):
             projects = search_projects(query, limit)
             
             return jsonify({'projects': projects})
-                
+            
         except Exception as e:
             logger.error(f"Error searching projects: {str(e)}")
             return jsonify({'error': str(e)}), 500
@@ -387,7 +301,7 @@ def register_routes(app):
                 return jsonify({'error': 'Project not found'}), 404
             
             return jsonify(project)
-                
+            
         except Exception as e:
             logger.error(f"Error getting project: {str(e)}")
             return jsonify({'error': str(e)}), 500
@@ -414,21 +328,14 @@ def register_routes(app):
     def api_save_fan(enquiry_number, fan_number):
         """Save fan data with calculations."""
         try:
-            logger.info(f"Saving fan data for {enquiry_number}/fan {fan_number}")
             data = request.json
-            if not data:
-                logger.error("No JSON data received")
-                return jsonify({'error': 'No data received'}), 400
-            
             specifications = data.get('specifications', {})
             motor = data.get('motor', {})
-            logger.info(f"Specifications: {specifications}")
-            logger.info(f"Motor: {motor}")
             
             # Perform calculations
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-            
+                
                 # Convert specifications to fan_data format for calculations
                 fan_data = {
                     'Fan Model': specifications.get('Fan Model'),
@@ -438,13 +345,13 @@ def register_routes(app):
                     'vendor': specifications.get('vendor', 'TCF Factory'),
                     'material': specifications.get('material', 'ms'),
                     'vibration_isolators': specifications.get('vibration_isolators', 'not_required'),
-                    'fabrication_margin': float(specifications.get('fabrication_margin', 25) or 25),
-                    'bought_out_margin': float(specifications.get('bought_out_margin', 25) or 25),
+                    'fabrication_margin': float(specifications.get('fabrication_margin', 25)),
+                    'bought_out_margin': float(specifications.get('bought_out_margin', 25)),
                     'motor_brand': motor.get('brand', ''),
                     'motor_kw': motor.get('kw', ''),
                     'pole': motor.get('pole', ''),
                     'efficiency': motor.get('efficiency', ''),
-                    'motor_discount': float(motor.get('discount', 0) or 0),
+                    'motor_discount': float(motor.get('discount', 0)),
                     'drive_pack': specifications.get('drive_pack'),
                     'customAccessories': specifications.get('custom_accessories', {}),
                     'optional_items': specifications.get('optional_items', {}),
@@ -457,11 +364,11 @@ def register_routes(app):
                         weight_key = f'material_weight_{i}'
                         name_key = f'material_name_{i}'
                         rate_key = f'material_rate_{i}'
-                        if weight_key in specifications and specifications[weight_key] and str(specifications[weight_key]).strip():
+                        if weight_key in specifications:
                             fan_data[weight_key] = float(specifications[weight_key])
                         if name_key in specifications:
                             fan_data[name_key] = specifications[name_key]
-                        if rate_key in specifications and specifications[rate_key] and str(specifications[rate_key]).strip():
+                        if rate_key in specifications:
                             fan_data[rate_key] = float(specifications[rate_key])
                 
                 # Get selected accessories
@@ -473,39 +380,21 @@ def register_routes(app):
                         selected_accessories = specifications['accessories']
                 
                 # Calculate weights
-                logger.info(f"Calculating fan weight for model: {fan_data.get('Fan Model')}, size: {fan_data.get('Fan Size')}, class: {fan_data.get('Class')}, arrangement: {fan_data.get('Arrangement')}")
                 bare_fan_weight, no_of_isolators, shaft_diameter, total_weight, fan_error, accessory_details = calculate_fan_weight(
                     cursor, fan_data, selected_accessories
                 )
                 
                 if fan_error:
-                    logger.error(f"Fan weight calculation error: {fan_error}")
                     return jsonify({'error': fan_error}), 400
                 
-                # Allow manual override from UI for isolators/shaft if provided
-                try:
-                    if 'no_of_isolators' in specifications and str(specifications['no_of_isolators']).strip() != '':
-                        no_of_isolators = int(float(specifications['no_of_isolators']))
-                except Exception:
-                    pass
-                try:
-                    if 'shaft_diameter' in specifications and str(specifications['shaft_diameter']).strip() != '':
-                        shaft_diameter = float(specifications['shaft_diameter'])
-                except Exception:
-                    pass
-                
                 # Calculate fabrication cost
-                logger.info(f"Calculating fabrication cost for vendor: {fan_data.get('vendor')}, material: {fan_data.get('material')}, weight: {total_weight}")
                 fabrication_cost, total_weight, custom_weights, fab_error = calculate_fabrication_cost(cursor, fan_data, total_weight)
                 if fab_error:
-                    logger.error(f"Fabrication cost calculation error: {fab_error}")
                     return jsonify({'error': fab_error}), 400
                 
                 # Calculate bought out components
-                logger.info(f"Calculating bought out components for isolators: {no_of_isolators}, shaft: {shaft_diameter}")
                 bought_out_result, error = calculate_bought_out_components(cursor, fan_data, no_of_isolators, shaft_diameter)
                 if error:
-                    logger.error(f"Bought out components calculation error: {error}")
                     return jsonify({'error': error}), 400
                 
                 # Extract costs
@@ -522,7 +411,7 @@ def register_routes(app):
                 optional_items_detail = {}
                 if 'optional_items' in specifications:
                     for item_name, item_price in specifications['optional_items'].items():
-                        if item_price and str(item_price).strip() and float(item_price) > 0:
+                        if item_price and float(item_price) > 0:
                             optional_items_cost += float(item_price)
                             optional_items_detail[item_name] = float(item_price)
                 
@@ -533,9 +422,9 @@ def register_routes(app):
                 bought_out_selling_price = bought_out_cost / (1 - fan_data['bought_out_margin'] / 100)
                 total_selling_price = fabrication_selling_price + bought_out_selling_price + optional_items_cost
                 
-                total_raw_cost = fabrication_cost + bought_out_cost + optional_items_cost
-                if total_selling_price > 0:
-                    total_job_margin = ((total_selling_price - total_raw_cost) / total_selling_price) * 100
+                total_raw_cost = fabrication_cost + bought_out_cost
+                if total_raw_cost > 0:
+                    total_job_margin = (1 - (total_raw_cost / total_selling_price)) * 100
                 else:
                     total_job_margin = 0
                 
@@ -546,40 +435,15 @@ def register_routes(app):
                                          if name in ACCESSORY_NAME_MAP.values()),
                     'total_weight': total_weight,
                     'no_of_isolators': no_of_isolators,
-                    'shaft_diameter': shaft_diameter,
-                    'accessory_weight_details': accessory_details
+                    'shaft_diameter': shaft_diameter
                 }
                 
-                # Compute total_cost including optional items for user clarity
-                total_cost = total_raw_cost + optional_items_cost
-                # Proportional fabrication cost per accessory (estimate by weight share)
-                accessory_cost_estimates = {}
-                try:
-                    if total_weight and total_weight > 0 and fabrication_cost is not None:
-                        for acc_name, acc_wt in accessory_details.items():
-                            share = (acc_wt or 0) / total_weight
-                            accessory_cost_estimates[acc_name] = fabrication_cost * share
-                except Exception:
-                    accessory_cost_estimates = {}
-                
-                fabrication_cost_breakdown = {}
-                try:
-                    if total_weight and total_weight > 0 and fabrication_cost is not None:
-                        accessory_weight_total = sum(accessory_details.values()) if accessory_details else 0
-                        fabrication_cost_breakdown = {
-                            'base_fabrication_cost': fabrication_cost * ((bare_fan_weight or 0) / total_weight),
-                            'accessories_fabrication_cost': fabrication_cost * ((accessory_weight_total or 0) / total_weight)
-                        }
-                except Exception:
-                    fabrication_cost_breakdown = {}
                 costs = {
                     'fabrication_cost': fabrication_cost,
-                    'fabrication_cost_breakdown': fabrication_cost_breakdown,
                     'bought_out_cost': bought_out_cost,
                     'optional_items_cost': optional_items_cost,
                     'optional_items_detail': optional_items_detail,
                     'total_raw_cost': total_raw_cost,
-                    'total_cost': total_cost,
                     'fabrication_selling_price': fabrication_selling_price,
                     'bought_out_selling_price': bought_out_selling_price,
                     'total_selling_price': total_selling_price,
@@ -589,18 +453,8 @@ def register_routes(app):
                     'drive_pack_price': drive_pack_price,
                     'motor_list_price': motor_list_price,
                     'discounted_motor_price': discounted_motor_price,
-                    'motor_discount': motor_discount,
-                    'selected_accessories': selected_accessories,
-                    'accessory_cost_estimates': accessory_cost_estimates
+                    'motor_discount': motor_discount
                 }
-                # Attach true custom accessory fabrication costs if available (and not custom materials map)
-                if isinstance(custom_weights, dict) and custom_weights:
-                    try:
-                        sample_val = next(iter(custom_weights.values()))
-                        if not (isinstance(sample_val, dict) and 'weight' in sample_val):
-                            costs['custom_accessory_costs'] = custom_weights
-                    except StopIteration:
-                        pass
                 
                 motor_data = {
                     'brand': motor.get('brand', ''),
@@ -610,37 +464,20 @@ def register_routes(app):
                     'discount': motor.get('discount', 0)
                 }
                 
-                # Ensure custom material data is included in specifications for database storage
-                if fan_data['material'] == 'others':
-                    for i in range(5):
-                        weight_key = f'material_weight_{i}'
-                        name_key = f'material_name_{i}'
-                        rate_key = f'material_rate_{i}'
-                        if weight_key in fan_data:
-                            specifications[weight_key] = fan_data[weight_key]
-                        if name_key in fan_data:
-                            specifications[name_key] = fan_data[name_key]
-                        if rate_key in fan_data:
-                            specifications[rate_key] = fan_data[rate_key]
-
                 # Save to database
-                logger.info(f"Saving fan to database: {enquiry_number}/fan {fan_number}")
                 from database import save_fan
                 save_fan(enquiry_number, fan_number, specifications, weights, costs, motor_data, 'draft')
-                logger.info(f"Fan saved successfully to database")
                 
-            return jsonify({
-                'success': True,
-                'specifications': specifications,
-                'weights': weights,
-                'costs': costs,
-                'motor': motor_data
-            })
-            
+                return jsonify({
+                    'success': True,
+                    'specifications': specifications,
+                    'weights': weights,
+                    'costs': costs,
+                    'motor': motor_data
+                })
+                
         except Exception as e:
-            logger.error(f"Error saving fan {enquiry_number}/fan {fan_number}: {str(e)}")
-            import traceback
-            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error(f"Error saving fan: {str(e)}")
             return jsonify({'error': str(e)}), 500
 
     @app.route('/api/projects/<enquiry_number>/fans/<int:fan_number>/add-to-project', methods=['POST'])
@@ -660,110 +497,9 @@ def register_routes(app):
                     fan['weights'], fan['costs'], fan['motor'], 'added')
             
             return jsonify({'success': True, 'status': 'added'})
-        
+            
         except Exception as e:
             logger.error(f"Error adding fan to project: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-
-    # Dependent dropdown APIs (filtered options)
-    @app.route('/api/options/sizes/<fan_model>')
-    @login_required
-    def api_options_sizes(fan_model):
-        try:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    SELECT DISTINCT "Fan Size" FROM FanWeights
-                    WHERE "Fan Model" = ?
-                    ORDER BY CAST("Fan Size" AS FLOAT)
-                ''', (fan_model,))
-                sizes = [str(row[0]) for row in cursor.fetchall()]
-            return jsonify({'sizes': sizes})
-        except Exception as e:
-            logger.error(f"Error getting sizes: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-
-    @app.route('/api/options/classes/<fan_model>/<fan_size>')
-    @login_required
-    def api_options_classes(fan_model, fan_size):
-        try:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    SELECT DISTINCT "Class" FROM FanWeights
-                    WHERE "Fan Model" = ? AND "Fan Size" = ?
-                    ORDER BY "Class"
-                ''', (fan_model, fan_size))
-                classes = [str(row[0]) for row in cursor.fetchall()]
-            return jsonify({'classes': classes})
-        except Exception as e:
-            logger.error(f"Error getting classes: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-
-    @app.route('/api/options/arrangements/<fan_model>/<fan_size>/<class_>')
-    @login_required
-    def api_options_arrangements(fan_model, fan_size, class_):
-        try:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    SELECT DISTINCT "Arrangement" FROM FanWeights
-                    WHERE "Fan Model" = ? AND "Fan Size" = ? AND "Class" = ?
-                    ORDER BY CAST("Arrangement" AS TEXT)
-                ''', (fan_model, fan_size, class_))
-                arrangements = [str(row[0]) for row in cursor.fetchall()]
-            return jsonify({'arrangements': arrangements})
-        except Exception as e:
-            logger.error(f"Error getting arrangements: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-
-    @app.route('/api/vendor-rate/<vendor>/<material>/<float:weight>')
-    @login_required
-    def api_vendor_rate(vendor, material, weight):
-        """Get vendor rate for specific material and weight."""
-        logger.info(f"Vendor rate endpoint called: vendor={vendor}, material={material}, weight={weight}")
-        try:
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                
-                # Get rate from VendorWeightDetails table
-                cursor.execute('''
-                    SELECT MSPrice, SS304Price FROM VendorWeightDetails
-                    WHERE Vendor = ? AND WeightStart <= ? AND WeightEnd > ?
-                ''', (vendor, weight, weight))
-                
-                vendor_row = cursor.fetchone()
-                if not vendor_row:
-                    logger.warning(f"No rate found for vendor {vendor} at weight {weight}")
-                    return jsonify({'error': f'No rate found for vendor {vendor} at weight {weight}'}), 404
-                
-                ms_price, ss304_price = vendor_row
-                logger.info(f"Found rates: MS={ms_price}, SS304={ss304_price}")
-                
-                # Determine rate based on material
-                if material == 'ms':
-                    rate = ms_price
-                elif material == 'ss304':
-                    rate = ss304_price
-                elif material == 'mixed':
-                    # For mixed, return MS rate (user will specify percentage)
-                    rate = ms_price
-                else:
-                    # For others, return MS rate as default
-                    rate = ms_price
-                
-                logger.info(f"Returning rate: {rate} for material: {material}")
-                return jsonify({
-                    'vendor': vendor,
-                    'material': material,
-                    'weight': weight,
-                    'rate': rate,
-                    'ms_rate': ms_price,
-                    'ss304_rate': ss304_price
-                })
-                
-        except Exception as e:
-            logger.error(f"Error getting vendor rate: {str(e)}")
             return jsonify({'error': str(e)}), 500
 
     # New page routes
@@ -808,137 +544,17 @@ def register_routes(app):
         try:
             from database import get_project
             
-            logger.info(f"Loading project summary for enquiry: {enquiry_number}")
             project = get_project(enquiry_number)
             if not project:
-                logger.warning(f"Project not found: {enquiry_number}")
                 flash('Project not found')
                 return redirect(url_for('index'))
             
-            logger.info(f"Project loaded successfully: {enquiry_number}, fans: {len(project.get('fans', []))}")
-            
-            # Debug: Log fan specifications to see if custom material data is present
-            for fan in project.get('fans', []):
-                logger.info(f"Fan {fan.get('fan_number')} specifications: {fan.get('specifications', {})}")
-                if fan.get('specifications', {}).get('material') == 'others':
-                    logger.info(f"Fan {fan.get('fan_number')} has material='others', checking for custom materials:")
-                    for i in range(5):
-                        name = fan.get('specifications', {}).get(f'material_name_{i}')
-                        weight = fan.get('specifications', {}).get(f'material_weight_{i}')
-                        rate = fan.get('specifications', {}).get(f'material_rate_{i}')
-                        logger.info(f"  Material {i}: name={name}, weight={weight}, rate={rate}")
-            
             return render_template('project_summary.html', project=project)
-        
+            
         except Exception as e:
-            logger.error(f"Error loading project summary for {enquiry_number}: {str(e)}")
-            import traceback
-            logger.error(f"Full traceback: {traceback.format_exc()}")
-            flash(f'Error loading project summary: {str(e)}')
+            logger.error(f"Error loading project summary: {str(e)}")
+            flash('Error loading project summary')
             return redirect(url_for('index'))
 
-    @app.route('/add_fan_model', methods=['POST'])
-    @login_required
-    def add_fan_model():
-        """Add a new fan model to the database."""
-        try:
-            data = request.json
-            logger.info(f"Adding new fan model: {data}")
+    return app
 
-            # Validate mandatory fields
-            required_fields = ['new_fan_model', 'new_fan_size', 'new_class', 'new_arrangement', 'new_bare_fan_weight']
-            if not all(key in data for key in required_fields):
-                logger.error("Missing mandatory fields for new fan model")
-                return jsonify({'success': False, 'message': 'Missing mandatory fields.'})
-
-            # Validate Shaft Diameter for non-Arrangement 4
-            if data['new_arrangement'] != '4' and 'new_shaft_diameter' not in data:
-                logger.error("Shaft Diameter is mandatory for non-Arrangement 4")
-                return jsonify({'success': False, 'message': 'Shaft Diameter is mandatory for arrangements other than 4.'})
-
-            # Prepare data for insertion
-            fan_data = {
-                'fan_model': data['new_fan_model'],
-                'fan_size': data['new_fan_size'],
-                'class_': data['new_class'],
-                'arrangement': data['new_arrangement'],
-                'bare_fan_weight': float(data['new_bare_fan_weight']),
-                'shaft_diameter': float(data.get('new_shaft_diameter', 0)) if data['new_arrangement'] != '4' else None,
-                'no_of_isolators': int(data.get('new_no_of_isolators', 0)) if data.get('new_no_of_isolators') else 0,
-                'accessories': data.get('new_accessories', {})
-            }
-
-            # Insert into the database
-            with get_db_connection() as conn:
-                cursor = conn.cursor()
-                
-                # Check if entry already exists
-                cursor.execute('''
-                    SELECT COUNT(*) FROM FanWeights 
-                    WHERE "Fan Model" = ? AND "Fan Size" = ? AND "Class" = ? AND "Arrangement" = ?
-                ''', (fan_data['fan_model'], fan_data['fan_size'], fan_data['class_'], fan_data['arrangement']))
-                
-                exists = cursor.fetchone()[0] > 0
-                
-                if exists:
-                    # Update existing entry
-                    logger.info(f"Updating existing fan model: {fan_data['fan_model']}/{fan_data['fan_size']}/{fan_data['class_']}/{fan_data['arrangement']}")
-                    cursor.execute('''
-                        UPDATE FanWeights SET 
-                            "Bare Fan Weight" = ?, "Shaft Diameter" = ?, "No. of Isolators" = ?,
-                            "Unitary Base Frame" = ?, "Isolation Base Frame" = ?, "Split Casing" = ?,
-                            "Inlet Companion Flange" = ?, "Outlet Companion Flange" = ?, "Inlet Butterfly Damper" = ?
-                        WHERE "Fan Model" = ? AND "Fan Size" = ? AND "Class" = ? AND "Arrangement" = ?
-                    ''', (
-                        fan_data['bare_fan_weight'], 
-                        fan_data['shaft_diameter'],
-                        fan_data['no_of_isolators'],
-                        fan_data['accessories'].get('Unitary Base Frame', 0),
-                        fan_data['accessories'].get('Isolation Base Frame', 0),
-                        fan_data['accessories'].get('Split Casing', 0),
-                        fan_data['accessories'].get('Inlet Companion Flange', 0),
-                        fan_data['accessories'].get('Outlet Companion Flange', 0),
-                        fan_data['accessories'].get('Inlet Butterfly Damper', 0),
-                        fan_data['fan_model'], 
-                        fan_data['fan_size'], 
-                        fan_data['class_'], 
-                        fan_data['arrangement']
-                    ))
-                    
-                    message = 'Fan model updated successfully!'
-                else:
-                    # Insert new entry
-                    logger.info(f"Inserting new fan model: {fan_data['fan_model']}/{fan_data['fan_size']}/{fan_data['class_']}/{fan_data['arrangement']}")
-                    cursor.execute('''
-                        INSERT INTO FanWeights (
-                            "Fan Model", "Fan Size", "Class", "Arrangement", "Bare Fan Weight", "Shaft Diameter",
-                            "No. of Isolators", "Unitary Base Frame", "Isolation Base Frame", "Split Casing", 
-                            "Inlet Companion Flange", "Outlet Companion Flange", "Inlet Butterfly Damper"
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
-                        fan_data['fan_model'], 
-                        fan_data['fan_size'], 
-                        fan_data['class_'], 
-                        fan_data['arrangement'],
-                        fan_data['bare_fan_weight'], 
-                        fan_data['shaft_diameter'],
-                        fan_data['no_of_isolators'],
-                        fan_data['accessories'].get('Unitary Base Frame', 0),
-                        fan_data['accessories'].get('Isolation Base Frame', 0),
-                        fan_data['accessories'].get('Split Casing', 0),
-                        fan_data['accessories'].get('Inlet Companion Flange', 0),
-                        fan_data['accessories'].get('Outlet Companion Flange', 0),
-                        fan_data['accessories'].get('Inlet Butterfly Damper', 0)
-                    ))
-                    
-                    message = 'New fan model added successfully!'
-                
-                conn.commit()
-                logger.info(f"{message} - Saved to unified database")
-                return jsonify({'success': True, 'message': message})
-                
-        except Exception as e:
-            logger.error(f"Error adding/updating fan model: {str(e)}", exc_info=True)
-            return jsonify({'success': False, 'message': f'Error with fan model: {str(e)}'})
-
-    return app 

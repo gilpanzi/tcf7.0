@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fan Calculator - Fan {{ fan_number }} - {{ project.enquiry_number }}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1000, 9999) | random }}">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-elevated: #ffffff;
+            --border: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .header {
+            background: var(--surface-elevated);
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .header h1 {
+            color: var(--text-primary);
+            margin: 0 0 16px 0;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .project-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .project-info div {
+            padding: 16px;
+            background: var(--background);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+        }
+
+        .project-info strong {
+            color: var(--text-primary);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .project-info span {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .fan-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .fan-nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .fan-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-draft {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-added {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+        }
+
+        .calculator-section {
+            background: var(--surface-elevated);
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+        }
+
+        .calculator-section h3 {
+            margin-top: 0;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .calculator-section h4 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .sidebar {
+            background: var(--surface-elevated);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            height: fit-content;
+            border: 1px solid var(--border);
+        }
+
+        /* Compact two-column layout for key selects */
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 20px;
+            align-items: end;
+        }
+        @media (max-width: 900px) {
+            .form-grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .sidebar h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            background: var(--surface);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+        }
+
+        .form-group input:hover, .form-group select:hover {
+            border-color: var(--primary-color);
+        }
+
+        .required::after {
+            content: " *";
+            color: var(--danger-color);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.2s ease;
+            margin: 4px;
+            min-height: 44px;
+            letter-spacing: 0.025em;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .fan-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .fan-list li {
+            padding: 16px;
+            margin-bottom: 8px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border);
+            font-weight: 500;
+        }
+
+        .fan-list li:hover {
+            background-color: var(--background);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .fan-list li.current {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .fan-list li.added {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-color: #a7f3d0;
+        }
+
+        .fan-list li.draft {
+            background-color: #fef3c7;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .calculation-results {
+            margin-top: 24px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: var(--background);
+        }
+
+        .calculation-results h3 {
+            margin-top: 0;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .calculation-results p {
+            margin: 8px 0;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            margin-top: 12px;
+            padding: 16px;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+        }
+
+        .success-message {
+            color: #065f46;
+            margin-top: 12px;
+            padding: 16px;
+            background-color: #d1fae5;
+            border: 1px solid #a7f3d0;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+        }
+
+        .autosave-indicator {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .autosave-indicator.show {
+            opacity: 1;
+        }
+
+        .autosave-indicator.saving {
+            background-color: var(--warning-color);
+            color: #000;
+        }
+
+        .autosave-indicator.saved {
+            background-color: var(--success-color);
+        }
+
+        .autosave-indicator.error {
+            background-color: var(--danger-color);
+        }
+
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+            margin-right: 8px;
+        }
+
+        /* Grid layouts for accessories */
+        .accessories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .accessory-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+
+        .accessory-item:hover {
+            background: var(--surface);
+            border-color: var(--primary-color);
+        }
+
+        .accessory-item input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .accessory-item label {
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        /* Custom accessories and optional items */
+        .custom-section {
+            background: var(--background);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .custom-section h4 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .custom-input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .custom-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .custom-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+        }
+
+        .custom-item span {
+            font-weight: 500;
+        }
+
+        .custom-item button {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .calculator-section {
+                padding: 20px;
+            }
+            
+            .project-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .fan-navigation {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+        
+        .rate-display {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .rate-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .rate-info {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="autosave-indicator" id="autosave-indicator">Auto-saving...</div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Fan {{ fan_number }} Calculator</h1>
+            <div class="project-info">
+                <div>
+                    <strong>Enquiry:</strong> {{ project.enquiry_number }}<br>
+                    <strong>Customer:</strong> {{ project.customer_name }}
+                </div>
+                <div>
+                    <strong>Sales Engineer:</strong> {{ project.sales_engineer }}<br>
+                <strong>Total Fans:</strong> {{ project.total_fans }}
+                </div>
+                <div>
+                    <strong>Status:</strong> <span class="fan-status status-{{ fan.status }}" id="fan-status">{{ fan.status }}</span>
+                </div>
+            </div>
+            <div class="fan-navigation">
+                <div class="fan-nav-buttons">
+                    <button class="btn btn-outline" onclick="navigateToFan({{ fan_number - 1 }})" {{ 'disabled' if fan_number <= 1 else '' }}>
+                        ← Previous Fan
+                    </button>
+                    <button class="btn btn-outline" onclick="navigateToFan({{ fan_number + 1 }})" {{ 'disabled' if fan_number >= project.total_fans else '' }}>
+                        Next Fan →
+                    </button>
+                </div>
+                <div>
+                    <a href="/enquiries/{{ project.enquiry_number }}/summary" class="btn btn-secondary">View Summary</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="calculator-section">
+            <form id="fan-calculator-form">
+                    <!-- Fan Specifications -->
+                    <h3>Fan Specifications</h3>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="fan_model" class="required">Fan Model</label>
+                            <div style="display: flex; gap: 8px;">
+                                <select id="fan_model" name="fan_model" required style="flex: 1;">
+                                    <option value="">Select Fan Model</option>
+                                    {% for model in fan_models %}
+                                    <option value="{{ model }}" {{ 'selected' if fan.specifications.get('Fan Model') == model else '' }}>{{ model }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-outline" onclick="openAddFanModelModal()" style="white-space: nowrap;">+ Add New</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fan_size" class="required">Fan Size</label>
+                            <select id="fan_size" name="fan_size" required>
+                                <option value="">Select Fan Size</option>
+                                {% for size in fan_sizes %}
+                                <option value="{{ size }}" {{ 'selected' if fan.specifications.get('Fan Size') == size else '' }}>{{ size }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="class" class="required">Class</label>
+                            <select id="class" name="class" required>
+                                <option value="">Select Class</option>
+                                {% for cls in classes %}
+                                <option value="{{ cls }}" {{ 'selected' if fan.specifications.get('Class') == cls else '' }}>{{ cls }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="arrangement" class="required">Arrangement</label>
+                            <select id="arrangement" name="arrangement" required>
+                                <option value="">Select Arrangement</option>
+                                {% for arr in arrangements %}
+                                <option value="{{ arr }}" {{ 'selected' if fan.specifications.get('Arrangement') == arr else '' }}>{{ arr }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vendor">Vendor</label>
+                        <select id="vendor" name="vendor">
+                            {% for vendor in vendors %}
+                            <option value="{{ vendor }}" {{ 'selected' if fan.specifications.get('vendor') == vendor or (not fan.specifications.get('vendor') and vendor == 'TCF Factory') else '' }}>{{ vendor }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="material">Material</label>
+                        <select id="material" name="material">
+                            <option value="ms" {{ 'selected' if fan.specifications.get('material') == 'ms' else '' }}>MS</option>
+                            <option value="ss304" {{ 'selected' if fan.specifications.get('material') == 'ss304' else '' }}>SS304</option>
+                            <option value="mixed" {{ 'selected' if fan.specifications.get('material') == 'mixed' else '' }}>Mixed</option>
+                            <option value="others" {{ 'selected' if fan.specifications.get('material') == 'others' else '' }}>Others</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vendor-rate-display">Per Kg Rate</label>
+                        <div id="vendor-rate-display" class="rate-display">
+                            <span class="rate-value">₹0.00</span>
+                            <span class="rate-info">per kg</span>
+                        </div>
+                    </div>
+
+                    <!-- Fabrication Section -->
+                    <h3>Fabrication</h3>
+                    
+                    <h4>Accessories</h4>
+                    <div class="accessories-grid">
+                        {% set accs = [
+                            ['unitary_base_frame','Unitary Base Frame'],
+                            ['isolation_base_frame','Isolation Base Frame'],
+                            ['split_casing','Split Casing'],
+                            ['inlet_companion_flange','Inlet Companion Flange'],
+                            ['outlet_companion_flange','Outlet Companion Flange'],
+                            ['inlet_butterfly_damper','Inlet Butterfly Damper']
+                        ] %}
+                        {% for key,label in accs %}
+                        <div class="accessory-item">
+                            <input type="checkbox" name="accessory_{{ key }}" id="accessory_{{ key }}" />
+                            <label for="accessory_{{ key }}">{{ label }}</label>
+                        </div>
+                        {% endfor %}
+                </div>
+
+                    <!-- Custom Material Inputs (visible when material == others) -->
+                    <div id="custom-materials-section" style="display:none;">
+                        <h4>Custom Materials</h4>
+                        {% for i in range(0,5) %}
+                        <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                            <div>
+                                <label for="material_name_{{ i }}">Material {{ i+1 }} Name</label>
+                                <input type="text" id="material_name_{{ i }}" name="material_name_{{ i }}" value="{{ fan.specifications.get('material_name_' ~ i, '') }}">
+                            </div>
+                            <div>
+                                <label for="material_weight_{{ i }}">Weight (kg)</label>
+                                <input type="number" step="0.01" id="material_weight_{{ i }}" name="material_weight_{{ i }}" value="{{ fan.specifications.get('material_weight_' ~ i, '') }}">
+                            </div>
+                            <div>
+                                <label for="material_rate_{{ i }}">Rate (₹/kg)</label>
+                                <input type="number" step="0.01" id="material_rate_{{ i }}" name="material_rate_{{ i }}" value="{{ fan.specifications.get('material_rate_' ~ i, '') }}">
+                            </div>
+                        </div>
+                            {% endfor %}
+
+                        <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div>
+                                <label for="shaft_diameter">Shaft Diameter (mm)</label>
+                                <input type="number" step="0.01" id="shaft_diameter" name="shaft_diameter" value="{{ fan.weights.get('shaft_diameter', '') if fan.weights else '' }}">
+                            </div>
+                            <div>
+                                <label for="no_of_isolators">No. of Isolators</label>
+                                <input type="number" id="no_of_isolators" name="no_of_isolators" value="{{ fan.weights.get('no_of_isolators', '') if fan.weights else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bought Out Section -->
+                    <h3>Bought Out</h3>
+
+                    <!-- Motor Specifications -->
+                    <h4>Motor Specifications</h4>
+                    <div class="form-grid-2x3">
+                        <div class="form-group">
+                            <label for="motor_brand">Motor Brand</label>
+                            <select id="motor_brand" name="motor_brand">
+                                <option value="">Select Motor Brand</option>
+                                {% for brand in motor_brands %}
+                                <option value="{{ brand }}" {{ 'selected' if fan.motor.get('brand') == brand else '' }}>{{ brand }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="motor_kw">Motor kW</label>
+                            <select id="motor_kw" name="motor_kw">
+                                <option value="">Select Motor kW</option>
+                                {% for kw in motor_kw_options %}
+                                <option value="{{ kw }}" {{ 'selected' if fan.motor.get('kw') == kw else '' }}>{{ kw }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pole">Pole</label>
+                            <select id="pole" name="pole">
+                                <option value="">Select Pole</option>
+                                {% for pole in poles %}
+                                <option value="{{ pole }}" {{ 'selected' if fan.motor.get('pole') == pole else '' }}>{{ pole }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="efficiency">Efficiency</label>
+                            <select id="efficiency" name="efficiency">
+                                <option value="">Select Efficiency</option>
+                                {% for eff in efficiencies %}
+                                <option value="{{ eff }}" {{ 'selected' if fan.motor.get('efficiency') == eff else '' }}>{{ eff }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="motor_discount">Motor Discount (%)</label>
+                            <input type="number" id="motor_discount" name="motor_discount" min="0" max="100" step="0.1" value="{{ fan.motor.get('discount', 0) }}">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2x2">
+                        <div class="form-group">
+                            <label for="bearing_brand">Bearing Brand</label>
+                            <select id="bearing_brand" name="bearing_brand">
+                                <option value="">Select Bearing Brand</option>
+                                {% for brand in bearing_brands %}
+                                <option value="{{ brand }}" {{ 'selected' if fan.specifications.get('bearing_brand') == brand else '' }}>{{ brand }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="drive-pack-group" style="display: none;">
+                            <label for="drive_pack">Drive Pack (kW)</label>
+                            <select id="drive_pack" name="drive_pack">
+                                <option value="">Select Drive Pack</option>
+                                {% for kw in drive_pack_options %}
+                                <option value="{{ kw }}" {{ 'selected' if fan.specifications.get('drive_pack') == kw else '' }}>{{ kw }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="vibration_isolators">Vibration Isolators</label>
+                            <select id="vibration_isolators" name="vibration_isolators">
+                                <option value="not_required" {{ 'selected' if fan.specifications.get('vibration_isolators','not_required') == 'not_required' else '' }}>Not Required</option>
+                                <option value="polybond" {{ 'selected' if fan.specifications.get('vibration_isolators') == 'polybond' else '' }}>Polybond</option>
+                                <option value="dunlop" {{ 'selected' if fan.specifications.get('vibration_isolators') == 'dunlop' else '' }}>Dunlop</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Custom Accessories -->
+                    <h4>Custom Accessories</h4>
+                    <div class="custom-section">
+                        <div class="custom-input-group">
+                            <input type="text" placeholder="Name" id="ca-name">
+                            <input type="number" step="0.01" placeholder="Weight (kg)" id="ca-weight">
+                            <button type="button" class="btn btn-outline" onclick="addCustomAccessory()">Add</button>
+                        </div>
+                        <div id="custom-accessories-list" class="custom-list"></div>
+                    </div>
+
+                    <!-- Optional Items -->
+                    <h4>Optional Items</h4>
+                    <div class="custom-section">
+                        <div class="custom-input-group">
+                            <select id="oi-standard" style="width:100%">
+                                <option value="">Select standard optional item...</option>
+                                <option value="flex_connectors">Flex Connectors</option>
+                                <option value="silencer">Silencer</option>
+                                <option value="testing_charges">Testing Charges</option>
+                                <option value="freight_charges">Freight Charges</option>
+                                <option value="warranty_charges">Warranty Charges</option>
+                                <option value="packing_charges">Packing Charges</option>
+                            </select>
+                            <input type="number" step="0.01" placeholder="Price (₹)" id="oi-standard-price">
+                            <button type="button" class="btn btn-outline" onclick="addStandardOptionalItem()">Add</button>
+                        </div>
+                        <div class="custom-input-group">
+                            <input type="text" placeholder="Custom Item Name" id="oi-name">
+                            <input type="number" step="0.01" placeholder="Price (₹)" id="oi-price">
+                            <button type="button" class="btn btn-outline" onclick="addOptionalItem()">Add</button>
+                        </div>
+                        <div id="optional-items-list" class="custom-list"></div>
+                    </div>
+
+                    <!-- Margins -->
+                    <h4>Margins</h4>
+                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <label for="fabrication_margin">Fabrication Margin (%)</label>
+                            <input type="number" id="fabrication_margin" name="fabrication_margin" min="0" max="100" step="0.1" value="{{ fan.specifications.get('fabrication_margin', 25) }}">
+                        </div>
+                        <div>
+                        <label for="bought_out_margin">Bought Out Margin (%)</label>
+                            <input type="number" id="bought_out_margin" name="bought_out_margin" min="0" max="100" step="0.1" value="{{ fan.specifications.get('bought_out_margin', 25) }}">
+                    </div>
+                </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" onclick="calculateFan()">Calculate</button>
+                        <button type="button" class="btn btn-primary" onclick="saveFan()">Save</button>
+                        <button type="button" class="btn btn-success" onclick="addToProject()">Add to Project</button>
+                        <button type="button" class="btn btn-secondary" onclick="navigateToFan({{ fan_number + 1 }})" {{ 'disabled' if fan_number >= project.total_fans else '' }}>Save & Next</button>
+                </div>
+            </form>
+
+                <div id="error-message" class="error-message" style="display: none;"></div>
+                <div id="success-message" class="success-message" style="display: none;"></div>
+
+                <div id="calculation-results" class="calculation-results" style="display: none;">
+                    <h3>Calculation Results</h3>
+                    <div id="results-content"></div>
+            </div>
+        </div>
+
+            <div class="sidebar">
+                <h3>Project Fans</h3>
+                <ul class="fan-list">
+                    {% for i in range(1, project.total_fans + 1) %}
+                    <li class="{% if i == fan_number %}current{% else %}{{ project.fans[i-1].status if project.fans[i-1] else 'draft' }}{% endif %}" 
+                        onclick="navigateToFan({{ i }})">
+                        Fan {{ i }}
+                        {% if i == fan_number %}
+                            (Current)
+                        {% elif project.fans[i-1] and project.fans[i-1].status == 'added' %}
+                            ✓ Added
+                        {% else %}
+                            Draft
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Fan Model Modal -->
+    <div id="addFanModelModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 32px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90%; overflow-y: auto;">
+            <h3 style="margin-top: 0; margin-bottom: 24px; color: var(--text-primary);">Add New Fan Model</h3>
+            
+            <form id="addFanModelForm">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label for="new_fan_model" class="required">Fan Model</label>
+                        <input type="text" id="new_fan_model" name="new_fan_model" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_fan_size" class="required">Fan Size</label>
+                        <input type="text" id="new_fan_size" name="new_fan_size" required>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label for="new_class" class="required">Class</label>
+                        <input type="text" id="new_class" name="new_class" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_arrangement" class="required">Arrangement</label>
+                        <input type="text" id="new_arrangement" name="new_arrangement" required>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label for="new_bare_fan_weight" class="required">Bare Fan Weight (kg)</label>
+                        <input type="number" step="0.01" id="new_bare_fan_weight" name="new_bare_fan_weight" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_shaft_diameter">Shaft Diameter (mm)</label>
+                        <input type="number" step="0.01" id="new_shaft_diameter" name="new_shaft_diameter">
+                    </div>
+                    </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label for="new_no_of_isolators">No. of Isolators</label>
+                        <input type="number" id="new_no_of_isolators" name="new_no_of_isolators" value="0">
+                    </div>
+                    <div></div>
+                </div>
+                
+                <h4 style="margin-bottom: 16px; color: var(--text-primary);">Accessories (Weight in kg)</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label for="new_unitary_base_frame">Unitary Base Frame</label>
+                        <input type="number" step="0.01" id="new_unitary_base_frame" name="new_unitary_base_frame" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_isolation_base_frame">Isolation Base Frame</label>
+                        <input type="number" step="0.01" id="new_isolation_base_frame" name="new_isolation_base_frame" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_split_casing">Split Casing</label>
+                        <input type="number" step="0.01" id="new_split_casing" name="new_split_casing" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_inlet_companion_flange">Inlet Companion Flange</label>
+                        <input type="number" step="0.01" id="new_inlet_companion_flange" name="new_inlet_companion_flange" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_outlet_companion_flange">Outlet Companion Flange</label>
+                        <input type="number" step="0.01" id="new_outlet_companion_flange" name="new_outlet_companion_flange" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_inlet_butterfly_damper">Inlet Butterfly Damper</label>
+                        <input type="number" step="0.01" id="new_inlet_butterfly_damper" name="new_inlet_butterfly_damper" value="0">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddFanModelModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNewFanModel()">Save Fan Model</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/fan_calculator.js') }}?v={{ range(1000, 9999) | random }}"></script>
+    <script>
+        // Initialize the calculator with current data
+        window.projectData = {{ project | tojson }};
+        window.fanData = {{ fan | tojson }};
+        window.fanNumber = {{ fan_number }};
+        
+        // Add New Fan Model functionality
+        function openAddFanModelModal() {
+            document.getElementById('addFanModelModal').style.display = 'block';
+        }
+        
+        function closeAddFanModelModal() {
+            document.getElementById('addFanModelModal').style.display = 'none';
+            document.getElementById('addFanModelForm').reset();
+        }
+        
+        function saveNewFanModel() {
+            const form = document.getElementById('addFanModelForm');
+            const formData = new FormData(form);
+            
+            // Validate required fields
+            const requiredFields = ['new_fan_model', 'new_fan_size', 'new_class', 'new_arrangement', 'new_bare_fan_weight'];
+            for (const field of requiredFields) {
+                if (!formData.get(field)) {
+                    alert(`Please fill in ${field.replace('new_', '').replace('_', ' ')}`);
+                    return;
+                }
+            }
+            
+            // Validate shaft diameter for non-arrangement 4
+            const arrangement = formData.get('new_arrangement');
+            if (arrangement !== '4' && !formData.get('new_shaft_diameter')) {
+                alert('Shaft Diameter is required for arrangements other than 4');
+                return;
+            }
+
+            // Prepare data
+            const fanData = {
+                new_fan_model: formData.get('new_fan_model'),
+                new_fan_size: formData.get('new_fan_size'),
+                new_class: formData.get('new_class'),
+                new_arrangement: formData.get('new_arrangement'),
+                new_bare_fan_weight: formData.get('new_bare_fan_weight'),
+                new_shaft_diameter: formData.get('new_shaft_diameter') || 0,
+                new_no_of_isolators: formData.get('new_no_of_isolators') || 0,
+                new_accessories: {
+                    'Unitary Base Frame': parseFloat(formData.get('new_unitary_base_frame')) || 0,
+                    'Isolation Base Frame': parseFloat(formData.get('new_isolation_base_frame')) || 0,
+                    'Split Casing': parseFloat(formData.get('new_split_casing')) || 0,
+                    'Inlet Companion Flange': parseFloat(formData.get('new_inlet_companion_flange')) || 0,
+                    'Outlet Companion Flange': parseFloat(formData.get('new_outlet_companion_flange')) || 0,
+                    'Inlet Butterfly Damper': parseFloat(formData.get('new_inlet_butterfly_damper')) || 0
+                }
+            };
+            
+            // Show loading
+            const saveButton = document.querySelector('#addFanModelModal button[onclick="saveNewFanModel()"]');
+            const originalText = saveButton.textContent;
+            saveButton.textContent = 'Saving...';
+            saveButton.disabled = true;
+            
+            // Send to server
+            fetch('/add_fan_model', {
+                    method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fanData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                saveButton.textContent = originalText;
+                saveButton.disabled = false;
+                
+                if (data.success) {
+                    alert(data.message);
+                    closeAddFanModelModal();
+                    
+                    // Add new option to dropdown
+                    const fanModelSelect = document.getElementById('fan_model');
+                    const newOption = document.createElement('option');
+                    newOption.value = fanData.new_fan_model;
+                    newOption.textContent = fanData.new_fan_model;
+                    fanModelSelect.appendChild(newOption);
+                    
+                    // Select the new fan model
+                    fanModelSelect.value = fanData.new_fan_model;
+                    
+                    // Trigger change event to update dependent dropdowns
+                    fanModelSelect.dispatchEvent(new Event('change'));
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                saveButton.textContent = originalText;
+                saveButton.disabled = false;
+                alert('Error saving fan model: ' + error.message);
+            });
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('addFanModelModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAddFanModelModal();
+            }
+        });
+    </script>
+</body>
+</html>

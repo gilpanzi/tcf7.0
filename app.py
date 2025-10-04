@@ -39,9 +39,9 @@ def create_app():
     logger.info(f"Static folder: {static_folder}")
     
     # Configure session
-    app.config['SECRET_KEY'] = 'TCF_Pricing_Tool_Secret_Key_2024'  # Fixed secret key
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'TCF_Pricing_Tool_Secret_Key_2024_Dev_Only')  # Use env var or dev fallback
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)  # Sessions last 24 hours
-    app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookie over HTTPS
+    app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'  # Secure cookies in production
     app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to session cookie
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
     
@@ -69,7 +69,7 @@ def create_app():
     if os.path.exists('schema.sql'):
         logger.info("Found schema.sql - checking if database needs initialization...")
         try:
-            from database import get_db_connection
+            from database import get_db_connection, migrate_to_unified_schema
             conn = get_db_connection()
             cursor = conn.cursor()
             
@@ -112,6 +112,13 @@ def create_app():
         logger.info("Central database updated or already up-to-date")
     else:
         logger.error("Failed to update central database")
+    
+    # Migrate to unified schema
+    logger.info("Migrating to unified schema...")
+    if migrate_to_unified_schema():
+        logger.info("Unified schema migration completed")
+    else:
+        logger.error("Failed to migrate to unified schema")
     
     # Register routes
     register_routes(app)
