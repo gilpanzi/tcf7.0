@@ -248,10 +248,10 @@ def migrate_to_unified_schema():
         if cursor.fetchone():
             logger.info("Migrating data from ProjectFans to unified schema...")
             
-            # Get all unique projects from ProjectFans
+            # Get all unique projects from Projects table (not ProjectFans)
             cursor.execute('''
                 SELECT DISTINCT enquiry_number, customer_name, total_fans, sales_engineer
-                FROM ProjectFans
+                FROM Projects
                 WHERE enquiry_number IS NOT NULL
             ''')
             projects = cursor.fetchall()
@@ -259,7 +259,7 @@ def migrate_to_unified_schema():
             for project in projects:
                 enquiry_number, customer_name, total_fans, sales_engineer = project
                 
-                # Insert or update project
+                # Insert or update project (already exists, just ensure it's in new format)
                 cursor.execute('''
                     INSERT OR REPLACE INTO Projects (enquiry_number, customer_name, total_fans, sales_engineer)
                     VALUES (?, ?, ?, ?)
@@ -272,9 +272,9 @@ def migrate_to_unified_schema():
                 # Get fans for this project
                 cursor.execute('''
                     SELECT * FROM ProjectFans 
-                    WHERE enquiry_number = ?
+                    WHERE project_id = ?
                     ORDER BY fan_number
-                ''', (enquiry_number,))
+                ''', (project_id,))
                 
                 fans = cursor.fetchall()
                 
