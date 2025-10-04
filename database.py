@@ -281,88 +281,98 @@ def migrate_to_unified_schema():
                 for fan in fans:
                     # Convert ProjectFans row to JSON structures
                     specifications = {
-                        'fan_model': fan.get('fan_model'),
-                        'size': fan.get('size'),
-                        'class': fan.get('class'),
-                        'arrangement': fan.get('arrangement'),
-                        'vendor': fan.get('vendor'),
-                        'material': fan.get('material'),
-                        'accessories': fan.get('accessories'),
-                        'custom_accessories': fan.get('custom_accessories'),
-                        'optional_items': fan.get('optional_items'),
-                        'custom_option_items': fan.get('custom_option_items'),
-                        'vibration_isolators': fan.get('vibration_isolators'),
-                        'drive_pack_kw': fan.get('drive_pack_kw'),
-                        'fabrication_margin': fan.get('fabrication_margin'),
-                        'bought_out_margin': fan.get('bought_out_margin'),
-                        'vendor_rate': fan.get('vendor_rate'),
-                        'ms_percentage': fan.get('ms_percentage'),
-                        'custom_no_of_isolators': fan.get('custom_no_of_isolators'),
-                        'custom_shaft_diameter': fan.get('custom_shaft_diameter'),
-                        'material_name_0': fan.get('material_name_0'),
-                        'material_weight_0': fan.get('material_weight_0'),
-                        'material_rate_0': fan.get('material_rate_0'),
-                        'material_name_1': fan.get('material_name_1'),
-                        'material_weight_1': fan.get('material_weight_1'),
-                        'material_rate_1': fan.get('material_rate_1'),
-                        'material_name_2': fan.get('material_name_2'),
-                        'material_weight_2': fan.get('material_weight_2'),
-                        'material_rate_2': fan.get('material_rate_2'),
-                        'material_name_3': fan.get('material_name_3'),
-                        'material_weight_3': fan.get('material_weight_3'),
-                        'material_rate_3': fan.get('material_rate_3'),
-                        'material_name_4': fan.get('material_name_4'),
-                        'material_weight_4': fan.get('material_weight_4'),
-                        'material_rate_4': fan.get('material_rate_4')
+                        'fan_model': fan['fan_model'] if 'fan_model' in fan.keys() else None,
+                        'size': fan['size'] if 'size' in fan.keys() else None,
+                        'class': fan['class'] if 'class' in fan.keys() else None,
+                        'arrangement': fan['arrangement'] if 'arrangement' in fan.keys() else None,
+                        'vendor': fan['vendor'] if 'vendor' in fan.keys() else None,
+                        'material': fan['material'] if 'material' in fan.keys() else None,
+                        'accessories': fan['accessories'] if 'accessories' in fan.keys() else None,
+                        'custom_accessories': fan['custom_accessories'] if 'custom_accessories' in fan.keys() else None,
+                        'optional_items': fan['optional_items'] if 'optional_items' in fan.keys() else None,
+                        'custom_option_items': fan['custom_option_items'] if 'custom_option_items' in fan.keys() else None,
+                        'vibration_isolators': fan['vibration_isolators'] if 'vibration_isolators' in fan.keys() else None,
+                        'drive_pack_kw': fan['drive_pack_kw'] if 'drive_pack_kw' in fan.keys() else None,
+                        'fabrication_margin': fan['fabrication_margin'] if 'fabrication_margin' in fan.keys() else None,
+                        'bought_out_margin': fan['bought_out_margin'] if 'bought_out_margin' in fan.keys() else None,
+                        'vendor_rate': fan['vendor_rate'] if 'vendor_rate' in fan.keys() else None,
+                        'ms_percentage': fan['ms_percentage'] if 'ms_percentage' in fan.keys() else None,
+                        'custom_no_of_isolators': fan['custom_no_of_isolators'] if 'custom_no_of_isolators' in fan.keys() else None,
+                        'custom_shaft_diameter': fan['custom_shaft_diameter'] if 'custom_shaft_diameter' in fan.keys() else None,
+                        'material_name_0': fan['material_name_0'] if 'material_name_0' in fan.keys() else None,
+                        'material_weight_0': fan['material_weight_0'] if 'material_weight_0' in fan.keys() else None,
+                        'material_rate_0': fan['material_rate_0'] if 'material_rate_0' in fan.keys() else None,
+                        'material_name_1': fan['material_name_1'] if 'material_name_1' in fan.keys() else None,
+                        'material_weight_1': fan['material_weight_1'] if 'material_weight_1' in fan.keys() else None,
+                        'material_rate_1': fan['material_rate_1'] if 'material_rate_1' in fan.keys() else None,
+                        'material_name_2': fan['material_name_2'] if 'material_name_2' in fan.keys() else None,
+                        'material_weight_2': fan['material_weight_2'] if 'material_weight_2' in fan.keys() else None,
+                        'material_rate_2': fan['material_rate_2'] if 'material_rate_2' in fan.keys() else None,
+                        'material_name_3': fan['material_name_3'] if 'material_name_3' in fan.keys() else None,
+                        'material_weight_3': fan['material_weight_3'] if 'material_weight_3' in fan.keys() else None,
+                        'material_rate_3': fan['material_rate_3'] if 'material_rate_3' in fan.keys() else None,
+                        'material_name_4': fan['material_name_4'] if 'material_name_4' in fan.keys() else None,
+                        'material_weight_4': fan['material_weight_4'] if 'material_weight_4' in fan.keys() else None,
+                        'material_rate_4': fan['material_rate_4'] if 'material_rate_4' in fan.keys() else None
                     }
                     
                     weights = {
-                        'bare_fan_weight': fan.get('bare_fan_weight'),
-                        'accessory_weight': fan.get('accessory_weight'),
-                        'total_weight': fan.get('total_weight'),
-                        'fabrication_weight': fan.get('fabrication_weight'),
-                        'bought_out_weight': fan.get('bought_out_weight'),
-                        'no_of_isolators': fan.get('no_of_isolators'),
-                        'shaft_diameter': fan.get('shaft_diameter')
+                        'bare_fan_weight': fan['bare_fan_weight'] if 'bare_fan_weight' in fan.keys() else None,
+                        'accessory_weight': fan['accessory_weight'] if 'accessory_weight' in fan.keys() else None,
+                        'total_weight': fan['total_weight'] if 'total_weight' in fan.keys() else None,
+                        'fabrication_weight': fan['fabrication_weight'] if 'fabrication_weight' in fan.keys() else None,
+                        'bought_out_weight': fan['bought_out_weight'] if 'bought_out_weight' in fan.keys() else None,
+                        'no_of_isolators': fan['no_of_isolators'] if 'no_of_isolators' in fan.keys() else None,
+                        'shaft_diameter': fan['shaft_diameter'] if 'shaft_diameter' in fan.keys() else None
                     }
                     
                     costs = {
-                        'fabrication_cost': fan.get('fabrication_cost'),
-                        'motor_cost': fan.get('motor_cost'),
-                        'vibration_isolators_cost': fan.get('vibration_isolators_cost'),
-                        'drive_pack_cost': fan.get('drive_pack_cost'),
-                        'bearing_cost': fan.get('bearing_cost'),
-                        'optional_items_cost': fan.get('optional_items_cost'),
-                        'flex_connectors_cost': fan.get('flex_connectors_cost'),
-                        'bought_out_cost': fan.get('bought_out_cost'),
-                        'total_cost': fan.get('total_cost'),
-                        'fabrication_selling_price': fan.get('fabrication_selling_price'),
-                        'bought_out_selling_price': fan.get('bought_out_selling_price'),
-                        'total_selling_price': fan.get('total_selling_price'),
-                        'total_job_margin': fan.get('total_job_margin')
+                        'fabrication_cost': fan['fabrication_cost'] if 'fabrication_cost' in fan.keys() else None,
+                        'motor_cost': fan['motor_cost'] if 'motor_cost' in fan.keys() else None,
+                        'vibration_isolators_cost': fan['vibration_isolators_cost'] if 'vibration_isolators_cost' in fan.keys() else None,
+                        'drive_pack_cost': fan['drive_pack_cost'] if 'drive_pack_cost' in fan.keys() else None,
+                        'bearing_cost': fan['bearing_cost'] if 'bearing_cost' in fan.keys() else None,
+                        'optional_items_cost': fan['optional_items_cost'] if 'optional_items_cost' in fan.keys() else None,
+                        'flex_connectors_cost': fan['flex_connectors_cost'] if 'flex_connectors_cost' in fan.keys() else None,
+                        'bought_out_cost': fan['bought_out_cost'] if 'bought_out_cost' in fan.keys() else None,
+                        'total_cost': fan['total_cost'] if 'total_cost' in fan.keys() else None,
+                        'fabrication_selling_price': fan['fabrication_selling_price'] if 'fabrication_selling_price' in fan.keys() else None,
+                        'bought_out_selling_price': fan['bought_out_selling_price'] if 'bought_out_selling_price' in fan.keys() else None,
+                        'total_selling_price': fan['total_selling_price'] if 'total_selling_price' in fan.keys() else None,
+                        'total_job_margin': fan['total_job_margin'] if 'total_job_margin' in fan.keys() else None
                     }
                     
                     motor = {
-                        'motor_kw': fan.get('motor_kw'),
-                        'motor_brand': fan.get('motor_brand'),
-                        'motor_pole': fan.get('motor_pole'),
-                        'motor_efficiency': fan.get('motor_efficiency'),
-                        'motor_discount_rate': fan.get('motor_discount_rate'),
-                        'bearing_brand': fan.get('bearing_brand')
+                        'motor_kw': fan['motor_kw'] if 'motor_kw' in fan.keys() else None,
+                        'motor_brand': fan['motor_brand'] if 'motor_brand' in fan.keys() else None,
+                        'motor_pole': fan['motor_pole'] if 'motor_pole' in fan.keys() else None,
+                        'motor_efficiency': fan['motor_efficiency'] if 'motor_efficiency' in fan.keys() else None,
+                        'motor_discount_rate': fan['motor_discount_rate'] if 'motor_discount_rate' in fan.keys() else None,
+                        'bearing_brand': fan['bearing_brand'] if 'bearing_brand' in fan.keys() else None
                     }
                     
-                    # Insert fan
+                    # Check if fan already exists to prevent duplicates
                     cursor.execute('''
-                        INSERT OR REPLACE INTO Fans (project_id, fan_number, status, specifications, weights, costs, motor)
-                        VALUES (?, ?, 'added', ?, ?, ?, ?)
-                    ''', (
-                        project_id, 
-                        fan.get('fan_number', 1),
-                        json.dumps(specifications),
-                        json.dumps(weights),
-                        json.dumps(costs),
-                        json.dumps(motor)
-                    ))
+                        SELECT id FROM Fans WHERE project_id = ? AND fan_number = ?
+                    ''', (project_id, fan_number))
+                    existing_fan = cursor.fetchone()
+                    
+                    if not existing_fan:
+                        # Insert fan only if it doesn't exist
+                        cursor.execute('''
+                            INSERT INTO Fans (project_id, fan_number, status, specifications, weights, costs, motor)
+                            VALUES (?, ?, 'added', ?, ?, ?, ?)
+                        ''', (
+                            project_id, 
+                            fan_number,
+                            json.dumps(specifications),
+                            json.dumps(weights),
+                            json.dumps(costs),
+                            json.dumps(motor)
+                        ))
+                        logger.info(f"Migrated fan {fan_number} for project {enquiry_number}")
+                    else:
+                        logger.info(f"Fan {fan_number} already exists for project {enquiry_number}, skipping")
             
             logger.info("Migration completed successfully")
         
