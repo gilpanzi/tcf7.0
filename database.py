@@ -351,6 +351,9 @@ def migrate_to_unified_schema():
                         'bearing_brand': fan['bearing_brand'] if 'bearing_brand' in fan.keys() else None
                     }
                     
+                    # Get fan_number from the fan row
+                    fan_number = fan['fan_number'] if 'fan_number' in fan.keys() else 1
+                    
                     # Check if fan already exists to prevent duplicates
                     cursor.execute('''
                         SELECT id FROM Fans WHERE project_id = ? AND fan_number = ?
