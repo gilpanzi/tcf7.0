@@ -461,29 +461,30 @@ def save_fan(enquiry_number, fan_number, specifications, weights=None, costs=Non
             
             project_id = project['id']
             
-            # Ensure the fan row exists (idempotent)
+            # Check if fan already exists
             cursor.execute('''
-                INSERT OR IGNORE INTO Fans (project_id, fan_number, status)
-                VALUES (?, ?, 'draft')
+                SELECT id FROM Fans WHERE project_id = ? AND fan_number = ?
             ''', (project_id, fan_number))
-
-            # Update fan
-            cursor.execute('''
-                UPDATE Fans 
-                SET specifications = ?, weights = ?, costs = ?, motor = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE project_id = ? AND fan_number = ?
-            ''', (
-                json.dumps(specifications),
-                json.dumps(weights) if weights else None,
-                json.dumps(costs) if costs else None,
-                json.dumps(motor) if motor else None,
-                status,
-                project_id,
-                fan_number
-            ))
+            existing_fan = cursor.fetchone()
             
-            if cursor.rowcount == 0:
-                # As a safety net, try creating the record explicitly, then update again
+            if existing_fan:
+                # Update existing fan
+                cursor.execute('''
+                    UPDATE Fans 
+                    SET specifications = ?, weights = ?, costs = ?, motor = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE project_id = ? AND fan_number = ?
+                ''', (
+                    json.dumps(specifications),
+                    json.dumps(weights) if weights else None,
+                    json.dumps(costs) if costs else None,
+                    json.dumps(motor) if motor else None,
+                    status,
+                    project_id,
+                    fan_number
+                ))
+                logger.info(f"Updated existing fan {fan_number} for project {enquiry_number}")
+            else:
+                # Create new fan
                 cursor.execute('''
                     INSERT INTO Fans (project_id, fan_number, status, specifications, weights, costs, motor)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -496,7 +497,7 @@ def save_fan(enquiry_number, fan_number, specifications, weights=None, costs=Non
                     json.dumps(costs) if costs else None,
                     json.dumps(motor) if motor else None
                 ))
-                # No need to run update again; inserted with latest data
+                logger.info(f"Created new fan {fan_number} for project {enquiry_number}")
             
             conn.commit()
             return True
