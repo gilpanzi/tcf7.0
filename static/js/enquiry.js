@@ -119,7 +119,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('sales_engineer').value = project.sales_engineer;
                 document.getElementById('total_fans').value = project.total_fans;
                 
-                showSuccess('Project loaded successfully! You can modify details and create/update the project.');
+                showSuccess('Project loaded successfully! Redirecting to project summary...');
+                
+                // Automatically redirect to project summary page
+                setTimeout(() => {
+                    window.location.href = `/enquiries/${enquiryNumber}/summary`;
+                }, 1500);
             } else {
                 showError(project.error || 'Failed to load project');
             }
