@@ -275,12 +275,12 @@ def register_routes(app):
                 
                 bought_out_cost += optional_items_cost
                 
-                # Calculate total costs and margins
+                # Calculate total costs and margins (do not add optional_items_cost again)
                 fabrication_selling_price = fabrication_cost / (1 - fan_data['fabrication_margin'] / 100)
                 bought_out_selling_price = bought_out_cost / (1 - fan_data['bought_out_margin'] / 100)
-                total_selling_price = fabrication_selling_price + bought_out_selling_price + optional_items_cost
+                total_selling_price = fabrication_selling_price + bought_out_selling_price
                 
-                # Calculate total job margin
+                # Calculate total job margin on raw costs (fab + BO including optionals already in BO)
                 total_raw_cost = fabrication_cost + bought_out_cost
                 if total_raw_cost > 0:
                     total_job_margin = (1 - (total_raw_cost / total_selling_price)) * 100
@@ -528,12 +528,13 @@ def register_routes(app):
                 
                 bought_out_cost += optional_items_cost
                 
-                # Calculate selling prices and margins
+                # Calculate selling prices and margins (do not add optional_items_cost again)
                 fabrication_selling_price = fabrication_cost / (1 - fan_data['fabrication_margin'] / 100)
                 bought_out_selling_price = bought_out_cost / (1 - fan_data['bought_out_margin'] / 100)
-                total_selling_price = fabrication_selling_price + bought_out_selling_price + optional_items_cost
+                total_selling_price = fabrication_selling_price + bought_out_selling_price
                 
-                total_raw_cost = fabrication_cost + bought_out_cost + optional_items_cost
+                # Raw cost is fab + BO including optionals already
+                total_raw_cost = fabrication_cost + bought_out_cost
                 if total_selling_price > 0:
                     total_job_margin = ((total_selling_price - total_raw_cost) / total_selling_price) * 100
                 else:
@@ -550,8 +551,8 @@ def register_routes(app):
                     'accessory_weight_details': accessory_details
                 }
                 
-                # Compute total_cost including optional items for user clarity
-                total_cost = total_raw_cost + optional_items_cost
+                # total_cost equals total_raw_cost (optionals already inside BO)
+                total_cost = total_raw_cost
                 # Proportional fabrication cost per accessory (estimate by weight share)
                 accessory_cost_estimates = {}
                 try:

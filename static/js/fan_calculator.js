@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h4>Fabrication & Totals</h4>
                         <p><strong>Fabrication Cost:</strong> ₹${(c.fabrication_cost || 0).toFixed(2)}</p>
                         <p><strong>Bought Out Cost:</strong> ₹${(c.bought_out_cost || 0).toFixed(2)}</p>
-                        <p><strong>Total Cost:</strong> ₹${(c.total_cost || ((c.fabrication_cost||0)+(c.bought_out_cost||0)+(c.optional_items_cost||0))).toFixed(2)}</p>
+                        <p><strong>Total Cost:</strong> ₹${(c.total_cost || ((c.fabrication_cost||0)+(c.bought_out_cost||0))).toFixed(2)}</p>
                         <p><strong>Optional Items:</strong> ₹${(c.optional_items_cost || 0).toFixed(2)}</p>
                         <p><strong>Total Selling Price:</strong> ₹${(c.total_selling_price || 0).toFixed(2)}</p>
                         <p><strong>Fabrication Selling Price:</strong> ₹${(c.fabrication_selling_price || 0).toFixed(2)}</p>
