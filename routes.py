@@ -19,6 +19,26 @@ from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
+# == Define a helper normalization function at the top (after imports) ==
+def normalize_keys(spec: dict) -> dict:
+    # Always fallback/merge between snake_case and camelCase for accessories/optionals
+    if not spec:
+        return {}
+    keys_map = [
+        ('custom_accessories', 'customAccessories'),
+        ('optional_items', 'optionalItems'),
+        ('custom_accessory_costs', 'customAccessoryCosts'),
+        ('custom_optional_items', 'customOptionalItems'),
+    ]
+    normalized = dict(spec)
+    for snake, camel in keys_map:
+        # If one exists and the other doesn't, copy
+        if snake not in normalized and camel in normalized:
+            normalized[snake] = normalized[camel]
+        if camel not in normalized and snake in normalized:
+            normalized[camel] = normalized[snake]
+    return normalized
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -820,6 +840,24 @@ def register_routes(app):
             
             # Debug: Log fan specifications to see if custom material data is present
             for fan in project.get('fans', []):
+                # Normalize possible custom/optional keys
+                specs = fan.get('specifications', {}) or {}
+                # Custom accessories
+                custom_access = specs.get('custom_accessories') or specs.get('customAccessories') or {}
+                specs['custom_accessories'] = custom_access
+                if 'customAccessories' in specs: del specs['customAccessories']
+                # Optional items
+                optional_items = specs.get('optional_items') or specs.get('optionalItems') or {}
+                specs['optional_items'] = optional_items
+                if 'optionalItems' in specs: del specs['optionalItems']
+                # Custom accessory costs
+                costs = fan.get('costs', {}) or {}
+                custom_costs = costs.get('custom_accessory_costs') or costs.get('customAccessoryCosts') or {}
+                costs['custom_accessory_costs'] = custom_costs
+                if 'customAccessoryCosts' in costs: del costs['customAccessoryCosts']
+                # Save back normalized
+                fan['specifications'] = specs
+                fan['costs'] = costs
                 logger.info(f"Fan {fan.get('fan_number')} specifications: {fan.get('specifications', {})}")
                 if fan.get('specifications', {}).get('material') == 'others':
                     logger.info(f"Fan {fan.get('fan_number')} has material='others', checking for custom materials:")

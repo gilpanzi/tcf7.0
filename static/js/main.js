@@ -6419,3 +6419,24 @@ function ensureSaveButtonListeners() {
 // Add this to window load and DOMContentLoaded events
 document.addEventListener('DOMContentLoaded', ensureSaveButtonListeners);
 window.addEventListener('load', ensureSaveButtonListeners);
+
+// Helper to normalize possible alternate (camelCase/snake_case) keys on load
+function normalizeKeys(obj) {
+    if (!obj) return {};
+    const map = [
+        ['custom_accessories', 'customAccessories'],
+        ['optional_items', 'optionalItems'],
+        ['custom_accessory_costs', 'customAccessoryCosts'],
+        ['custom_optional_items', 'customOptionalItems'],
+    ];
+    const out = {...obj};
+    map.forEach(([snake, camel]) => {
+        if (!(snake in out) && camel in out) out[snake] = out[camel];
+        if (!(camel in out) && snake in out) out[camel] = out[snake];
+    });
+    return out;
+}
+// On any fanData load/unpack/use: always use normalizeKeys(...)
+// Example usage everywhere fan/specification/unpacked data is read:
+// const spec = normalizeKeys(fan.specifications);
+// const customAccessories = spec.custom_accessories;
