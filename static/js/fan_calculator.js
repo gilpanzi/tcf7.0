@@ -4,6 +4,166 @@ let isDirty = false;
 let currentData = {};
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Vendor rate lookup table with weight ranges
+    const vendorRates = {
+        'TCF Factory': {
+            ms: [
+                { min: 0, max: 50, rate: 250 },
+                { min: 50, max: 100, rate: 240 },
+                { min: 100, max: 200, rate: 230 },
+                { min: 200, max: 500, rate: 220 },
+                { min: 500, max: 1000, rate: 210 },
+                { min: 1000, max: 9999, rate: 200 }
+            ],
+            ss304: [
+                { min: 0, max: 50, rate: 600 },
+                { min: 50, max: 100, rate: 580 },
+                { min: 100, max: 200, rate: 560 },
+                { min: 200, max: 500, rate: 540 },
+                { min: 500, max: 1000, rate: 520 },
+                { min: 1000, max: 9999, rate: 500 }
+            ]
+        },
+        'Air Master': {
+            ms: [
+                { min: 0, max: 50, rate: 225 },
+                { min: 50, max: 100, rate: 220 },
+                { min: 100, max: 200, rate: 215 },
+                { min: 200, max: 500, rate: 210 },
+                { min: 500, max: 1000, rate: 205 },
+                { min: 1000, max: 9999, rate: 200 }
+            ],
+            ss304: [
+                { min: 0, max: 50, rate: 600 },
+                { min: 50, max: 100, rate: 580 },
+                { min: 100, max: 200, rate: 560 },
+                { min: 200, max: 500, rate: 540 },
+                { min: 500, max: 1000, rate: 520 },
+                { min: 1000, max: 9999, rate: 500 }
+            ]
+        },
+        'Sri Sakthi': {
+            ms: [
+                { min: 0, max: 50, rate: 250 },
+                { min: 50, max: 100, rate: 240 },
+                { min: 100, max: 200, rate: 230 },
+                { min: 200, max: 500, rate: 220 },
+                { min: 500, max: 1000, rate: 210 },
+                { min: 1000, max: 9999, rate: 200 }
+            ],
+            ss304: [
+                { min: 0, max: 50, rate: 600 },
+                { min: 50, max: 100, rate: 580 },
+                { min: 100, max: 200, rate: 560 },
+                { min: 200, max: 500, rate: 540 },
+                { min: 500, max: 1000, rate: 520 },
+                { min: 1000, max: 9999, rate: 500 }
+            ]
+        },
+        'SLS': {
+            ms: [
+                { min: 0, max: 50, rate: 225 },
+                { min: 50, max: 100, rate: 220 },
+                { min: 100, max: 200, rate: 215 },
+                { min: 200, max: 500, rate: 210 },
+                { min: 500, max: 1000, rate: 205 },
+                { min: 1000, max: 9999, rate: 200 }
+            ],
+            ss304: [
+                { min: 0, max: 50, rate: 600 },
+                { min: 50, max: 100, rate: 580 },
+                { min: 100, max: 200, rate: 560 },
+                { min: 200, max: 500, rate: 540 },
+                { min: 500, max: 1000, rate: 520 },
+                { min: 1000, max: 9999, rate: 500 }
+            ]
+        },
+        'Bajaj Steel': {
+            ms: [
+                { min: 0, max: 50, rate: 250 },
+                { min: 50, max: 100, rate: 240 },
+                { min: 100, max: 200, rate: 230 },
+                { min: 200, max: 500, rate: 220 },
+                { min: 500, max: 1000, rate: 210 },
+                { min: 1000, max: 9999, rate: 200 }
+            ],
+            ss304: [
+                { min: 0, max: 50, rate: 600 },
+                { min: 50, max: 100, rate: 580 },
+                { min: 100, max: 200, rate: 560 },
+                { min: 200, max: 500, rate: 540 },
+                { min: 500, max: 1000, rate: 520 },
+                { min: 1000, max: 9999, rate: 500 }
+            ]
+        }
+    };
+
+    // Helper function to get rate based on weight range
+    function getVendorRate(vendor, material, weight) {
+        // If material is mixed, use MS rate
+        if (material === 'mixed') {
+            material = 'ms';
+        }
+
+        if (!vendorRates[vendor] || !vendorRates[vendor][material]) {
+            return 0;
+        }
+        
+        const ranges = vendorRates[vendor][material];
+        for (const range of ranges) {
+            if (weight >= range.min && weight < range.max) {
+                return range.rate;
+            }
+        }
+        
+        // If no range matches, return the last rate
+        return ranges[ranges.length - 1].rate;
+    }
+
+    // Helper function to show default rates
+    function showDefaultRate(vendor, material, rateDisplay, weight = 100) {
+        const rate = getVendorRate(vendor, material, weight);
+        
+        rateDisplay.innerHTML = `
+            <span class="rate-value">₹${rate.toFixed(2)}</span>
+            <span class="rate-info">per kg</span>
+        `;
+    }
+
+    // Update vendor rate display using calculation results
+    async function updateVendorRate() {
+        const vendorSelect = document.getElementById('vendor');
+        const materialSelect = document.getElementById('material');
+        const rateDisplay = document.getElementById('vendor-rate-display');
+        
+        if (!vendorSelect || !materialSelect || !rateDisplay) return;
+        
+        const vendor = vendorSelect.value;
+        const material = materialSelect.value;
+        
+        if (!vendor || !material) {
+            rateDisplay.innerHTML = '<span class="rate-value">₹0.00</span><span class="rate-info">per kg</span>';
+            return;
+        }
+        
+        // Handle "others" material case
+        if (material === 'others') {
+            rateDisplay.innerHTML = '<span class="rate-value">Custom</span><span class="rate-info">per kg</span>';
+            return;
+        }
+        
+        // Get current weight for rate calculation
+        const totalWeight = parseFloat(document.getElementById('total_weight')?.value || 0);
+        const weight = totalWeight > 0 ? totalWeight : 100; // Default to 100kg if no weight
+        
+        // Always show vendor rate based on weight ranges
+        // This ensures the display updates when vendor changes
+        showDefaultRate(vendor, material, rateDisplay, weight);
+    }
+    
+    // Make updateVendorRate globally available
+    window.updateVendorRate = updateVendorRate;
+
     const form = document.getElementById('fan-calculator-form');
     const autosaveIndicator = document.getElementById('autosave-indicator');
     const errorMessage = document.getElementById('error-message');
@@ -98,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const material = document.getElementById('material')?.value || 'ms';
         const drivePackGroup = document.getElementById('drive-pack-group');
         const customMaterials = document.getElementById('custom-materials-section');
+        const mixedMaterialSection = document.getElementById('mixed-material-section');
         const bearingBrand = document.getElementById('bearing_brand')?.parentElement;
 
         // Drive pack is applicable for belt driven (not arrangement 4)
@@ -117,6 +278,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Custom materials section only for material == others
         if (customMaterials) {
             customMaterials.style.display = material === 'others' ? '' : 'none';
+        }
+
+        // Mixed material section
+        if (mixedMaterialSection) {
+            mixedMaterialSection.style.display = material === 'mixed' ? '' : 'none';
         }
     }
 
@@ -158,6 +324,15 @@ document.addEventListener('DOMContentLoaded', function() {
             'bearing_brand': formData.get('bearing_brand') || 'SKF',
             'drive_pack': formData.get('drive_pack') || ''
         };
+        
+        // Add MS percentage for mixed material
+        if (specifications['material'] === 'mixed') {
+            const msPercentage = parseFloat(formData.get('ms_percentage'));
+            if (!isNaN(msPercentage)) {
+                specifications['ms_percentage'] = msPercentage;
+            }
+        }
+
         // Standard accessories
         const accessories = {};
         ['unitary_base_frame','isolation_base_frame','split_casing','inlet_companion_flange','outlet_companion_flange','inlet_butterfly_damper']
@@ -307,6 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setFormValue('arrangement', specs['Arrangement']);
             setFormValue('vendor', specs['vendor']);
             setFormValue('material', specs['material']);
+            setFormValue('ms_percentage', specs['ms_percentage']);
             setFormValue('motor_brand', motor['brand']);
             setFormValue('motor_kw', motor['kw']);
             setFormValue('pole', motor['pole']);
@@ -617,160 +793,4 @@ document.addEventListener('DOMContentLoaded', function() {
             updateVendorRate();
         }
     }
-
-    // Update vendor rate display using calculation results
-    async function updateVendorRate() {
-        const vendorSelect = document.getElementById('vendor');
-        const materialSelect = document.getElementById('material');
-        const rateDisplay = document.getElementById('vendor-rate-display');
-        
-        if (!vendorSelect || !materialSelect || !rateDisplay) return;
-        
-        const vendor = vendorSelect.value;
-        const material = materialSelect.value;
-        
-        if (!vendor || !material) {
-            rateDisplay.innerHTML = '<span class="rate-value">₹0.00</span><span class="rate-info">per kg</span>';
-            return;
-        }
-        
-        // Handle "others" material case
-        if (material === 'others') {
-            rateDisplay.innerHTML = '<span class="rate-value">Custom</span><span class="rate-info">per kg</span>';
-            return;
-        }
-        
-        // Get current weight for rate calculation
-        const totalWeight = parseFloat(document.getElementById('total_weight')?.value || 0);
-        const weight = totalWeight > 0 ? totalWeight : 100; // Default to 100kg if no weight
-        
-        // Always show vendor rate based on weight ranges
-        // This ensures the display updates when vendor changes
-        showDefaultRate(vendor, material, rateDisplay, weight);
-    }
-    
-    // Vendor rate lookup table with weight ranges
-    const vendorRates = {
-        'TCF Factory': {
-            ms: [
-                { min: 0, max: 50, rate: 250 },
-                { min: 50, max: 100, rate: 240 },
-                { min: 100, max: 200, rate: 230 },
-                { min: 200, max: 500, rate: 220 },
-                { min: 500, max: 1000, rate: 210 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        },
-        'Air Master': {
-            ms: [
-                { min: 0, max: 50, rate: 225 },
-                { min: 50, max: 100, rate: 220 },
-                { min: 100, max: 200, rate: 215 },
-                { min: 200, max: 500, rate: 210 },
-                { min: 500, max: 1000, rate: 205 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        },
-        'Sri Sakthi': {
-            ms: [
-                { min: 0, max: 50, rate: 250 },
-                { min: 50, max: 100, rate: 240 },
-                { min: 100, max: 200, rate: 230 },
-                { min: 200, max: 500, rate: 220 },
-                { min: 500, max: 1000, rate: 210 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        },
-        'SLS': {
-            ms: [
-                { min: 0, max: 50, rate: 225 },
-                { min: 50, max: 100, rate: 220 },
-                { min: 100, max: 200, rate: 215 },
-                { min: 200, max: 500, rate: 210 },
-                { min: 500, max: 1000, rate: 205 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        },
-        'Bajaj Steel': {
-            ms: [
-                { min: 0, max: 50, rate: 250 },
-                { min: 50, max: 100, rate: 240 },
-                { min: 100, max: 200, rate: 230 },
-                { min: 200, max: 500, rate: 220 },
-                { min: 500, max: 1000, rate: 210 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        }
-    };
-
-    // Helper function to get rate based on weight range
-    function getVendorRate(vendor, material, weight) {
-        if (!vendorRates[vendor] || !vendorRates[vendor][material]) {
-            return 0;
-        }
-        
-        const ranges = vendorRates[vendor][material];
-        for (const range of ranges) {
-            if (weight >= range.min && weight < range.max) {
-                return range.rate;
-            }
-        }
-        
-        // If no range matches, return the last rate
-        return ranges[ranges.length - 1].rate;
-    }
-
-    // Helper function to show default rates
-    function showDefaultRate(vendor, material, rateDisplay, weight = 100) {
-        const rate = getVendorRate(vendor, material, weight);
-        
-        rateDisplay.innerHTML = `
-            <span class="rate-value">₹${rate.toFixed(2)}</span>
-            <span class="rate-info">per kg</span>
-        `;
-    }
-
-    // Make updateVendorRate globally available
-    window.updateVendorRate = updateVendorRate;
 });
-

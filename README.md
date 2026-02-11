@@ -7,10 +7,9 @@ This application is a specialized pricing tool for fan equipment with the follow
 - Project summary with detailed breakdown of costs
 - Database integration for storing and retrieving projects
 
-## Recent Updates
-- Fixed indexing issue with fan editing
-- Enhanced project summary UI
-- Fixed display of bought-out item prices when loading enquiries
-- Ensured correct material handling when saving fan data
+## Recent Updates (v7.0)
+- **Dynamic Pricing**: Internal Costing sheet now uses formulas for Selling Prices, linked to margins.
+- **Editable Margins**: "Internal Costing" sheet is unlocked and editing margins updates Quotation automatically.
+- **Excel Fixes**: Resolved margin linking issues and mixed material calculations.
 
-Last updated: May 2024 
+Last updated: February 2026 

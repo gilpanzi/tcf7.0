@@ -1,6 +1,7 @@
 from flask import render_template, request, jsonify, redirect, url_for, session, flash, send_file
 import logging
 from database import get_db_connection, load_dropdown_options
+from services.excel_service import ExcelService
 from calculations import calculate_fan_weight, calculate_fabrication_cost, calculate_bought_out_components, ACCESSORY_NAME_MAP
 import json
 import os
@@ -412,6 +413,43 @@ def register_routes(app):
             logger.error(f"Error getting project: {str(e)}")
             return jsonify({'error': str(e)}), 500
 
+    @app.route('/api/projects/<enquiry_number>/export/excel', methods=['GET'])
+    @login_required
+    def api_export_project_excel(enquiry_number):
+        """Export project data to Excel."""
+        try:
+            logger.info(f"Exporting project {enquiry_number} to Excel")
+            from database import get_project
+            
+            # Fetch project data
+            project = get_project(enquiry_number)
+            if not project:
+                return jsonify({'error': 'Project not found'}), 404
+                
+            # Generate Excel
+            service = ExcelService()
+            wb = service.generate_project_excel(project)
+            
+            # Save to buffer
+            buffer = BytesIO()
+            wb.save(buffer)
+            buffer.seek(0)
+            
+            filename = f"TCF_Project_{enquiry_number}.xlsx"
+            
+            return send_file(
+                buffer,
+                as_attachment=True,
+                download_name=filename,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            
+        except Exception as e:
+            logger.error(f"Error exporting project to Excel: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return jsonify({'error': str(e)}), 500
+
     @app.route('/api/projects/<enquiry_number>/fans/<int:fan_number>', methods=['GET'])
     @login_required
     def api_get_fan(enquiry_number, fan_number):
@@ -468,7 +506,8 @@ def register_routes(app):
                     'drive_pack': specifications.get('drive_pack'),
                     'customAccessories': specifications.get('custom_accessories', {}),
                     'optional_items': specifications.get('optional_items', {}),
-                    'bearing_brand': specifications.get('bearing_brand', 'SKF')
+                    'bearing_brand': specifications.get('bearing_brand', 'SKF'),
+                    'ms_percentage': specifications.get('ms_percentage', 0)
                 }
                 
                 # Add custom material data if present

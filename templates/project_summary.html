@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,8 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1000, 9999) | random }}">
     <style>
         .container {
@@ -15,17 +17,19 @@
             margin: 0 auto;
             padding: 20px;
         }
+
         .header {
-            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
             backdrop-filter: blur(10px);
             padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
             border: 2px solid transparent;
             background-clip: padding-box;
             position: relative;
         }
+
         .header::before {
             content: '';
             position: absolute;
@@ -41,45 +45,53 @@
             -webkit-mask-composite: xor;
             z-index: -1;
         }
+
         .header h1 {
-            color: #0f172a; /* high contrast */
+            color: #0f172a;
+            /* high contrast */
             margin: 0 0 12px 0;
             font-size: 2.2rem;
             font-weight: 700;
             letter-spacing: 0.2px;
         }
+
         .project-info {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 20px;
         }
+
         .info-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.4) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%);
             padding: 20px;
             border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
         }
+
         .info-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
+
         .info-card strong {
             color: var(--primary-600);
             font-weight: 600;
         }
+
         .summary-section {
-            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
             backdrop-filter: blur(10px);
             padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
             border: 2px solid transparent;
             background-clip: padding-box;
             position: relative;
         }
+
         .summary-section::before {
             content: '';
             position: absolute;
@@ -95,31 +107,37 @@
             -webkit-mask-composite: xor;
             z-index: -1;
         }
+
         .summary-section h2 {
-            color: #111827; /* solid heading for readability */
+            color: #111827;
+            /* solid heading for readability */
             margin-top: 0;
             border-bottom: 2px solid #e5e7eb;
             padding-bottom: 10px;
             font-size: 1.4rem;
             font-weight: 700;
         }
+
         .fans-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); /* wider cards for readability */
+            grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+            /* wider cards for readability */
             gap: 20px;
             margin-top: 24px;
         }
+
         .fan-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
             backdrop-filter: blur(10px);
             border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border: 2px solid transparent;
             background-clip: padding-box;
             position: relative;
             transition: all 0.3s ease;
         }
+
         .fan-card::before {
             content: '';
             position: absolute;
@@ -135,10 +153,12 @@
             -webkit-mask-composite: xor;
             z-index: -1;
         }
+
         .fan-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
         }
+
         .fan-card h3 {
             margin-top: 0;
             color: #0f172a;
@@ -146,16 +166,19 @@
             font-weight: 700;
             margin-bottom: 12px;
         }
+
         .fan-card.added::before {
             background: linear-gradient(135deg, var(--success-300), var(--success-400), var(--success-500));
         }
+
         .fan-card.draft::before {
             background: linear-gradient(135deg, var(--warning-300), var(--warning-400), var(--warning-500));
         }
+
         .compact-specs {
             margin-bottom: 20px;
         }
-        
+
         .spec-row {
             display: grid;
             grid-template-columns: repeat(8, auto);
@@ -167,26 +190,28 @@
             border-radius: 6px;
             border: 1px solid #e5e7eb;
         }
-        
+
         .spec-row .spec-label {
             font-size: 12px;
             color: #6b7280;
             font-weight: 600;
             text-transform: uppercase;
         }
-        
+
         .spec-row .spec-value {
             font-size: 13px;
             color: #111827;
             font-weight: 600;
             margin-right: 12px;
         }
+
         .spec-item {
-            background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.4) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%);
             padding: 12px;
             border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
+
         .spec-label {
             font-size: 0.85rem;
             color: var(--gray-600);
@@ -194,30 +219,35 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
         .spec-value {
             font-size: 1.1rem;
             color: var(--primary-600);
             font-weight: 600;
             margin-top: 4px;
         }
+
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
             margin: 12px 0 8px;
         }
+
         .metric-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.5) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.5) 100%);
             padding: 15px;
             border-radius: 10px;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
         }
+
         .metric-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+
         .metric-label {
             font-size: 12px;
             color: #6b7280;
@@ -226,23 +256,27 @@
             letter-spacing: 0.4px;
             margin-bottom: 4px;
         }
+
         .metric-value {
             font-size: 1.1rem;
             font-weight: 800;
             color: #111827;
         }
+
         .cost-breakdown {
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
         }
+
         .cost-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
+
         .cost-item:last-child {
             border-bottom: none;
             font-weight: 700;
@@ -252,6 +286,7 @@
             padding-top: 10px;
             border-top: 2px solid var(--success-300);
         }
+
         .total-cost {
             font-weight: bold;
             font-size: 16px;
@@ -259,15 +294,15 @@
             padding-top: 10px;
             border-top: 2px solid #ddd;
         }
-        
+
         .detailed-section {
             margin: 20px 0;
             padding: 20px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%);
             border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        
+
         .detailed-section h4 {
             background: linear-gradient(135deg, var(--accent-600) 0%, var(--success-600) 100%);
             -webkit-background-clip: text;
@@ -279,63 +314,63 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
+
         .detail-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 12px;
         }
-        
+
         .detail-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 15px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.4) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%);
             border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
         }
-        
+
         .detail-item:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        
+
         .detail-label {
             font-size: 0.9rem;
             color: var(--gray-600);
             font-weight: 500;
         }
-        
+
         .detail-value {
             font-size: 1rem;
             color: var(--primary-600);
             font-weight: 600;
         }
-        
+
         .no-data {
             text-align: center;
             color: var(--gray-500);
             font-style: italic;
             padding: 20px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
             border-radius: 8px;
-            border: 1px dashed rgba(255,255,255,0.3);
+            border: 1px dashed rgba(255, 255, 255, 0.3);
         }
-        
+
         .compact-details {
             margin: 15px 0;
         }
-        
+
         .detail-section {
             margin-bottom: 12px;
             padding: 12px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
             border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .detail-section h5 {
             background: linear-gradient(135deg, var(--accent-600) 0%, var(--success-600) 100%);
             -webkit-background-clip: text;
@@ -347,23 +382,23 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
+
         .compact-detail-grid {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
         }
-        
+
         .compact-detail-grid span {
             font-size: 0.85rem;
             color: var(--primary-600);
             font-weight: 500;
             padding: 4px 8px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.3) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 100%);
             border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        
+
         .no-data-compact {
             font-size: 0.8rem;
             color: var(--gray-500);
@@ -372,13 +407,13 @@
 
         /* Bulk Margin Editor Styles */
         .bulk-margin-editor {
-            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
             backdrop-filter: blur(10px);
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 24px;
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .bulk-margin-editor h2 {
@@ -412,9 +447,9 @@
 
         .margin-editor-form input {
             padding: 12px;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
-            background: rgba(255,255,255,0.8);
+            background: rgba(255, 255, 255, 0.8);
             font-size: 1rem;
             transition: all 0.3s ease;
         }
@@ -423,7 +458,7 @@
             outline: none;
             border-color: var(--primary-500);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-            background: rgba(255,255,255,0.95);
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .btn-secondary {
@@ -439,7 +474,7 @@
 
         .btn-secondary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         @media (max-width: 768px) {
@@ -448,39 +483,46 @@
                 gap: 16px;
             }
         }
+
         .project-totals {
             background-color: #e9ecef;
             padding: 20px;
             border-radius: 8px;
             margin-top: 20px;
         }
+
         .project-totals h3 {
             margin-top: 0;
             color: #333;
         }
+
         .totals-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-top: 15px;
         }
+
         .total-item {
             text-align: center;
             padding: 15px;
             background: white;
             border-radius: 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
+
         .total-item h4 {
             margin: 0 0 10px 0;
             color: #666;
             font-size: 14px;
         }
+
         .total-item .value {
             font-size: 24px;
             font-weight: bold;
             color: #333;
         }
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -494,33 +536,41 @@
             transition: all 0.3s ease;
             margin: 5px;
         }
+
         .btn-primary {
             background-color: #007bff;
             color: white;
         }
+
         .btn-primary:hover {
             background-color: #0056b3;
         }
+
         .btn-success {
             background-color: #28a745;
             color: white;
         }
+
         .btn-success:hover {
             background-color: #1e7e34;
         }
+
         .btn-secondary {
             background-color: #6c757d;
             color: white;
         }
+
         .btn-secondary:hover {
             background-color: #545b62;
         }
+
         .actions {
             text-align: center;
             margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid #eee;
         }
+
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -529,16 +579,19 @@
             font-weight: 500;
             margin-left: 10px;
         }
+
         .status-added {
             background-color: #d4edda;
             color: #155724;
         }
+
         .status-draft {
             background-color: #fff3cd;
             color: #856404;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -581,7 +634,8 @@
             <div class="fans-grid">
                 {% for fan in project.fans %}
                 <div class="fan-card {{ fan.status }}">
-                    <h3>Fan {{ fan.fan_number }} <span class="status-badge status-{{ fan.status }}">{{ fan.status.title() }}</span></h3>
+                    <h3>Fan {{ fan.fan_number }} <span class="status-badge status-{{ fan.status }}">{{
+                            fan.status.title() }}</span></h3>
 
                     <!-- Compact Fan Specifications -->
                     <div class="compact-specs">
@@ -599,32 +653,35 @@
                             <span class="spec-label">Material:</span>
                             <span class="spec-value">{{ fan.specifications.get('material','-') }}</span>
                             <span class="spec-label">Motor:</span>
-                            <span class="spec-value">{{ fan.motor.get('brand','-') }} {{ fan.motor.get('kw','') }}kW</span>
+                            <span class="spec-value">{{ fan.motor.get('brand','-') }} {{ fan.motor.get('kw','')
+                                }}kW</span>
                             <span class="spec-label">Pole:</span>
                             <span class="spec-value">{{ fan.motor.get('pole','-') }}</span>
                             <span class="spec-label">Eff:</span>
                             <span class="spec-value">{{ fan.motor.get('efficiency','-') }}</span>
                         </div>
-                        
+
                         <!-- Custom Materials Detail (if material is 'others') -->
                         {% if fan.specifications.get('material') == 'others' %}
                         {% set custom_materials = [] %}
                         {% for i in range(5) %}
-                            {% set name = fan.specifications.get('material_name_' ~ i) %}
-                            {% set weight = fan.specifications.get('material_weight_' ~ i) %}
-                            {% set rate = fan.specifications.get('material_rate_' ~ i) %}
-                            {% if name and weight and rate %}
-                                {% set total_cost = weight * rate %}
-                                {% set _ = custom_materials.append({'name': name, 'weight': weight, 'rate': rate, 'total_cost': total_cost}) %}
-                            {% endif %}
+                        {% set name = fan.specifications.get('material_name_' ~ i) %}
+                        {% set weight = fan.specifications.get('material_weight_' ~ i) %}
+                        {% set rate = fan.specifications.get('material_rate_' ~ i) %}
+                        {% if name and weight and rate %}
+                        {% set total_cost = weight * rate %}
+                        {% set _ = custom_materials.append({'name': name, 'weight': weight, 'rate': rate, 'total_cost':
+                        total_cost}) %}
+                        {% endif %}
                         {% endfor %}
-                        
+
                         {% if custom_materials %}
                         <div class="detail-section">
                             <h5>Custom Materials</h5>
                             <div class="compact-detail-grid">
                                 {% for material in custom_materials %}
-                                    <span>{{ material.name }}: {{ material.weight }}kg @ ₹{{ material.rate }}/kg = ₹{{ "%.0f"|format(material.total_cost) }}</span>
+                                <span>{{ material.name }}: {{ material.weight }}kg @ ₹{{ material.rate }}/kg = ₹{{
+                                    "%.0f"|format(material.total_cost) }}</span>
                                 {% endfor %}
                             </div>
                         </div>
@@ -676,7 +733,8 @@
                             <div class="compact-detail-grid">
                                 <span>Bearings: ₹{{ "%.0f"|format(fan.costs.get('bearing_price',0)) }}</span>
                                 <span>Drive Pack: ₹{{ "%.0f"|format(fan.costs.get('drive_pack_price',0)) }}</span>
-                                <span>Isolators: ₹{{ "%.0f"|format(fan.costs.get('vibration_isolators_price',0)) }}</span>
+                                <span>Isolators: ₹{{ "%.0f"|format(fan.costs.get('vibration_isolators_price',0))
+                                    }}</span>
                                 <span>Motor List: ₹{{ "%.0f"|format(fan.costs.get('motor_list_price',0)) }}</span>
                                 <span>Motor Net: ₹{{ "%.0f"|format(fan.costs.get('discounted_motor_price',0)) }}</span>
                             </div>
@@ -699,10 +757,14 @@
                         <div class="detail-section">
                             <h5>Accessory Costs</h5>
                             {# Normalize custom/accessory fields for rendering #}
-                            {% set custom_accessories = fan.specifications.custom_accessories or fan.specifications.customAccessories or {} %}
-                            {% set custom_accessory_costs = fan.costs.custom_accessory_costs or fan.costs.customAccessoryCosts or {} %}
-                            {% set optional_items = fan.specifications.optional_items or fan.specifications.optionalItems or {} %}
-                            {# Render using custom_accessories, custom_accessory_costs, optional_items below as appropriate #}
+                            {% set custom_accessories = fan.specifications.custom_accessories or
+                            fan.specifications.customAccessories or {} %}
+                            {% set custom_accessory_costs = fan.costs.custom_accessory_costs or
+                            fan.costs.customAccessoryCosts or {} %}
+                            {% set optional_items = fan.specifications.optional_items or
+                            fan.specifications.optionalItems or {} %}
+                            {# Render using custom_accessories, custom_accessory_costs, optional_items below as
+                            appropriate #}
                             {% if custom_accessory_costs %}
                             <div class="compact-detail-grid">
                                 {% for name, price in custom_accessory_costs.items() %}
@@ -745,7 +807,8 @@
                         </div>
                         <div class="cost-item">
                             <span>Total Cost</span>
-                            <span>₹{{ "%.2f"|format(fan.costs.get('total_cost', fan.costs.get('fabrication_cost',0)+fan.costs.get('bought_out_cost',0))) }}</span>
+                            <span>₹{{ "%.2f"|format(fan.costs.get('total_cost',
+                                fan.costs.get('fabrication_cost',0)+fan.costs.get('bought_out_cost',0))) }}</span>
                         </div>
                         <div class="cost-item">
                             <span>Fabrication Selling Price</span>
@@ -780,28 +843,33 @@
                     </div>
                     <div class="total-item">
                         <h4>Added to Project</h4>
-                        <div class="value">{{ project.fans | selectattr('status', 'equalto', 'added') | list | length }}</div>
+                        <div class="value">{{ project.fans | selectattr('status', 'equalto', 'added') | list | length }}
+                        </div>
                     </div>
                     <div class="total-item">
                         <h4>Total Fabrication Cost</h4>
-                        <div class="value">₹{{ "%.2f"|format(project.fans | sum(attribute='costs.fabrication_cost') or 0) }}</div>
+                        <div class="value">₹{{ "%.2f"|format(project.fans | sum(attribute='costs.fabrication_cost') or
+                            0) }}</div>
                     </div>
                     <div class="total-item">
                         <h4>Total Bought Out Cost</h4>
-                        <div class="value">₹{{ "%.2f"|format(project.fans | sum(attribute='costs.bought_out_cost') or 0) }}</div>
+                        <div class="value">₹{{ "%.2f"|format(project.fans | sum(attribute='costs.bought_out_cost') or 0)
+                            }}</div>
                     </div>
                     <div class="total-item">
                         <h4>Total Selling Price</h4>
-                        <div class="value">₹{{ "%.2f"|format(project.fans | sum(attribute='costs.total_selling_price') or 0) }}</div>
+                        <div class="value">₹{{ "%.2f"|format(project.fans | sum(attribute='costs.total_selling_price')
+                            or 0) }}</div>
                     </div>
                     <div class="total-item">
                         <h4>Average Margin</h4>
                         <div class="value">
-                            {% set margins = project.fans | selectattr('costs.total_job_margin') | map(attribute='costs.total_job_margin') | list %}
+                            {% set margins = project.fans | selectattr('costs.total_job_margin') |
+                            map(attribute='costs.total_job_margin') | list %}
                             {% if margins %}
-                                {{ "%.1f"|format(margins | sum / margins | length) }}%
+                            {{ "%.1f"|format(margins | sum / margins | length) }}%
                             {% else %}
-                                0%
+                            0%
                             {% endif %}
                         </div>
                     </div>
@@ -812,7 +880,8 @@
         <div class="summary-section">
             <div class="actions">
                 <a href="/enquiries/{{ project.enquiry_number }}/fans/1" class="btn btn-primary">Edit Fans</a>
-                <button class="btn btn-success" onclick="exportToExcel()">Export to Excel</button>
+                <a href="/api/projects/{{ project.enquiry_number }}/export/excel" class="btn btn-success">Export to
+                    Excel</a>
                 <a href="/" class="btn btn-secondary">New Project</a>
             </div>
         </div>
@@ -826,7 +895,7 @@
         window.projectData = {{ project | tojson }};
 
         // Bulk Margin Editor Functionality
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const fabricationMarginInput = document.getElementById('bulk-fabrication-margin');
             const boughtOutMarginInput = document.getElementById('bulk-bought-out-margin');
             const updateAllButton = document.getElementById('update-all-margins');
@@ -842,13 +911,13 @@
             }
 
             // Reset to current margins
-            resetButton.addEventListener('click', function() {
+            resetButton.addEventListener('click', function () {
                 initializeMargins();
                 showMessage('Margins reset to current values', 'info');
             });
 
             // Update all fans with new margins
-            updateAllButton.addEventListener('click', async function() {
+            updateAllButton.addEventListener('click', async function () {
                 const fabricationMargin = parseFloat(fabricationMarginInput.value);
                 const boughtOutMargin = parseFloat(boughtOutMarginInput.value);
 
@@ -889,7 +958,7 @@
 
                     await Promise.all(updatePromises);
                     showMessage('All fans updated successfully! Refreshing page...', 'success');
-                    
+
                     // Refresh the page after a short delay
                     setTimeout(() => {
                         window.location.reload();
@@ -933,9 +1002,9 @@
                 border-radius: 8px;
                 font-weight: 500;
                 animation: slideIn 0.3s ease;
-                ${type === 'success' ? 'background: linear-gradient(135deg, #10b981, #059669); color: white;' : 
-                  type === 'error' ? 'background: linear-gradient(135deg, #ef4444, #dc2626); color: white;' :
-                  'background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;'}
+                ${type === 'success' ? 'background: linear-gradient(135deg, #10b981, #059669); color: white;' :
+                    type === 'error' ? 'background: linear-gradient(135deg, #ef4444, #dc2626); color: white;' :
+                        'background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;'}
             `;
             messageEl.textContent = message;
 
@@ -969,4 +1038,5 @@
         document.head.appendChild(style);
     </script>
 </body>
+
 </html>

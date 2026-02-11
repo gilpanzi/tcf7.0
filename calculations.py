@@ -26,14 +26,16 @@ def calculate_fan_weight(cursor, fan_data, selected_accessories):
         
         fan_weight_row = cursor.fetchone()
         if not fan_weight_row:
-            return None, None, None, None, "Fan weight data not found", {}
+            return None, None, None, None, f"Fan weight data not found for Model='{fan_data['Fan Model']}', Size='{fan_data['Fan Size']}', Class='{fan_data['Class']}', Arr='{fan_data['Arrangement']}'", {}
+
         
         fan_weight_dict = dict(zip([column[0] for column in cursor.description], fan_weight_row))
         
         # Bare fan weight
         bare_fan_weight = float(fan_weight_dict['Bare Fan Weight']) if fan_weight_dict['Bare Fan Weight'] is not None else None
         if bare_fan_weight is None:
-            return None, None, None, None, "Invalid or missing bare fan weight", {}
+            return None, None, None, None, f"Invalid or missing bare fan weight for Model='{fan_data['Fan Model']}'", {}
+
 
         total_weight = bare_fan_weight
 
@@ -132,72 +134,56 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
             logger.info(f"Total fabrication cost for custom materials: {fabrication_cost}")
             return fabrication_cost, total_weight, custom_weights, None
         
-        # For standard materials (MS, SS304, mixed)
+        # Initialize base prices
+        ms_price = 0
+        ss304_price = 0
+        
         # Check if custom vendor_rate is provided
         custom_vendor_rate = fan_data.get('vendor_rate')
+        rate_source = "db"
+        
         if custom_vendor_rate is not None:
             try:
-                # Use the custom vendor rate instead of database lookup
-                custom_vendor_rate = float(custom_vendor_rate)
-                logger.info(f"Using custom vendor rate: {custom_vendor_rate} per kg")
-                
-                if material == 'ms':
-                    fabrication_cost = total_weight * custom_vendor_rate
-                elif material == 'ss304':
-                    # For SS304, we apply a multiplier to the base rate (typically 2-3x higher than MS)
-                    ss_multiplier = 2.5
-                    fabrication_cost = total_weight * (custom_vendor_rate * ss_multiplier)
-                elif material == 'mixed':
-                    ms_percentage = float(fan_data.get('ms_percentage', 0))
-                    if ms_percentage <= 0 or ms_percentage > 100:
-                        logger.error(f"Invalid MS percentage for mixed construction: {ms_percentage}")
-                        return None, None, None, {
-                            'error': 'Invalid MS percentage for mixed construction',
-                            'details': {
-                                'ms_percentage': ms_percentage
-                            }
-                        }
-                    
-                    # Calculate weights based on percentages
-                    ms_weight = total_weight * (ms_percentage / 100)
-                    ss_weight = total_weight * ((100 - ms_percentage) / 100)
-                    
-                    # Use custom rate with appropriate multipliers
-                    ss_multiplier = 2.5
-                    fabrication_cost = (ms_weight * custom_vendor_rate) + (ss_weight * (custom_vendor_rate * ss_multiplier))
-                else:
-                    fabrication_cost = total_weight * custom_vendor_rate
-                
-                logger.info(f"Fabrication cost calculated with custom rate: {fabrication_cost}")
-                return fabrication_cost, total_weight, {}, None
-                
+                # Use the custom vendor rate
+                base_rate = float(custom_vendor_rate)
+                logger.info(f"Using custom vendor rate: {base_rate} per kg")
+                ms_price = base_rate
+                ss_multiplier = 2.5
+                ss304_price = base_rate * ss_multiplier
+                rate_source = "custom"
             except (ValueError, TypeError) as e:
                 logger.warning(f"Error using custom vendor rate ({custom_vendor_rate}): {str(e)}. Falling back to database lookup.")
-                # Continue with database lookup
+                custom_vendor_rate = None # Validation failed, fall back
         
-        # Standard database lookup for vendor rates
-        logger.info(f"Looking up rate for vendor: {vendor}, weight: {total_weight}")
-        cursor.execute('''
-            SELECT MSPrice, SS304Price FROM VendorWeightDetails
-            WHERE Vendor = ? AND WeightStart <= ? AND WeightEnd > ?
-        ''', (vendor, total_weight, total_weight))
-        
-        vendor_row = cursor.fetchone()
-        if not vendor_row:
-            logger.error(f"No matching vendor price found for vendor: {vendor}, weight: {total_weight}")
-            return None, None, None, {
-                'error': 'No matching vendor price found',
-                'details': {
-                    'vendor': vendor,
-                    'weight': total_weight
+        # If no custom rate (or invalid), use DB lookup
+        if custom_vendor_rate is None:
+            logger.info(f"Looking up rate for vendor: {vendor}, weight: {total_weight}")
+            # Correct schema: WeightStart, WeightEnd, MSPrice, SS304Price
+            cursor.execute('''
+                SELECT MSPrice, SS304Price FROM VendorWeightDetails 
+                WHERE Vendor = ? AND ? >= WeightStart AND ? <= WeightEnd
+            ''', (vendor, total_weight, total_weight))
+            
+            price_row = cursor.fetchone()
+            
+            if not price_row:
+                logger.error(f"No matching vendor price found for vendor: {vendor}, weight: {total_weight}")
+                return None, None, None, {
+                    'error': 'No matching vendor price found',
+                    'details': {
+                        'vendor': vendor,
+                        'weight': total_weight,
+                        'message': 'Weight likely out of range defined in VendorWeightDetails'
+                    }
                 }
-            }
+            
+            ms_price = float(price_row[0])
+            ss304_price = float(price_row[1])
+            logger.debug(f"Vendor prices - MS: {ms_price}, SS304: {ss304_price}")
+
+        # Calculate fabrication cost based on material and determined prices
+        fabrication_cost = 0
         
-        ms_price = vendor_row['MSPrice']
-        ss304_price = vendor_row['SS304Price']
-        logger.debug(f"Vendor prices - MS: {ms_price}, SS304: {ss304_price}")
-        
-        # Calculate fabrication cost based on material
         if material == 'ms':
             fabrication_cost = total_weight * ms_price
         elif material == 'ss304':
@@ -219,12 +205,15 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
             
             fabrication_cost = (ms_weight * ms_price) + (ss_weight * ss304_price)
         else:
+            # Default to MS if unknown (should rely on validation, but safe fallback)
             fabrication_cost = total_weight * ms_price
         
         # Price custom accessories at per-kg fabrication rate
         custom_accessory_costs = {}
         try:
-            rate_for_material = ms_price if material == 'ms' else ss304_price if material == 'ss304' else ms_price
+            # Determine rate to apply for accessories
+            rate_for_accessories = ms_price if material == 'ms' else ss304_price if material == 'ss304' else ms_price
+            
             # Accept both camel and snake keys from frontend
             custom_acc = fan_data.get('customAccessories') or fan_data.get('custom_accessories') or {}
             if isinstance(custom_acc, dict):
@@ -232,13 +221,13 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
                     try:
                         w = float(acc_weight)
                         if w > 0:
-                            custom_accessory_costs[acc_name] = w * rate_for_material
+                            custom_accessory_costs[acc_name] = w * rate_for_accessories
                     except Exception:
                         pass
         except Exception:
             custom_accessory_costs = {}
 
-        logger.info(f"Fabrication cost calculated: {fabrication_cost}")
+        logger.info(f"Fabrication cost calculated ({rate_source}): {fabrication_cost}")
         return fabrication_cost, total_weight, custom_accessory_costs, None
         
     except Exception as e:
@@ -455,4 +444,4 @@ def calculate_fan_price(data, db_connection):
         'bearing_price': round(bearing_price, 2),
         'material_cost': round(material_cost, 2),
         'total_weight': round(total_weight, 2)
-    } 
+    }

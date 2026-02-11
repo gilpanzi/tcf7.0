@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,8 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1000, 9999) | random }}">
     <style>
         :root {
@@ -175,8 +177,11 @@
             gap: 16px 20px;
             align-items: end;
         }
+
         @media (max-width: 900px) {
-            .form-grid-2 { grid-template-columns: 1fr; }
+            .form-grid-2 {
+                grid-template-columns: 1fr;
+            }
         }
 
         .sidebar h3 {
@@ -199,7 +204,8 @@
             font-size: 14px;
         }
 
-        .form-group input, .form-group select {
+        .form-group input,
+        .form-group select {
             width: 100%;
             padding: 12px 16px;
             border: 1px solid var(--border);
@@ -210,13 +216,15 @@
             transition: all 0.2s ease;
         }
 
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
         }
 
-        .form-group input:hover, .form-group select:hover {
+        .form-group input:hover,
+        .form-group select:hover {
             border-color: var(--primary-color);
         }
 
@@ -515,11 +523,11 @@
             .main-content {
                 grid-template-columns: 1fr;
             }
-            
+
             .form-actions {
                 flex-direction: column;
             }
-            
+
             .btn {
                 width: 100%;
             }
@@ -529,25 +537,25 @@
             .container {
                 padding: 16px;
             }
-            
+
             .header {
                 padding: 20px;
             }
-            
+
             .calculator-section {
                 padding: 20px;
             }
-            
+
             .project-info {
                 grid-template-columns: 1fr;
             }
-            
+
             .fan-navigation {
                 flex-direction: column;
                 gap: 16px;
             }
         }
-        
+
         .rate-display {
             background: linear-gradient(135deg, #10B981 0%, #059669 100%);
             color: white;
@@ -555,22 +563,23 @@
             border-radius: 8px;
             text-align: center;
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-            border: 2px solid rgba(255,255,255,0.2);
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .rate-value {
             font-size: 1.5rem;
             font-weight: 700;
             display: block;
             margin-bottom: 4px;
         }
-        
+
         .rate-info {
             font-size: 0.9rem;
             opacity: 0.9;
         }
     </style>
 </head>
+
 <body>
     <div class="autosave-indicator" id="autosave-indicator">Auto-saving...</div>
 
@@ -584,18 +593,21 @@
                 </div>
                 <div>
                     <strong>Sales Engineer:</strong> {{ project.sales_engineer }}<br>
-                <strong>Total Fans:</strong> {{ project.total_fans }}
+                    <strong>Total Fans:</strong> {{ project.total_fans }}
                 </div>
                 <div>
-                    <strong>Status:</strong> <span class="fan-status status-{{ fan.status }}" id="fan-status">{{ fan.status }}</span>
+                    <strong>Status:</strong> <span class="fan-status status-{{ fan.status }}" id="fan-status">{{
+                        fan.status }}</span>
                 </div>
             </div>
             <div class="fan-navigation">
                 <div class="fan-nav-buttons">
-                    <button class="btn btn-outline" onclick="navigateToFan({{ fan_number - 1 }})" {{ 'disabled' if fan_number <= 1 else '' }}>
+                    <button class="btn btn-outline" onclick="navigateToFan({{ fan_number - 1 }})" {{ 'disabled' if
+                        fan_number <=1 else '' }}>
                         ← Previous Fan
                     </button>
-                    <button class="btn btn-outline" onclick="navigateToFan({{ fan_number + 1 }})" {{ 'disabled' if fan_number >= project.total_fans else '' }}>
+                    <button class="btn btn-outline" onclick="navigateToFan({{ fan_number + 1 }})" {{ 'disabled' if
+                        fan_number>= project.total_fans else '' }}>
                         Next Fan →
                     </button>
                 </div>
@@ -607,7 +619,7 @@
 
         <div class="main-content">
             <div class="calculator-section">
-            <form id="fan-calculator-form">
+                <form id="fan-calculator-form">
                     <!-- Fan Specifications -->
                     <h3>Fan Specifications</h3>
                     <div class="form-grid-2">
@@ -617,10 +629,12 @@
                                 <select id="fan_model" name="fan_model" required style="flex: 1;">
                                     <option value="">Select Fan Model</option>
                                     {% for model in fan_models %}
-                                    <option value="{{ model }}" {{ 'selected' if fan.specifications.get('Fan Model') == model else '' }}>{{ model }}</option>
+                                    <option value="{{ model }}" {{ 'selected' if fan.specifications.get('Fan
+                                        Model')==model else '' }}>{{ model }}</option>
                                     {% endfor %}
                                 </select>
-                                <button type="button" class="btn btn-outline" onclick="openAddFanModelModal()" style="white-space: nowrap;">+ Add New</button>
+                                <button type="button" class="btn btn-outline" onclick="openAddFanModelModal()"
+                                    style="white-space: nowrap;">+ Add New</button>
                             </div>
                         </div>
 
@@ -629,7 +643,8 @@
                             <select id="fan_size" name="fan_size" required>
                                 <option value="">Select Fan Size</option>
                                 {% for size in fan_sizes %}
-                                <option value="{{ size }}" {{ 'selected' if fan.specifications.get('Fan Size') == size else '' }}>{{ size }}</option>
+                                <option value="{{ size }}" {{ 'selected' if fan.specifications.get('Fan Size')==size
+                                    else '' }}>{{ size }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -639,7 +654,8 @@
                             <select id="class" name="class" required>
                                 <option value="">Select Class</option>
                                 {% for cls in classes %}
-                                <option value="{{ cls }}" {{ 'selected' if fan.specifications.get('Class') == cls else '' }}>{{ cls }}</option>
+                                <option value="{{ cls }}" {{ 'selected' if fan.specifications.get('Class')==cls else ''
+                                    }}>{{ cls }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -649,31 +665,45 @@
                             <select id="arrangement" name="arrangement" required>
                                 <option value="">Select Arrangement</option>
                                 {% for arr in arrangements %}
-                                <option value="{{ arr }}" {{ 'selected' if fan.specifications.get('Arrangement') == arr else '' }}>{{ arr }}</option>
+                                <option value="{{ arr }}" {{ 'selected' if fan.specifications.get('Arrangement')==arr
+                                    else '' }}>{{ arr }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="vendor">Vendor</label>
                         <select id="vendor" name="vendor">
                             {% for vendor in vendors %}
-                            <option value="{{ vendor }}" {{ 'selected' if fan.specifications.get('vendor') == vendor or (not fan.specifications.get('vendor') and vendor == 'TCF Factory') else '' }}>{{ vendor }}</option>
+                            <option value="{{ vendor }}" {{ 'selected' if fan.specifications.get('vendor')==vendor or
+                                (not fan.specifications.get('vendor') and vendor=='TCF Factory' ) else '' }}>{{ vendor
+                                }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="material">Material</label>
                         <select id="material" name="material">
-                            <option value="ms" {{ 'selected' if fan.specifications.get('material') == 'ms' else '' }}>MS</option>
-                            <option value="ss304" {{ 'selected' if fan.specifications.get('material') == 'ss304' else '' }}>SS304</option>
-                            <option value="mixed" {{ 'selected' if fan.specifications.get('material') == 'mixed' else '' }}>Mixed</option>
-                            <option value="others" {{ 'selected' if fan.specifications.get('material') == 'others' else '' }}>Others</option>
+                            <option value="ms" {{ 'selected' if fan.specifications.get('material')=='ms' else '' }}>MS
+                            </option>
+                            <option value="ss304" {{ 'selected' if fan.specifications.get('material')=='ss304' else ''
+                                }}>SS304</option>
+                            <option value="mixed" {{ 'selected' if fan.specifications.get('material')=='mixed' else ''
+                                }}>Mixed</option>
+                            <option value="others" {{ 'selected' if fan.specifications.get('material')=='others' else ''
+                                }}>Others</option>
                         </select>
                     </div>
-                    
+
+                    <div class="form-group" id="mixed-material-section" style="display:none;">
+                        <label for="ms_percentage" class="required">MS Percentage (%)</label>
+                        <input type="number" id="ms_percentage" name="ms_percentage" min="1" max="99" step="1"
+                            value="{{ fan.specifications.get('ms_percentage', '') }}">
+                        <small class="form-text text-muted">Remaining percentage will be SS304.</small>
+                    </div>
+
                     <div class="form-group">
                         <label for="vendor-rate-display">Per Kg Rate</label>
                         <div id="vendor-rate-display" class="rate-display">
@@ -684,24 +714,26 @@
 
                     <!-- Fabrication Section -->
                     <h3>Fabrication</h3>
-                    
+
                     <h4>Accessories</h4>
                     <div class="accessories-grid">
                         {% set accs = [
-                            ['unitary_base_frame','Unitary Base Frame'],
-                            ['isolation_base_frame','Isolation Base Frame'],
-                            ['split_casing','Split Casing'],
-                            ['inlet_companion_flange','Inlet Companion Flange'],
-                            ['outlet_companion_flange','Outlet Companion Flange'],
-                            ['inlet_butterfly_damper','Inlet Butterfly Damper']
+                        ['unitary_base_frame','Unitary Base Frame'],
+                        ['isolation_base_frame','Isolation Base Frame'],
+                        ['split_casing','Split Casing'],
+                        ['inlet_companion_flange','Inlet Companion Flange'],
+                        ['outlet_companion_flange','Outlet Companion Flange'],
+                        ['inlet_butterfly_damper','Inlet Butterfly Damper']
                         ] %}
                         {% for key,label in accs %}
                         <div class="accessory-item">
-                            <input type="checkbox" name="accessory_{{ key }}" id="accessory_{{ key }}" />
+                            <input type="checkbox" name="accessory_{{ key }}" id="accessory_{{ key }}" {{ 'checked' if
+                                fan.weights.accessory_weight_details and fan.weights.accessory_weight_details.get(label)
+                                else '' }} />
                             <label for="accessory_{{ key }}">{{ label }}</label>
                         </div>
                         {% endfor %}
-                </div>
+                    </div>
 
                     <!-- Custom Material Inputs (visible when material == others) -->
                     <div id="custom-materials-section" style="display:none;">
@@ -710,31 +742,37 @@
                         <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
                             <div>
                                 <label for="material_name_{{ i }}">Material {{ i+1 }} Name</label>
-                                <input type="text" id="material_name_{{ i }}" name="material_name_{{ i }}" value="{{ fan.specifications.get('material_name_' ~ i, '') }}">
+                                <input type="text" id="material_name_{{ i }}" name="material_name_{{ i }}"
+                                    value="{{ fan.specifications.get('material_name_' ~ i, '') }}">
                             </div>
                             <div>
                                 <label for="material_weight_{{ i }}">Weight (kg)</label>
-                                <input type="number" step="0.01" id="material_weight_{{ i }}" name="material_weight_{{ i }}" value="{{ fan.specifications.get('material_weight_' ~ i, '') }}">
+                                <input type="number" step="0.01" id="material_weight_{{ i }}"
+                                    name="material_weight_{{ i }}"
+                                    value="{{ fan.specifications.get('material_weight_' ~ i, '') }}">
                             </div>
                             <div>
                                 <label for="material_rate_{{ i }}">Rate (₹/kg)</label>
-                                <input type="number" step="0.01" id="material_rate_{{ i }}" name="material_rate_{{ i }}" value="{{ fan.specifications.get('material_rate_' ~ i, '') }}">
+                                <input type="number" step="0.01" id="material_rate_{{ i }}" name="material_rate_{{ i }}"
+                                    value="{{ fan.specifications.get('material_rate_' ~ i, '') }}">
                             </div>
                         </div>
-                            {% endfor %}
+                        {% endfor %}
 
                         <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                             <div>
                                 <label for="shaft_diameter">Shaft Diameter (mm)</label>
-                                <input type="number" step="0.01" id="shaft_diameter" name="shaft_diameter" value="{{ fan.weights.get('shaft_diameter', '') if fan.weights else '' }}">
+                                <input type="number" step="0.01" id="shaft_diameter" name="shaft_diameter"
+                                    value="{{ fan.weights.get('shaft_diameter', '') if fan.weights else '' }}">
                             </div>
                             <div>
                                 <label for="no_of_isolators">No. of Isolators</label>
-                                <input type="number" id="no_of_isolators" name="no_of_isolators" value="{{ fan.weights.get('no_of_isolators', '') if fan.weights else '' }}">
+                                <input type="number" id="no_of_isolators" name="no_of_isolators"
+                                    value="{{ fan.weights.get('no_of_isolators', '') if fan.weights else '' }}">
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Bought Out Section -->
                     <h3>Bought Out</h3>
 
@@ -746,7 +784,8 @@
                             <select id="motor_brand" name="motor_brand">
                                 <option value="">Select Motor Brand</option>
                                 {% for brand in motor_brands %}
-                                <option value="{{ brand }}" {{ 'selected' if fan.motor.get('brand') == brand else '' }}>{{ brand }}</option>
+                                <option value="{{ brand }}" {{ 'selected' if fan.motor.get('brand')==brand else '' }}>{{
+                                    brand }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -756,34 +795,38 @@
                             <select id="motor_kw" name="motor_kw">
                                 <option value="">Select Motor kW</option>
                                 {% for kw in motor_kw_options %}
-                                <option value="{{ kw }}" {{ 'selected' if fan.motor.get('kw') == kw else '' }}>{{ kw }}</option>
+                                <option value="{{ kw }}" {{ 'selected' if fan.motor.get('kw')==kw else '' }}>{{ kw }}
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="pole">Pole</label>
                             <select id="pole" name="pole">
                                 <option value="">Select Pole</option>
                                 {% for pole in poles %}
-                                <option value="{{ pole }}" {{ 'selected' if fan.motor.get('pole') == pole else '' }}>{{ pole }}</option>
+                                <option value="{{ pole }}" {{ 'selected' if fan.motor.get('pole')==pole else '' }}>{{
+                                    pole }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="efficiency">Efficiency</label>
                             <select id="efficiency" name="efficiency">
                                 <option value="">Select Efficiency</option>
                                 {% for eff in efficiencies %}
-                                <option value="{{ eff }}" {{ 'selected' if fan.motor.get('efficiency') == eff else '' }}>{{ eff }}</option>
+                                <option value="{{ eff }}" {{ 'selected' if fan.motor.get('efficiency')==eff else '' }}>
+                                    {{ eff }}</option>
                                 {% endfor %}
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="motor_discount">Motor Discount (%)</label>
-                            <input type="number" id="motor_discount" name="motor_discount" min="0" max="100" step="0.1" value="{{ fan.motor.get('discount', 0) }}">
+                            <input type="number" id="motor_discount" name="motor_discount" min="0" max="100" step="0.1"
+                                value="{{ fan.motor.get('discount', 0) }}">
                         </div>
                     </div>
 
@@ -793,7 +836,8 @@
                             <select id="bearing_brand" name="bearing_brand">
                                 <option value="">Select Bearing Brand</option>
                                 {% for brand in bearing_brands %}
-                                <option value="{{ brand }}" {{ 'selected' if fan.specifications.get('bearing_brand') == brand else '' }}>{{ brand }}</option>
+                                <option value="{{ brand }}" {{ 'selected' if
+                                    fan.specifications.get('bearing_brand')==brand else '' }}>{{ brand }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -803,17 +847,23 @@
                             <select id="drive_pack" name="drive_pack">
                                 <option value="">Select Drive Pack</option>
                                 {% for kw in drive_pack_options %}
-                                <option value="{{ kw }}" {{ 'selected' if fan.specifications.get('drive_pack') == kw else '' }}>{{ kw }}</option>
+                                <option value="{{ kw }}" {{ 'selected' if fan.specifications.get('drive_pack')==kw
+                                    else '' }}>{{ kw }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="vibration_isolators">Vibration Isolators</label>
                             <select id="vibration_isolators" name="vibration_isolators">
-                                <option value="not_required" {{ 'selected' if fan.specifications.get('vibration_isolators','not_required') == 'not_required' else '' }}>Not Required</option>
-                                <option value="polybond" {{ 'selected' if fan.specifications.get('vibration_isolators') == 'polybond' else '' }}>Polybond</option>
-                                <option value="dunlop" {{ 'selected' if fan.specifications.get('vibration_isolators') == 'dunlop' else '' }}>Dunlop</option>
+                                <option value="not_required" {{ 'selected' if
+                                    fan.specifications.get('vibration_isolators','not_required')=='not_required' else ''
+                                    }}>Not Required</option>
+                                <option value="polybond" {{ 'selected' if
+                                    fan.specifications.get('vibration_isolators')=='polybond' else '' }}>Polybond
+                                </option>
+                                <option value="dunlop" {{ 'selected' if
+                                    fan.specifications.get('vibration_isolators')=='dunlop' else '' }}>Dunlop</option>
                             </select>
                         </div>
                     </div>
@@ -843,7 +893,8 @@
                                 <option value="packing_charges">Packing Charges</option>
                             </select>
                             <input type="number" step="0.01" placeholder="Price (₹)" id="oi-standard-price">
-                            <button type="button" class="btn btn-outline" onclick="addStandardOptionalItem()">Add</button>
+                            <button type="button" class="btn btn-outline"
+                                onclick="addStandardOptionalItem()">Add</button>
                         </div>
                         <div class="custom-input-group">
                             <input type="text" placeholder="Custom Item Name" id="oi-name">
@@ -858,21 +909,24 @@
                     <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                         <div>
                             <label for="fabrication_margin">Fabrication Margin (%)</label>
-                            <input type="number" id="fabrication_margin" name="fabrication_margin" min="0" max="100" step="0.1" value="{{ fan.specifications.get('fabrication_margin', 25) }}">
+                            <input type="number" id="fabrication_margin" name="fabrication_margin" min="0" max="100"
+                                step="0.1" value="{{ fan.specifications.get('fabrication_margin', 25) }}">
                         </div>
                         <div>
-                        <label for="bought_out_margin">Bought Out Margin (%)</label>
-                            <input type="number" id="bought_out_margin" name="bought_out_margin" min="0" max="100" step="0.1" value="{{ fan.specifications.get('bought_out_margin', 25) }}">
+                            <label for="bought_out_margin">Bought Out Margin (%)</label>
+                            <input type="number" id="bought_out_margin" name="bought_out_margin" min="0" max="100"
+                                step="0.1" value="{{ fan.specifications.get('bought_out_margin', 25) }}">
+                        </div>
                     </div>
-                </div>
 
                     <div class="form-actions">
                         <button type="button" class="btn btn-primary" onclick="calculateFan()">Calculate</button>
                         <button type="button" class="btn btn-primary" onclick="saveFan()">Save</button>
                         <button type="button" class="btn btn-success" onclick="addToProject()">Add to Project</button>
-                        <button type="button" class="btn btn-secondary" onclick="navigateToFan({{ fan_number + 1 }})" {{ 'disabled' if fan_number >= project.total_fans else '' }}>Save & Next</button>
-                </div>
-            </form>
+                        <button type="button" class="btn btn-secondary" onclick="navigateToFan({{ fan_number + 1 }})"
+                            {{ 'disabled' if fan_number>= project.total_fans else '' }}>Save & Next</button>
+                    </div>
+                </form>
 
                 <div id="error-message" class="error-message" style="display: none;"></div>
                 <div id="success-message" class="success-message" style="display: none;"></div>
@@ -880,22 +934,22 @@
                 <div id="calculation-results" class="calculation-results" style="display: none;">
                     <h3>Calculation Results</h3>
                     <div id="results-content"></div>
+                </div>
             </div>
-        </div>
 
             <div class="sidebar">
                 <h3>Project Fans</h3>
                 <ul class="fan-list">
                     {% for i in range(1, project.total_fans + 1) %}
-                    <li class="{% if i == fan_number %}current{% else %}{{ project.fans[i-1].status if project.fans[i-1] else 'draft' }}{% endif %}" 
+                    <li class="{% if i == fan_number %}current{% else %}{{ project.fans[i-1].status if project.fans[i-1] else 'draft' }}{% endif %}"
                         onclick="navigateToFan({{ i }})">
                         Fan {{ i }}
                         {% if i == fan_number %}
-                            (Current)
+                        (Current)
                         {% elif project.fans[i-1] and project.fans[i-1].status == 'added' %}
-                            ✓ Added
+                        ✓ Added
                         {% else %}
-                            Draft
+                        Draft
                         {% endif %}
                     </li>
                     {% endfor %}
@@ -905,10 +959,12 @@
     </div>
 
     <!-- Add New Fan Model Modal -->
-    <div id="addFanModelModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 32px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90%; overflow-y: auto;">
+    <div id="addFanModelModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div
+            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 32px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90%; overflow-y: auto;">
             <h3 style="margin-top: 0; margin-bottom: 24px; color: var(--text-primary);">Add New Fan Model</h3>
-            
+
             <form id="addFanModelForm">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div class="form-group">
@@ -920,7 +976,7 @@
                         <input type="text" id="new_fan_size" name="new_fan_size" required>
                     </div>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div class="form-group">
                         <label for="new_class" class="required">Class</label>
@@ -931,7 +987,7 @@
                         <input type="text" id="new_arrangement" name="new_arrangement" required>
                     </div>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     <div class="form-group">
                         <label for="new_bare_fan_weight" class="required">Bare Fan Weight (kg)</label>
@@ -941,8 +997,8 @@
                         <label for="new_shaft_diameter">Shaft Diameter (mm)</label>
                         <input type="number" step="0.01" id="new_shaft_diameter" name="new_shaft_diameter">
                     </div>
-                    </div>
-                
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                     <div class="form-group">
                         <label for="new_no_of_isolators">No. of Isolators</label>
@@ -950,16 +1006,18 @@
                     </div>
                     <div></div>
                 </div>
-                
+
                 <h4 style="margin-bottom: 16px; color: var(--text-primary);">Accessories (Weight in kg)</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                     <div class="form-group">
                         <label for="new_unitary_base_frame">Unitary Base Frame</label>
-                        <input type="number" step="0.01" id="new_unitary_base_frame" name="new_unitary_base_frame" value="0">
+                        <input type="number" step="0.01" id="new_unitary_base_frame" name="new_unitary_base_frame"
+                            value="0">
                     </div>
                     <div class="form-group">
                         <label for="new_isolation_base_frame">Isolation Base Frame</label>
-                        <input type="number" step="0.01" id="new_isolation_base_frame" name="new_isolation_base_frame" value="0">
+                        <input type="number" step="0.01" id="new_isolation_base_frame" name="new_isolation_base_frame"
+                            value="0">
                     </div>
                     <div class="form-group">
                         <label for="new_split_casing">Split Casing</label>
@@ -967,18 +1025,21 @@
                     </div>
                     <div class="form-group">
                         <label for="new_inlet_companion_flange">Inlet Companion Flange</label>
-                        <input type="number" step="0.01" id="new_inlet_companion_flange" name="new_inlet_companion_flange" value="0">
+                        <input type="number" step="0.01" id="new_inlet_companion_flange"
+                            name="new_inlet_companion_flange" value="0">
                     </div>
                     <div class="form-group">
                         <label for="new_outlet_companion_flange">Outlet Companion Flange</label>
-                        <input type="number" step="0.01" id="new_outlet_companion_flange" name="new_outlet_companion_flange" value="0">
+                        <input type="number" step="0.01" id="new_outlet_companion_flange"
+                            name="new_outlet_companion_flange" value="0">
                     </div>
                     <div class="form-group">
                         <label for="new_inlet_butterfly_damper">Inlet Butterfly Damper</label>
-                        <input type="number" step="0.01" id="new_inlet_butterfly_damper" name="new_inlet_butterfly_damper" value="0">
+                        <input type="number" step="0.01" id="new_inlet_butterfly_damper"
+                            name="new_inlet_butterfly_damper" value="0">
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 12px; justify-content: flex-end;">
                     <button type="button" class="btn btn-secondary" onclick="closeAddFanModelModal()">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveNewFanModel()">Save Fan Model</button>
@@ -993,21 +1054,21 @@
         window.projectData = {{ project | tojson }};
         window.fanData = {{ fan | tojson }};
         window.fanNumber = {{ fan_number }};
-        
+
         // Add New Fan Model functionality
         function openAddFanModelModal() {
             document.getElementById('addFanModelModal').style.display = 'block';
         }
-        
+
         function closeAddFanModelModal() {
             document.getElementById('addFanModelModal').style.display = 'none';
             document.getElementById('addFanModelForm').reset();
         }
-        
+
         function saveNewFanModel() {
             const form = document.getElementById('addFanModelForm');
             const formData = new FormData(form);
-            
+
             // Validate required fields
             const requiredFields = ['new_fan_model', 'new_fan_size', 'new_class', 'new_arrangement', 'new_bare_fan_weight'];
             for (const field of requiredFields) {
@@ -1016,7 +1077,7 @@
                     return;
                 }
             }
-            
+
             // Validate shaft diameter for non-arrangement 4
             const arrangement = formData.get('new_arrangement');
             if (arrangement !== '4' && !formData.get('new_shaft_diameter')) {
@@ -1042,57 +1103,58 @@
                     'Inlet Butterfly Damper': parseFloat(formData.get('new_inlet_butterfly_damper')) || 0
                 }
             };
-            
+
             // Show loading
             const saveButton = document.querySelector('#addFanModelModal button[onclick="saveNewFanModel()"]');
             const originalText = saveButton.textContent;
             saveButton.textContent = 'Saving...';
             saveButton.disabled = true;
-            
+
             // Send to server
             fetch('/add_fan_model', {
-                    method: 'POST',
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(fanData)
             })
-            .then(response => response.json())
-            .then(data => {
-                saveButton.textContent = originalText;
-                saveButton.disabled = false;
-                
-                if (data.success) {
-                    alert(data.message);
-                    closeAddFanModelModal();
-                    
-                    // Add new option to dropdown
-                    const fanModelSelect = document.getElementById('fan_model');
-                    const newOption = document.createElement('option');
-                    newOption.value = fanData.new_fan_model;
-                    newOption.textContent = fanData.new_fan_model;
-                    fanModelSelect.appendChild(newOption);
-                    
-                    // Select the new fan model
-                    fanModelSelect.value = fanData.new_fan_model;
-                    
-                    // Trigger change event to update dependent dropdowns
-                    fanModelSelect.dispatchEvent(new Event('change'));
-                } else {
-                    alert(`Error: ${data.message}`);
-                }
-            })
-            .catch(error => {
-                saveButton.textContent = originalText;
-                saveButton.disabled = false;
-                alert('Error saving fan model: ' + error.message);
-            });
+                .then(response => response.json())
+                .then(data => {
+                    saveButton.textContent = originalText;
+                    saveButton.disabled = false;
+
+                    if (data.success) {
+                        alert(data.message);
+                        closeAddFanModelModal();
+
+                        // Add new option to dropdown
+                        const fanModelSelect = document.getElementById('fan_model');
+                        const newOption = document.createElement('option');
+                        newOption.value = fanData.new_fan_model;
+                        newOption.textContent = fanData.new_fan_model;
+                        fanModelSelect.appendChild(newOption);
+
+                        // Select the new fan model
+                        fanModelSelect.value = fanData.new_fan_model;
+
+                        // Trigger change event to update dependent dropdowns
+                        fanModelSelect.dispatchEvent(new Event('change'));
+                    } else {
+                        alert(`Error: ${data.message}`);
+                    }
+                })
+                .catch(error => {
+                    saveButton.textContent = originalText;
+                    saveButton.disabled = false;
+                    alert('Error saving fan model: ' + error.message);
+                });
         }
-        
+
         // Close modal when clicking outside
-        document.getElementById('addFanModelModal').addEventListener('click', function(e) {
+        document.getElementById('addFanModelModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeAddFanModelModal();
             }
         });
     </script>
 </body>
+
 </html>
