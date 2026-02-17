@@ -17,6 +17,77 @@ DATABASE_PATHS = {
 # Create Blueprint for database admin routes
 db_admin_bp = Blueprint('db_admin', __name__)
 
+@db_admin_bp.route('/upload-motor-prices', methods=['GET', 'POST'])
+def upload_motor_prices():
+    """Upload motor prices from Excel."""
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return "No file part", 400
+        file = request.files['file']
+        if file.filename == '':
+            return "No selected file", 400
+        if file:
+            try:
+                from import_motor_prices_excel import import_motor_prices_from_excel
+                # Reset file pointer just in case
+                file.stream.seek(0)
+                success = import_motor_prices_from_excel(file)
+                
+                if success:
+                    return f"""
+                    <html>
+                    <head>
+                        <title>Success - TCF Database Admin</title>
+                        <style>
+                            body {{ font-family: Arial, sans-serif; margin: 40px; text-align: center; }}
+                            .success {{ color: green; font-size: 24px; margin-bottom: 20px; }}
+                            .links a {{ display: inline-block; margin: 0 10px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="success">✅ Motor Prices Updated Successfully!</div>
+                        <div class="links">
+                            <a href="/db-admin/view-table/unified/MotorPrices">View Updated Table</a>
+                            <a href="/">Back to Main App</a>
+                        </div>
+                    </body>
+                    </html>
+                    """
+                else:
+                    return "Import failed. Check server logs for details.", 500
+            except Exception as e:
+                logger.error(f"Upload error: {e}")
+                return f"Error: {str(e)}", 500
+    
+    return """
+    <html>
+    <head>
+        <title>Upload Motor Prices - TCF Database Admin</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            h1 { color: #333; }
+            form { border: 1px solid #ddd; padding: 20px; border-radius: 4px; max-width: 500px; }
+            input[type="file"] { margin-bottom: 20px; display: block; }
+            button { background-color: #4CAF50; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; }
+            button:hover { background-color: #45a049; }
+            .note { color: #666; font-size: 0.9em; margin-bottom: 15px; }
+        </style>
+    </head>
+    <body>
+        <h1>Upload New Motor Prices</h1>
+        <form method="post" enctype="multipart/form-data">
+            <div class="note">
+                Please upload an Excel file (.xlsx) with columns:<br>
+                <b>Brand, Motor kW, Pole, Efficiency, Price</b>
+            </div>
+            <input type="file" name="file" accept=".xlsx,.xls">
+            <button type="submit">Upload and Update Database</button>
+        </form>
+        <p><a href="/db-admin">Back to Admin Panel</a></p>
+    </body>
+    </html>
+    """
+
 # Define routes on the blueprint before it gets registered
 @db_admin_bp.route('/')
 def index():
@@ -78,6 +149,7 @@ def view_db(db_name):
         <h1>{db_title}</h1>
         <div class="back-link">
             <a href="/">← Back to Main App</a>
+            <a href="/db-admin/upload-motor-prices" style="background-color: #008CBA; margin-left: 10px;">Upload Motor Prices</a>
         </div>
         
         <div>
