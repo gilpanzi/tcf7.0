@@ -63,8 +63,9 @@ def calculate_fan_weight(cursor, fan_data, selected_accessories):
                 accessory_details[accessory] = None
 
         # Custom accessories
-        if 'customAccessories' in fan_data and isinstance(fan_data['customAccessories'], dict):
-            for name, weight in fan_data['customAccessories'].items():
+        custom_acc = fan_data.get('customAccessories') or fan_data.get('custom_accessories') or {}
+        if isinstance(custom_acc, dict):
+            for name, weight in custom_acc.items():
                 try:
                     custom_weight = float(weight)
                     total_weight += custom_weight

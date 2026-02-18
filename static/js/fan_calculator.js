@@ -367,17 +367,34 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // UI Rendering Helpers
+    function renderCustomAccessoryUI(name, weight) {
+        const list = document.getElementById('custom-accessories-list');
+        if (!list) return;
+        const div = document.createElement('div');
+        div.className = 'ca-item';
+        div.style.cssText = 'display:flex;justify-content:space-between;padding:6px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;';
+        div.innerHTML = `<span class="ca-n">${name}</span><span class="ca-w">${weight}</span><button type="button" class="btn btn-secondary" onclick="this.parentElement.remove(); handleFormChange();">Remove</button>`;
+        list.appendChild(div);
+    }
+
+    function renderOptionalItemUI(name, price, key = null) {
+        const list = document.getElementById('optional-items-list');
+        if (!list) return;
+        const div = document.createElement('div');
+        div.className = 'oi-item';
+        div.style.cssText = 'display:flex;justify-content:space-between;padding:6px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;';
+        const keyAttr = key ? `data-key="${key}"` : '';
+        div.innerHTML = `<span class="oi-n" ${keyAttr}>${name}</span><span class="oi-p">${price}</span><button type="button" class="btn btn-secondary" onclick="this.parentElement.remove(); handleFormChange();">Remove</button>`;
+        list.appendChild(div);
+    }
+
     // Custom accessories UI handlers
     window.addCustomAccessory = function () {
         const name = document.getElementById('ca-name').value.trim();
         const weight = parseFloat(document.getElementById('ca-weight').value || '0');
         if (!name || !(weight > 0)) return;
-        const list = document.getElementById('custom-accessories-list');
-        const div = document.createElement('div');
-        div.className = 'ca-item';
-        div.style.cssText = 'display:flex;justify-content:space-between;padding:6px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;';
-        div.innerHTML = `<span class="ca-n">${name}</span><span class="ca-w">${weight}</span><button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()">Remove</button>`;
-        list.appendChild(div);
+        renderCustomAccessoryUI(name, weight);
         document.getElementById('ca-name').value = '';
         document.getElementById('ca-weight').value = '';
         handleFormChange();
@@ -388,12 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const name = document.getElementById('oi-name').value.trim();
         const price = parseFloat(document.getElementById('oi-price').value || '0');
         if (!name || !(price > 0)) return;
-        const list = document.getElementById('optional-items-list');
-        const div = document.createElement('div');
-        div.className = 'oi-item';
-        div.style.cssText = 'display:flex;justify-content:space-between;padding:6px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;';
-        div.innerHTML = `<span class="oi-n">${name}</span><span class="oi-p">${price}</span><button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()">Remove</button>`;
-        list.appendChild(div);
+        renderOptionalItemUI(name, price);
         document.getElementById('oi-name').value = '';
         document.getElementById('oi-price').value = '';
         handleFormChange();
@@ -413,12 +425,7 @@ document.addEventListener('DOMContentLoaded', function () {
             packing_charges: 'Packing Charges'
         };
         const display = nameMap[key] || key;
-        const list = document.getElementById('optional-items-list');
-        const div = document.createElement('div');
-        div.className = 'oi-item';
-        div.style.cssText = 'display:flex;justify-content:space-between;padding:6px 10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:6px;';
-        div.innerHTML = `<span class="oi-n" data-key="${key}">${display}</span><span class="oi-p">${price}</span><button type="button" class="btn btn-secondary" onclick="this.parentElement.remove()">Remove</button>`;
-        list.appendChild(div);
+        renderOptionalItemUI(display, price, key);
         document.getElementById('oi-standard').value = '';
         document.getElementById('oi-standard-price').value = '';
         handleFormChange();
@@ -452,6 +459,32 @@ document.addEventListener('DOMContentLoaded', function () {
             // Set vendor rate if available in specs (custom saved rate)
             if (specs['vendor_rate']) {
                 setFormValue('vendor-rate', specs['vendor_rate']);
+            }
+
+            // Populate custom accessories
+            const customAcc = specs['custom_accessories'] || specs['customAccessories'] || {};
+            for (const [name, weight] of Object.entries(customAcc)) {
+                renderCustomAccessoryUI(name, weight);
+            }
+
+            // Populate optional items
+            const optionalItems = specs['optional_items'] || {};
+            const standardKeys = ['flex_connectors', 'silencer', 'testing_charges', 'freight_charges', 'warranty_charges', 'packing_charges'];
+            const nameMap = {
+                flex_connectors: 'Flex Connectors',
+                silencer: 'Silencer',
+                testing_charges: 'Testing Charges',
+                freight_charges: 'Freight Charges',
+                warranty_charges: 'Warranty Charges',
+                packing_charges: 'Packing Charges'
+            };
+
+            for (const [keyOrLabel, price] of Object.entries(optionalItems)) {
+                if (standardKeys.includes(keyOrLabel)) {
+                    renderOptionalItemUI(nameMap[keyOrLabel], price, keyOrLabel);
+                } else {
+                    renderOptionalItemUI(keyOrLabel, price);
+                }
             }
         }
     }
