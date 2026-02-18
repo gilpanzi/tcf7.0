@@ -1,0 +1,121 @@
+Checking database at: C:\Basidh\TCF_6.0\tcf6.0\data\fan_pricing.db
+Tables in DB: ['Projects', 'sqlite_sequence', 'FanWeights', 'VendorWeightDetails', 'MotorPrices', 'DrivePackLookup', 'MotorPrices_backup_20250321_155725', 'MotorPrices_backup', 'OptionalItemsMetadata', 'ProjectFans', 'users', 'BearingLookup', 'Fans', 'MotorPrices_backup_20260217_104322', 'MotorPrices_backup_20260217_104420', 'MotorPrices_backup_20260217_104534', 'MotorPrices_backup_20260217_110300']
+
+--- Inspecting Fans Table ---
+
+Fan ID: 1, Project ID: 20, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '270'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 2, Project ID: 21, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '270'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 4, Project ID: 23, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '270'
+  All Spec Keys: ['Arrangement', 'Class', 'Fan Model', 'Fan Size', 'bearing_brand', 'bought_out_margin', 'drive_pack', 'fabrication_margin', 'material', 'vendor', 'vibration_isolators']
+
+Fan ID: 5, Project ID: 24, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '270'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 6, Project ID: 25, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '270'
+  All Spec Keys: ['Arrangement', 'Class', 'Fan Model', 'Fan Size', 'bearing_brand', 'bought_out_margin', 'fabrication_margin', 'material', 'vendor', 'vibration_isolators']
+
+Fan ID: 7, Project ID: 26, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '270'
+  All Spec Keys: ['Arrangement', 'Class', 'Fan Model', 'Fan Size', 'bearing_brand', 'bought_out_margin', 'fabrication_margin', 'material', 'ms_percentage', 'vendor', 'vibration_isolators']
+
+Fan ID: 8, Project ID: 27, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '222'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'ms_percentage', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 9, Project ID: 28, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '300'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 10, Project ID: 29, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '330'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 11, Project ID: 30, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '300'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 12, Project ID: 30, Fan #: 2
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '200'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'ms_percentage', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 13, Project ID: 31, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '300'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 14, Project ID: 32, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '300'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 16, Project ID: 34, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '300'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 17, Project ID: 35, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '300'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 18, Project ID: 36, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '402'
+  All Spec Keys: ['Fan Model', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 19, Project ID: 37, Fan #: 1
+  Error parsing specs: the JSON object must be str, bytes or bytearray, not NoneType
+
+Fan ID: 20, Project ID: 38, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '365'
+  All Spec Keys: ['Fan Model', 'fan_tag', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 21, Project ID: 39, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '245'
+  All Spec Keys: ['Fan Model', 'fan_tag', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']
+
+Fan ID: 22, Project ID: 40, Fan #: 1
+  Fan Model: 'BC-SW'
+  fan_model (lowercase): 'None'
+  Fan Size: '245'
+  All Spec Keys: ['Fan Model', 'fan_tag', 'Fan Size', 'Class', 'Arrangement', 'vendor', 'material', 'vibration_isolators', 'fabrication_margin', 'bought_out_margin', 'bearing_brand', 'drive_pack', 'accessories', 'custom_accessories', 'optional_items']

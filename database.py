@@ -100,6 +100,57 @@ def load_dropdown_options():
         logger.error(f"Error loading dropdown options: {str(e)}")
         raise
 
+def get_all_vendor_rates():
+    """Get all vendor rates from the database structured for frontend use."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT Vendor, "Material Type", WeightStart, WeightEnd, MSPrice, SS304Price FROM VendorWeightDetails')
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # Structure: rates[vendor][material] = [{min, max, rate}, ...]
+        rates = {}
+        
+        for row in rows:
+            vendor = row['Vendor']
+            material_type = row['Material Type'] # 'ms' or 'ss304' usually, but DB schema might differ
+            weight_start = float(row['WeightStart'])
+            weight_end = float(row['WeightEnd'])
+            ms_price = float(row['MSPrice'])
+            ss304_price = float(row['SS304Price'])
+            
+            if vendor not in rates:
+                rates[vendor] = {
+                    'ms': [],
+                    'ss304': []
+                }
+            
+            # MS Entry
+            rates[vendor]['ms'].append({
+                'min': weight_start,
+                'max': weight_end,
+                'rate': ms_price
+            })
+            
+            # SS304 Entry
+            rates[vendor]['ss304'].append({
+                'min': weight_start,
+                'max': weight_end,
+                'rate': ss304_price
+            })
+            
+        # Sort ranges by min weight
+        for vendor in rates:
+            for mat in rates[vendor]:
+                rates[vendor][mat].sort(key=lambda x: x['min'])
+                
+        return rates
+    except Exception as e:
+        logger.error(f"Error loading vendor rates: {str(e)}")
+        return {}
+
 def get_sales_engineers(limit: int = 100):
     """Return a list of sales engineer names. Prefer Users table; fallback to distinct from Projects."""
     try:

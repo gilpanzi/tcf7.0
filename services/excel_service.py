@@ -114,8 +114,8 @@ class ExcelService:
         
         # --- Main Quotation Table ---
         row = 9
-        headers = ["#", "Fan Model", "Size", "Class", "Arrangement", "Qty", "Unit Price (₹)", "Total Price (₹)"]
-        col_widths = [5, 20, 10, 10, 15, 8, 20, 20]
+        headers = ["#", "Fan Model", "Tag", "Air Flow (CMH)", "Static Pressure (mmwc)", "Size", "Class", "Arrangement", "Qty", "Unit Price (₹)", "Total Price (₹)"]
+        col_widths = [5, 20, 15, 15, 15, 10, 10, 15, 8, 20, 20]
         
         # Header Row
         for col, (header, width) in enumerate(zip(headers, col_widths), start=2):
@@ -144,10 +144,13 @@ class ExcelService:
             # Base data
             ws.cell(row=row, column=2, value=idx).alignment = Alignment(horizontal='center')
             ws.cell(row=row, column=3, value=specs.get('Fan Model'))
-            ws.cell(row=row, column=4, value=specs.get('Fan Size'))
-            ws.cell(row=row, column=5, value=specs.get('Class'))
-            ws.cell(row=row, column=6, value=specs.get('Arrangement'))
-            ws.cell(row=row, column=7, value=1).alignment = Alignment(horizontal='center')
+            ws.cell(row=row, column=4, value=specs.get('fan_tag', '-'))
+            ws.cell(row=row, column=5, value=specs.get('air_flow', '-'))
+            ws.cell(row=row, column=6, value=specs.get('static_pressure', '-'))
+            ws.cell(row=row, column=7, value=specs.get('Fan Size'))
+            ws.cell(row=row, column=8, value=specs.get('Class'))
+            ws.cell(row=row, column=9, value=specs.get('Arrangement'))
+            ws.cell(row=row, column=10, value=1).alignment = Alignment(horizontal='center')
             
             cost_sheet = "Internal Costing"
             
@@ -168,17 +171,17 @@ class ExcelService:
             # Price = (FabCost / (1 - FabMargin)) + (BOCost / (1 - BOMargin))
             formula = f"=({ref_fab_cost}/(1-{margin_fab_calc})) + ({ref_bo_cost}/(1-{margin_bo_calc}))"
             
-            price_cell = ws.cell(row=row, column=8)
+            price_cell = ws.cell(row=row, column=11)
             price_cell.value = formula
             price_cell.number_format = '₹ #,##0.00'
             
             # Total Formula (= Unit Price * Qty)
-            total_cell = ws.cell(row=row, column=9)
-            total_cell.value = f"=H{row}*G{row}"
+            total_cell = ws.cell(row=row, column=12)
+            total_cell.value = f"=K{row}*J{row}"
             total_cell.number_format = '₹ #,##0.00'
             
             # Apply styling
-            for col in range(2, 10):
+            for col in range(2, 13):
                 c = ws.cell(row=row, column=col)
                 c.border = self.border_thin
                 c.font = self.font_normal
@@ -188,11 +191,11 @@ class ExcelService:
         # --- Totals Row ---
         last_data_row = row - 1
         ws.cell(row=row, column=2, value="TOTAL Project Value").font = self.font_total
-        ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=7)
+        ws.merge_cells(start_row=row, start_column=2, end_row=row, end_column=10)
         ws.cell(row=row, column=2).alignment = Alignment(horizontal='right')
         
-        grand_total_cell = ws.cell(row=row, column=9)
-        grand_total_cell.value = f"=SUM(I{start_data_row}:I{last_data_row})"
+        grand_total_cell = ws.cell(row=row, column=12)
+        grand_total_cell.value = f"=SUM(L{start_data_row}:L{last_data_row})"
         grand_total_cell.font = self.font_total
         grand_total_cell.number_format = '₹ #,##0.00'
         grand_total_cell.fill = PatternFill(start_color=self.colors['total_bg'], end_color=self.colors['total_bg'], fill_type='solid')
@@ -201,8 +204,8 @@ class ExcelService:
         # ws = wb.create_sheet("Detailed Technical Specs") # Removed, passed in
         ws.sheet_view.showGridLines = False
         
-        headers = ["Fan #", "Model", "Size", "Class", "Type", "Material", "Motor kW", "Motor Brand", "Drive Type", "Isolators", "Accessories"]
-        col_widths = [8, 15, 10, 10, 15, 15, 12, 12, 15, 15, 40]
+        headers = ["Fan #", "Model", "Tag", "Air Flow (CMH)", "Static Pressure (mmwc)", "Size", "Class", "Type", "Material", "Motor kW", "Motor Brand", "Drive Type", "Isolators", "Accessories"]
+        col_widths = [8, 15, 15, 15, 15, 10, 10, 15, 15, 12, 12, 15, 15, 40]
         
         # Header Row
         for col, (header, width) in enumerate(zip(headers, col_widths), start=1):
@@ -233,15 +236,18 @@ class ExcelService:
                  
             ws.cell(row=row, column=1, value=f"Fan {idx}")
             ws.cell(row=row, column=2, value=specs.get('Fan Model'))
-            ws.cell(row=row, column=3, value=specs.get('Fan Size'))
-            ws.cell(row=row, column=4, value=specs.get('Class'))
-            ws.cell(row=row, column=5, value=specs.get('Arrangement'))
-            ws.cell(row=row, column=6, value=specs.get('material'))
-            ws.cell(row=row, column=7, value=motor.get('kw'))
-            ws.cell(row=row, column=8, value=motor.get('brand'))
-            ws.cell(row=row, column=9, value=specs.get('drive_pack'))
-            ws.cell(row=row, column=10, value=specs.get('vibration_isolators'))
-            ws.cell(row=row, column=11, value=", ".join(acc_list))
+            ws.cell(row=row, column=3, value=specs.get('fan_tag', '-'))
+            ws.cell(row=row, column=4, value=specs.get('air_flow', '-'))
+            ws.cell(row=row, column=5, value=specs.get('static_pressure', '-'))
+            ws.cell(row=row, column=6, value=specs.get('Fan Size'))
+            ws.cell(row=row, column=7, value=specs.get('Class'))
+            ws.cell(row=row, column=8, value=specs.get('Arrangement'))
+            ws.cell(row=row, column=9, value=specs.get('material'))
+            ws.cell(row=row, column=10, value=motor.get('kw'))
+            ws.cell(row=row, column=11, value=motor.get('brand'))
+            ws.cell(row=row, column=12, value=specs.get('drive_pack'))
+            ws.cell(row=row, column=13, value=specs.get('vibration_isolators'))
+            ws.cell(row=row, column=14, value=", ".join(acc_list))
             
             row += 1
 
@@ -257,7 +263,7 @@ class ExcelService:
         # Format: (Section Title, [List of Attribute Names])
         
         # 1. Identity
-        sec_identity = (None, ["Fan #", "Model"])
+        sec_identity = (None, ["Fan #", "Model", "Size", "Air Flow (CMH)", "Static Pressure (mmwc)"])
         
         # 2. Weights
         sec_weights_attrs = ["Bare Weight (kg)", "Standard Acc Wt (kg)", "Custom Acc Wt (kg)", "Total Weight (kg)", "MS Weight (kg)", "SS Weight (kg)"]
@@ -354,6 +360,9 @@ class ExcelService:
             # Identity
             data_map["Fan #"] = fan_idx
             data_map["Model"] = specs.get('Fan Model')
+            data_map["Size"] = specs.get('Fan Size')
+            data_map["Air Flow (CMH)"] = specs.get('air_flow', '-')
+            data_map["Static Pressure (mmwc)"] = specs.get('static_pressure', '-')
             
             # Weights
             total_wt = get_val(weights, 'total_weight')

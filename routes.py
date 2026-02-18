@@ -22,22 +22,38 @@ logger = logging.getLogger(__name__)
 
 # == Define a helper normalization function at the top (after imports) ==
 def normalize_keys(spec: dict) -> dict:
-    # Always fallback/merge between snake_case and camelCase for accessories/optionals
+    """Ensure consistent keys across the specifications dictionary."""
     if not spec:
         return {}
-    keys_map = [
-        ('custom_accessories', 'customAccessories'),
-        ('optional_items', 'optionalItems'),
-        ('custom_accessory_costs', 'customAccessoryCosts'),
-        ('custom_optional_items', 'customOptionalItems'),
-    ]
+    
     normalized = dict(spec)
-    for snake, camel in keys_map:
-        # If one exists and the other doesn't, copy
-        if snake not in normalized and camel in normalized:
-            normalized[snake] = normalized[camel]
-        if camel not in normalized and snake in normalized:
-            normalized[camel] = normalized[snake]
+    
+    # Key mapping pairs (target_key, alternative_keys)
+    mappings = [
+        ('Fan Model', ['fan_model', 'Fan_Model']),
+        ('Fan Size', ['fan_size', 'Fan_Size']),
+        ('Class', ['class', 'fan_class']),
+        ('Arrangement', ['arrangement', 'fan_arrangement']),
+        ('custom_accessories', ['customAccessories']),
+        ('optional_items', ['optionalItems']),
+        ('custom_accessory_costs', ['customAccessoryCosts']),
+        ('custom_optional_items', ['customOptionalItems']),
+    ]
+    
+    for target, alternatives in mappings:
+        # Check if target exists; if not, look for alternatives
+        if target not in normalized or not normalized[target]:
+            for alt in alternatives:
+                if alt in normalized and normalized[alt]:
+                    normalized[target] = normalized[alt]
+                    break
+        
+        # Populate alternatives from target if target exists
+        if target in normalized and normalized[target]:
+            for alt in alternatives:
+                if alt not in normalized:
+                    normalized[alt] = normalized[target]
+                    
     return normalized
 
 def login_required(f):
@@ -197,15 +213,21 @@ def register_routes(app):
             logger.info(f"Received data: {data}")
             
             fan_data = {
-                'Fan Model': data['Fan_Model'],
+                'Fan Model': data.get('Fan Model') or data.get('Fan_Model') or data.get('fan_model'),
                 'Fan Size': data['Fan_Size'],
                 'Class': data['Class'],
                 'Arrangement': data['Arrangement'],
+                'Arrangement': data['Arrangement'],
+                'Arrangement': data['Arrangement'],
                 'vendor': data.get('vendor', 'TCF Factory'),
+                'vendor_rate': data.get('vendor_rate'),
+                'air_flow': data.get('air_flow'),
+                'static_pressure': data.get('static_pressure'),
                 'material': data.get('material', 'ms'),
                 'vibration_isolators': data.get('vibration_isolators', 'not_required'),
                 'fabrication_margin': float(data.get('fabrication_margin', 25) or 25),
                 'bought_out_margin': float(data.get('bought_out_margin', 25) or 25),
+                'ms_percentage': data.get('ms_percentage'),
                 'motor_brand': data.get('motor_brand', ''),
                 'motor_kw': data.get('motor_kw', ''),
                 'pole': data.get('pole', ''),
@@ -238,9 +260,23 @@ def register_routes(app):
                         fan_data[rate_key] = float(data[rate_key])
                 no_of_isolators = data.get('no_of_isolators')
                 shaft_diameter = data.get('shaft_diameter')
-            else:
-                no_of_isolators = None
-                shaft_diameter = None
+            
+            # Always allow manual override for shaft/isolators from frontend
+            # These might be sent as empty strings, so filter them
+            manual_isolators = data.get('no_of_isolators')
+            manual_shaft = data.get('shaft_diameter')
+            
+            # Helper to convert to int/float or None
+            def parse_manual_input(val, type_func):
+                if val is not None and str(val).strip():
+                    try:
+                        return type_func(val)
+                    except (ValueError, TypeError):
+                        return None
+                return None
+
+            manual_isolators = parse_manual_input(manual_isolators, int)
+            manual_shaft = parse_manual_input(manual_shaft, float)
             
             with get_db_connection() as conn:
                 cursor = conn.cursor()
@@ -249,22 +285,43 @@ def register_routes(app):
                 bare_fan_weight, db_no_of_isolators, db_shaft_diameter, total_weight, fan_error, accessory_details = calculate_fan_weight(
                     cursor, fan_data, selected_accessories
                 )
+
+                # Check for missing accessory weights
+                missing_accessories = []
+                for name, weight in accessory_details.items():
+                    if weight is None:
+                        missing_accessories.append(name)
                 
-                if fan_data['material'] == 'others':
-                    if no_of_isolators is None:
-                        no_of_isolators = db_no_of_isolators
-                    if shaft_diameter is None:
-                        shaft_diameter = db_shaft_diameter
-                else:
-                    no_of_isolators = db_no_of_isolators
-                    shaft_diameter = db_shaft_diameter
+                if missing_accessories:
+                    logger.warning(f"Missing weights for accessories: {missing_accessories}")
+                    return jsonify({
+                        'success': False, 
+                        'message': f"Weight data missing for: {', '.join(missing_accessories)}. Please use Custom Accessories for these items."
+                    }), 400
+                
+                # Logic for Isolators and Shaft Diameter:
+                # 1. Use manual input if provided
+                # 2. Else use DB value
+                # 3. Else fail if required (we can let calculation fail or return specific error)
+
+                no_of_isolators = manual_isolators if manual_isolators is not None else db_no_of_isolators
+                shaft_diameter = manual_shaft if manual_shaft is not None else db_shaft_diameter
+                
+                # Update total weight if it was None (should happen if bare fan weight is missing)
+                # calculate_fan_weight returns None for total_weight if bare_fan_weight is None
                 
                 if fan_error:
+                    # If specific error (like bare fan weight missing), return it
                     logger.error(f"Error in fan weight calculation: {fan_error}")
                     return jsonify({'success': False, 'message': fan_error}), 400
+
+                # Validate Shaft Diameter if needed for Bought Out (e.g. Bearings)
+                # For Arrangement 4, shaft diameter might not be strictly needed for bearings (embedded), 
+                # but might be needed for other checks.
+                # However, calculate_bought_out_components handles validation.
                 
                 # Calculate fabrication cost
-                fabrication_cost, total_weight, custom_weights, fab_error = calculate_fabrication_cost(cursor, fan_data, total_weight)
+                fabrication_cost, total_weight, custom_weights, rate_used, fab_error = calculate_fabrication_cost(cursor, fan_data, total_weight)
                 if fab_error:
                     logger.error(f"Error in fabrication cost calculation: {fab_error}")
                     return jsonify({'success': False, 'message': fab_error}), 400
@@ -322,6 +379,14 @@ def register_routes(app):
                     'bare_fan_weight': bare_fan_weight,
                     'accessory_weights': standard_accessory_weight + custom_accessory_weight,
                     'total_weight': total_weight,
+                    'weights': {
+                        'total_weight': total_weight,
+                        'bare_fan_weight': bare_fan_weight,
+                        'accessory_weight_details': accessory_details,
+                        'custom_weights': custom_weights,
+                        'shaft_diameter': shaft_diameter,
+                        'no_of_isolators': no_of_isolators
+                    },
                     'fabrication_cost': fabrication_cost,
                     'bought_out_cost': bought_out_cost,
                     'optional_items_cost': optional_items_cost,
@@ -342,7 +407,8 @@ def register_routes(app):
                     'discounted_motor_price': discounted_motor_price,
                     'motor_discount': motor_discount,
                     'no_of_isolators': no_of_isolators,
-                    'shaft_diameter': shaft_diameter
+                    'shaft_diameter': shaft_diameter,
+                    'vendor_rate': rate_used
                 }
                 
                 logger.info(f"Calculation response: {response_data}")
@@ -478,8 +544,11 @@ def register_routes(app):
                 logger.error("No JSON data received")
                 return jsonify({'error': 'No data received'}), 400
             
-            specifications = data.get('specifications', {})
+            specifications = normalize_keys(data.get('specifications', {}))
             motor = data.get('motor', {})
+            logger.info(f"Specifications keys: {list(specifications.keys())}")
+            logger.info(f"Fan Model in specs: '{specifications.get('Fan Model')}'")
+            logger.info(f"fan_model in specs: '{specifications.get('fan_model')}'")
             logger.info(f"Specifications: {specifications}")
             logger.info(f"Motor: {motor}")
             
@@ -493,7 +562,9 @@ def register_routes(app):
                     'Fan Size': specifications.get('Fan Size'),
                     'Class': specifications.get('Class'),
                     'Arrangement': specifications.get('Arrangement'),
+                    'Arrangement': specifications.get('Arrangement'),
                     'vendor': specifications.get('vendor', 'TCF Factory'),
+                    'vendor_rate': specifications.get('vendor_rate'), # Add this
                     'material': specifications.get('material', 'ms'),
                     'vibration_isolators': specifications.get('vibration_isolators', 'not_required'),
                     'fabrication_margin': float(specifications.get('fabrication_margin', 25) or 25),
@@ -555,7 +626,7 @@ def register_routes(app):
                 
                 # Calculate fabrication cost
                 logger.info(f"Calculating fabrication cost for vendor: {fan_data.get('vendor')}, material: {fan_data.get('material')}, weight: {total_weight}")
-                fabrication_cost, total_weight, custom_weights, fab_error = calculate_fabrication_cost(cursor, fan_data, total_weight)
+                fabrication_cost, total_weight, custom_weights, rate_used, fab_error = calculate_fabrication_cost(cursor, fan_data, total_weight)
                 if fab_error:
                     logger.error(f"Fabrication cost calculation error: {fab_error}")
                     return jsonify({'error': fab_error}), 400
@@ -602,13 +673,34 @@ def register_routes(app):
                 # Prepare data structures
                 weights = {
                     'bare_fan_weight': bare_fan_weight,
-                    'accessory_weight': sum(weight for name, weight in accessory_details.items() 
-                                         if name in ACCESSORY_NAME_MAP.values()),
+                    'accessory_weight': 0, # Calculated below
                     'total_weight': total_weight,
                     'no_of_isolators': no_of_isolators,
                     'shaft_diameter': shaft_diameter,
                     'accessory_weight_details': accessory_details
                 }
+                
+                # Validate accessory weights
+                missing_weight_accessories = []
+                total_acc_weight = 0
+                for name, weight in accessory_details.items():
+                    if name in ACCESSORY_NAME_MAP.values():
+                        if weight is None:
+                            missing_weight_accessories.append(name)
+                        else:
+                            total_acc_weight += weight
+                
+                if missing_weight_accessories:
+                    error_msg = f"Missing weight for accessories: {', '.join(missing_weight_accessories)}. Please add them as custom accessories or update the database."
+                    logger.error(error_msg)
+                    return jsonify({'error': error_msg}), 400
+
+                weights['accessory_weight'] = total_acc_weight
+                
+                # Check if we need to update total_weight if it was calculated with 0s before
+                # calculate_fan_weight returns total_weight which should already include found weights.
+                # If we error out above, we don't reach here. 
+                # If we are here, total_weight from calculate_fan_weight is valid for standard items.
                 
                 # total_cost equals total_raw_cost (optionals already inside BO)
                 total_cost = total_raw_cost
@@ -625,7 +717,7 @@ def register_routes(app):
                 fabrication_cost_breakdown = {}
                 try:
                     if total_weight and total_weight > 0 and fabrication_cost is not None:
-                        accessory_weight_total = sum(accessory_details.values()) if accessory_details else 0
+                        accessory_weight_total = sum((v or 0) for v in accessory_details.values()) if accessory_details else 0
                         fabrication_cost_breakdown = {
                             'base_fabrication_cost': fabrication_cost * ((bare_fan_weight or 0) / total_weight),
                             'accessories_fabrication_cost': fabrication_cost * ((accessory_weight_total or 0) / total_weight)
@@ -693,8 +785,10 @@ def register_routes(app):
                 'success': True,
                 'specifications': specifications,
                 'weights': weights,
+                'weights': weights,
                 'costs': costs,
-                'motor': motor_data
+                'motor': motor_data,
+                'vendor_rate': rate_used
             })
             
         except Exception as e:
@@ -832,7 +926,7 @@ def register_routes(app):
     def fan_calculator_page(enquiry_number, fan_number):
         """Render fan calculator page."""
         try:
-            from database import get_fan, get_project
+            from database import get_fan, get_project, get_all_vendor_rates
             import json
             
             # Get project info
@@ -847,13 +941,15 @@ def register_routes(app):
                 flash('Fan not found')
                 return redirect(url_for('index'))
             
-            # Load dropdown options
+            # Load dropdown options and vendor rates
             options = load_dropdown_options()
+            vendor_rates = get_all_vendor_rates()
             
             return render_template('fan_calculator.html', 
                                  project=project, 
                                  fan=fan, 
                                  fan_number=fan_number,
+                                 vendor_rates_json=json.dumps(vendor_rates),
                                  **options)
             
         except Exception as e:
@@ -877,26 +973,20 @@ def register_routes(app):
             
             logger.info(f"Project loaded successfully: {enquiry_number}, fans: {len(project.get('fans', []))}")
             
-            # Debug: Log fan specifications to see if custom material data is present
+            # Prepare fans for display with normalized keys and pre-calculated model/size
             for fan in project.get('fans', []):
-                # Normalize possible custom/optional keys
-                specs = fan.get('specifications', {}) or {}
-                # Custom accessories
-                custom_access = specs.get('custom_accessories') or specs.get('customAccessories') or {}
-                specs['custom_accessories'] = custom_access
-                if 'customAccessories' in specs: del specs['customAccessories']
-                # Optional items
-                optional_items = specs.get('optional_items') or specs.get('optionalItems') or {}
-                specs['optional_items'] = optional_items
-                if 'optionalItems' in specs: del specs['optionalItems']
-                # Custom accessory costs
-                costs = fan.get('costs', {}) or {}
-                custom_costs = costs.get('custom_accessory_costs') or costs.get('customAccessoryCosts') or {}
-                costs['custom_accessory_costs'] = custom_costs
-                if 'customAccessoryCosts' in costs: del costs['customAccessoryCosts']
-                # Save back normalized
+                # Normalize specifications
+                specs = normalize_keys(fan.get('specifications', {}) or {})
                 fan['specifications'] = specs
-                fan['costs'] = costs
+                
+                # Pre-calculate display model and size for robust UI rendering
+                fan['display_model'] = specs.get('Fan Model') or specs.get('fan_model') or '-'
+                fan['display_size'] = specs.get('Fan Size') or specs.get('fan_size') or ''
+                
+                # Normalize other nested structures
+                fan['costs'] = normalize_keys(fan.get('costs', {}) or {})
+                fan['weights'] = fan.get('weights', {}) or {}
+                fan['motor'] = fan.get('motor', {}) or {}
                 logger.info(f"Fan {fan.get('fan_number')} specifications: {fan.get('specifications', {})}")
                 if fan.get('specifications', {}).get('material') == 'others':
                     logger.info(f"Fan {fan.get('fan_number')} has material='others', checking for custom materials:")

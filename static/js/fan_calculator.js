@@ -3,100 +3,8 @@ let autosaveTimeout;
 let isDirty = false;
 let currentData = {};
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Vendor rate lookup table with weight ranges
-    const vendorRates = {
-        'TCF Factory': {
-            ms: [
-                { min: 0, max: 50, rate: 250 },
-                { min: 50, max: 100, rate: 240 },
-                { min: 100, max: 200, rate: 230 },
-                { min: 200, max: 500, rate: 220 },
-                { min: 500, max: 1000, rate: 210 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        },
-        'Air Master': {
-            ms: [
-                { min: 0, max: 50, rate: 225 },
-                { min: 50, max: 100, rate: 220 },
-                { min: 100, max: 200, rate: 215 },
-                { min: 200, max: 500, rate: 210 },
-                { min: 500, max: 1000, rate: 205 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        },
-        'Sri Sakthi': {
-            ms: [
-                { min: 0, max: 50, rate: 250 },
-                { min: 50, max: 100, rate: 240 },
-                { min: 100, max: 200, rate: 230 },
-                { min: 200, max: 500, rate: 220 },
-                { min: 500, max: 1000, rate: 210 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        },
-        'SLS': {
-            ms: [
-                { min: 0, max: 50, rate: 225 },
-                { min: 50, max: 100, rate: 220 },
-                { min: 100, max: 200, rate: 215 },
-                { min: 200, max: 500, rate: 210 },
-                { min: 500, max: 1000, rate: 205 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        },
-        'Bajaj Steel': {
-            ms: [
-                { min: 0, max: 50, rate: 250 },
-                { min: 50, max: 100, rate: 240 },
-                { min: 100, max: 200, rate: 230 },
-                { min: 200, max: 500, rate: 220 },
-                { min: 500, max: 1000, rate: 210 },
-                { min: 1000, max: 9999, rate: 200 }
-            ],
-            ss304: [
-                { min: 0, max: 50, rate: 600 },
-                { min: 50, max: 100, rate: 580 },
-                { min: 100, max: 200, rate: 560 },
-                { min: 200, max: 500, rate: 540 },
-                { min: 500, max: 1000, rate: 520 },
-                { min: 1000, max: 9999, rate: 500 }
-            ]
-        }
-    };
+document.addEventListener('DOMContentLoaded', function () {
+    const vendorRates = window.vendorRates;
 
     // Helper function to get rate based on weight range
     function getVendorRate(vendor, material, weight) {
@@ -108,14 +16,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!vendorRates[vendor] || !vendorRates[vendor][material]) {
             return 0;
         }
-        
+
         const ranges = vendorRates[vendor][material];
         for (const range of ranges) {
-            if (weight >= range.min && weight < range.max) {
+            if (weight >= range.min && weight <= range.max) {
                 return range.rate;
             }
         }
-        
+
         // If no range matches, return the last rate
         return ranges[ranges.length - 1].rate;
     }
@@ -123,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Helper function to show default rates
     function showDefaultRate(vendor, material, rateDisplay, weight = 100) {
         const rate = getVendorRate(vendor, material, weight);
-        
+
         rateDisplay.innerHTML = `
             <span class="rate-value">₹${rate.toFixed(2)}</span>
             <span class="rate-info">per kg</span>
@@ -134,33 +42,66 @@ document.addEventListener('DOMContentLoaded', function() {
     async function updateVendorRate() {
         const vendorSelect = document.getElementById('vendor');
         const materialSelect = document.getElementById('material');
-        const rateDisplay = document.getElementById('vendor-rate-display');
-        
-        if (!vendorSelect || !materialSelect || !rateDisplay) return;
-        
         const vendor = vendorSelect.value;
         const material = materialSelect.value;
-        
+        const rateDisplay = document.getElementById('vendor-rate'); // Changed ID
+
         if (!vendor || !material) {
-            rateDisplay.innerHTML = '<span class="rate-value">₹0.00</span><span class="rate-info">per kg</span>';
+            if (rateDisplay) rateDisplay.value = '0.00';
             return;
         }
-        
+
         // Handle "others" material case
         if (material === 'others') {
-            rateDisplay.innerHTML = '<span class="rate-value">Custom</span><span class="rate-info">per kg</span>';
+            // rateDisplay.value = 'Custom'; // Can't set 'Custom' to number input
             return;
         }
-        
+
+
         // Get current weight for rate calculation
         const totalWeight = parseFloat(document.getElementById('total_weight')?.value || 0);
-        const weight = totalWeight > 0 ? totalWeight : 100; // Default to 100kg if no weight
-        
+        const weight = totalWeight; // Use actual weight (0 if new fan)
+
         // Always show vendor rate based on weight ranges
         // This ensures the display updates when vendor changes
-        showDefaultRate(vendor, material, rateDisplay, weight);
+        // Always show vendor rate based on weight ranges
+        // This ensures the display updates when vendor changes
+        // Only update if current value is 0 or empty, OR if we want to enforce auto-update on dropdown change
+        // For better UX, if user changed vendor/material, we should likely update the rate
+        const rate = getVendorRate(vendor, material, weight);
+
+        // Only update if the field is empty or 0 (initial load/default), OR if triggered by user change
+        // We need a flag to know if it's a user action vs initial load
+        // For now, if value is present and non-zero, don't overwrite it blindly unless weight/material changed?
+        // Better approach: In initializeForm, set a flag 'initialLoadComplete'. 
+        // Or simply: check if the calculated rate is different from current? No, user might have custom rate.
+
+        // Revised Logic:
+        // If the current value in the input matches the *previous* calculated rate, update it.
+        // If the current value is custom (different from standard), KEEP IT.
+        // But how to know?
+
+        // Simplest Fix for "Per Kg Rate is 0":
+        // If the calculated rate is > 0, update it. 
+        // BUT, if we have a saved custom rate (e.g. 350) and standard is 85...
+        // The issue is updateVendorRate called on load overwrites 350 with 85 (or 0 if w=0).
+
+        // We should NOT call updateVendorRate on load if we have a value.
+        // `initializeForm` sets the value. `initializeVendorRateDisplay` calls `updateVendorRate`?
+
+        // Let's modify `updateVendorRate` to respect existing value if it's "custom"?
+        // No, difficult.
+
+        // Better: Remove `updateVendorRate` call from `initializeVendorRateDisplay` or make it conditional.
+        if (rate > 0) {
+            // Only overwrite if incorrect? No.
+            // If we are currently 0, update.
+            if (parseFloat(rateDisplay.value || 0) === 0) {
+                rateDisplay.value = rate.toFixed(2);
+            }
+        }
     }
-    
+
     // Make updateVendorRate globally available
     window.updateVendorRate = updateVendorRate;
 
@@ -200,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (res.ok && data.sizes) {
                 fanSizeSel.innerHTML = '<option value="">Select Fan Size</option>' + data.sizes.map(s => `<option value="${s}">${s}</option>`).join('');
             }
-        } catch {}
+        } catch { }
     });
 
     fanSizeSel?.addEventListener('change', async () => {
@@ -215,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (res.ok && data.classes) {
                 classSel.innerHTML = '<option value="">Select Class</option>' + data.classes.map(c => `<option value="${c}">${c}</option>`).join('');
             }
-        } catch {}
+        } catch { }
     });
 
     classSel?.addEventListener('change', async () => {
@@ -230,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (res.ok && data.arrangements) {
                 arrangementSel.innerHTML = '<option value="">Select Arrangement</option>' + data.arrangements.map(a => `<option value="${a}">${a}</option>`).join('');
             }
-        } catch {}
+        } catch { }
     });
 
     // Handle form changes
@@ -244,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function scheduleAutosave() {
         clearTimeout(autosaveTimeout);
         showAutosaveIndicator('saving');
-        
+
         autosaveTimeout = setTimeout(() => {
             if (isDirty) {
                 saveFan(true); // true = autosave
@@ -287,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Manual calculate without save
-    window.calculateFan = async function() {
+    window.calculateFan = async function () {
         const payload = buildPayloadFromForm();
         console.log('Payload being sent:', payload);
         console.log('Specifications in payload:', payload.specifications);
@@ -313,6 +254,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(document.getElementById('fan-calculator-form'));
         const specifications = {
             'Fan Model': formData.get('fan_model'),
+            'fan_tag': formData.get('fan_tag'),
+            'air_flow': formData.get('air_flow'),
+            'static_pressure': formData.get('static_pressure'),
             'Fan Size': formData.get('fan_size'),
             'Class': formData.get('class'),
             'Arrangement': formData.get('arrangement'),
@@ -322,9 +266,10 @@ document.addEventListener('DOMContentLoaded', function() {
             'fabrication_margin': parseFloat(formData.get('fabrication_margin')) || 25,
             'bought_out_margin': parseFloat(formData.get('bought_out_margin')) || 25,
             'bearing_brand': formData.get('bearing_brand') || 'SKF',
-            'drive_pack': formData.get('drive_pack') || ''
+            'drive_pack': formData.get('drive_pack') || '',
+            'vendor_rate': formData.get('vendor_rate')
         };
-        
+
         // Add MS percentage for mixed material
         if (specifications['material'] === 'mixed') {
             const msPercentage = parseFloat(formData.get('ms_percentage'));
@@ -335,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Standard accessories
         const accessories = {};
-        ['unitary_base_frame','isolation_base_frame','split_casing','inlet_companion_flange','outlet_companion_flange','inlet_butterfly_damper']
+        ['unitary_base_frame', 'isolation_base_frame', 'split_casing', 'inlet_companion_flange', 'outlet_companion_flange', 'inlet_butterfly_damper']
             .forEach(key => {
                 const checkbox = document.querySelector(`input[name="accessory_${key}"]`);
                 if (checkbox) accessories[key] = !!checkbox.checked;
@@ -371,11 +316,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`Material ${i}: name=${specifications[`material_name_${i}`]}, weight=${specifications[`material_weight_${i}`]}, rate=${specifications[`material_rate_${i}`]}`);
             }
             // Allow manual shaft/no_of_isolators for custom material
-            const shaft = formData.get('shaft_diameter');
-            const isolators = formData.get('no_of_isolators');
             if (shaft) specifications['shaft_diameter'] = shaft;
             if (isolators) specifications['no_of_isolators'] = isolators;
         }
+
+        // Capture global manual overrides if set (and not already captured by custom materials logic)
+        // Since we moved inputs out, they are always available in formData
+        if (!specifications['shaft_diameter']) {
+            specifications['shaft_diameter'] = formData.get('shaft_diameter');
+        }
+        if (!specifications['no_of_isolators']) {
+            specifications['no_of_isolators'] = formData.get('no_of_isolators');
+        }
+
+        // Capture Vendor Rate
+        specifications['vendor_rate'] = formData.get('vendor_rate');
 
         const motor = {
             'brand': formData.get('motor_brand'),
@@ -392,8 +347,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function showAutosaveIndicator(status) {
         const indicator = document.getElementById('autosave-indicator');
         indicator.className = `autosave-indicator show ${status}`;
-        
-        switch(status) {
+
+        switch (status) {
             case 'saving':
                 indicator.textContent = 'Auto-saving...';
                 break;
@@ -413,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Custom accessories UI handlers
-    window.addCustomAccessory = function() {
+    window.addCustomAccessory = function () {
         const name = document.getElementById('ca-name').value.trim();
         const weight = parseFloat(document.getElementById('ca-weight').value || '0');
         if (!name || !(weight > 0)) return;
@@ -429,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Optional items UI handlers
-    window.addOptionalItem = function() {
+    window.addOptionalItem = function () {
         const name = document.getElementById('oi-name').value.trim();
         const price = parseFloat(document.getElementById('oi-price').value || '0');
         if (!name || !(price > 0)) return;
@@ -445,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Standard optional item (dropdown + price)
-    window.addStandardOptionalItem = function() {
+    window.addStandardOptionalItem = function () {
         const key = document.getElementById('oi-standard').value;
         const price = parseFloat(document.getElementById('oi-standard-price').value || '0');
         if (!key || !(price > 0)) return;
@@ -474,9 +429,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.fanData && window.fanData.specifications) {
             const specs = window.fanData.specifications;
             const motor = window.fanData.motor || {};
-            
+
             // Set form values
             setFormValue('fan_model', specs['Fan Model']);
+            setFormValue('fan_tag', specs['fan_tag']);
+            setFormValue('air_flow', specs['air_flow']);
+            setFormValue('static_pressure', specs['static_pressure']);
             setFormValue('fan_size', specs['Fan Size']);
             setFormValue('class', specs['Class']);
             setFormValue('arrangement', specs['Arrangement']);
@@ -490,6 +448,11 @@ document.addEventListener('DOMContentLoaded', function() {
             setFormValue('motor_discount', motor['discount']);
             setFormValue('fabrication_margin', specs['fabrication_margin']);
             setFormValue('bought_out_margin', specs['bought_out_margin']);
+
+            // Set vendor rate if available in specs (custom saved rate)
+            if (specs['vendor_rate']) {
+                setFormValue('vendor-rate', specs['vendor_rate']);
+            }
         }
     }
 
@@ -502,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Save fan data
-    window.saveFan = async function(isAutosave = false) {
+    window.saveFan = async function (isAutosave = false) {
         if (!isDirty && !isAutosave) {
             showMessage('No changes to save', 'success');
             return;
@@ -524,7 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok && result.success) {
                 isDirty = false;
                 currentData = result;
-                
+
                 if (isAutosave) {
                     showAutosaveIndicator('saved');
                 } else {
@@ -549,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Add fan to project
-    window.addToProject = async function() {
+    window.addToProject = async function () {
         try {
             const response = await fetch(`/api/projects/${window.projectData.enquiry_number}/fans/${window.fanNumber}/add-to-project`, {
                 method: 'POST',
@@ -573,7 +536,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Navigate to another fan
-    window.navigateToFan = function(fanNumber) {
+    window.navigateToFan = function (fanNumber) {
         if (fanNumber < 1 || fanNumber > window.projectData.total_fans) {
             return;
         }
@@ -596,26 +559,48 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayCalculationResults(data) {
         const resultsDiv = document.getElementById('calculation-results');
         const contentDiv = document.getElementById('results-content');
-        
+
         if (data.weights && data.costs) {
+            // Update hidden total_weight input
+            const totalWeightInput = document.getElementById('total_weight');
+            if (totalWeightInput) {
+                totalWeightInput.value = data.weights.total_weight || 0;
+            }
+
+            // Update Shaft Diameter and Isolators inputs (Auto-fill from DB or calculation result)
+            if (data.weights.shaft_diameter !== undefined && data.weights.shaft_diameter !== null) {
+                const shaftInput = document.getElementById('shaft_diameter');
+                if (shaftInput) shaftInput.value = data.weights.shaft_diameter;
+            }
+            if (data.weights.no_of_isolators !== undefined && data.weights.no_of_isolators !== null) {
+                const isolatorInput = document.getElementById('no_of_isolators');
+                if (isolatorInput) isolatorInput.value = data.weights.no_of_isolators;
+            }
+
+            // Update vendor rate if provided
+            if (data.vendor_rate !== undefined && data.vendor_rate !== null) {
+                const vendorRateInput = document.getElementById('vendor-rate');
+                if (vendorRateInput) vendorRateInput.value = data.vendor_rate;
+            }
+
             const c = data.costs || {};
             // Build accessories detail list
             const accW = data.weights.accessory_weight_details || {};
-            const accLines = Object.entries(accW).map(([name, wt]) => `<tr><td>${name}</td><td style="text-align:right">${(wt||0).toFixed(2)} kg</td></tr>`).join('');
+            const accLines = Object.entries(accW).map(([name, wt]) => `<tr><td>${name}</td><td style="text-align:right">${(wt || 0).toFixed(2)} kg</td></tr>`).join('');
 
             // Optional items detail table
             const opt = (c.optional_items_detail || {});
-            const optLines = Object.entries(opt).map(([name, price]) => `<tr><td>${name}</td><td style="text-align:right">₹${(price||0).toFixed(2)}</td></tr>`).join('');
+            const optLines = Object.entries(opt).map(([name, price]) => `<tr><td>${name}</td><td style="text-align:right">₹${(price || 0).toFixed(2)}</td></tr>`).join('');
 
             // Accessory cost estimates (from backend; fabrication share)
             const accC = Object.assign({}, c.accessory_cost_estimates || {});
             // Merge true custom accessory costs if provided by backend
             if (c.custom_accessory_costs) {
-                for (const [k,v] of Object.entries(c.custom_accessory_costs)) {
+                for (const [k, v] of Object.entries(c.custom_accessory_costs)) {
                     accC[k] = (v && v.cost) ? v.cost : (typeof v === 'number' ? v : 0);
                 }
             }
-            const accCostLines = Object.entries(accC).map(([name, price]) => `<tr><td>${name}</td><td style="text-align:right">₹${(price||0).toFixed(2)}</td></tr>`).join('');
+            const accCostLines = Object.entries(accC).map(([name, price]) => `<tr><td>${name}</td><td style="text-align:right">₹${(price || 0).toFixed(2)}</td></tr>`).join('');
 
             // Custom materials detail (if material is 'others')
             let customMaterialsHtml = '';
@@ -627,9 +612,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const name = document.getElementById(`material_name_${i}`)?.value;
                     const weight = parseFloat(document.getElementById(`material_weight_${i}`)?.value || 0);
                     const rate = parseFloat(document.getElementById(`material_rate_${i}`)?.value || 0);
-                    
+
                     console.log(`Material ${i}: name=${name}, weight=${weight}, rate=${rate}`);
-                    
+
                     if (name && weight > 0 && rate > 0) {
                         const totalCost = weight * rate;
                         customMaterials.push({
@@ -641,9 +626,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 console.log('Found custom materials:', customMaterials);
-                
+
                 if (customMaterials.length > 0) {
-                    const customMaterialLines = customMaterials.map(mat => 
+                    const customMaterialLines = customMaterials.map(mat =>
                         `<tr>
                             <td>${mat.name}</td>
                             <td style="text-align:right">${mat.weight.toFixed(2)} kg</td>
@@ -651,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td style="text-align:right">₹${mat.totalCost.toFixed(2)}</td>
                         </tr>`
                     ).join('');
-                    
+
                     customMaterialsHtml = `
                         <div>
                             <h4>Custom Materials Detail</h4>
@@ -685,7 +670,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h4>Fabrication & Totals</h4>
                         <p><strong>Fabrication Cost:</strong> ₹${(c.fabrication_cost || 0).toFixed(2)}</p>
                         <p><strong>Bought Out Cost:</strong> ₹${(c.bought_out_cost || 0).toFixed(2)}</p>
-                        <p><strong>Total Cost:</strong> ₹${(c.total_cost || ((c.fabrication_cost||0)+(c.bought_out_cost||0))).toFixed(2)}</p>
+                        <p><strong>Total Cost:</strong> ₹${(c.total_cost || ((c.fabrication_cost || 0) + (c.bought_out_cost || 0))).toFixed(2)}</p>
                         <p><strong>Optional Items:</strong> ₹${(c.optional_items_cost || 0).toFixed(2)}</p>
                         <p><strong>Total Selling Price:</strong> ₹${(c.total_selling_price || 0).toFixed(2)}</p>
                         <p><strong>Fabrication Selling Price:</strong> ₹${(c.fabrication_selling_price || 0).toFixed(2)}</p>
@@ -719,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${customMaterialsHtml ? `<div style="margin-top:16px;">${customMaterialsHtml}</div>` : ''}
             `;
             resultsDiv.style.display = 'block';
-            
+
             // Update vendor rate display after calculation
             if (window.updateVendorRate) {
                 window.updateVendorRate();
@@ -732,7 +717,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusElement = document.getElementById('fan-status');
         statusElement.textContent = status;
         statusElement.className = `fan-status status-${status}`;
-        
+
         // Update sidebar
         const fanListItem = document.querySelector(`.fan-list li:nth-child(${window.fanNumber})`);
         if (fanListItem) {
@@ -744,7 +729,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showMessage(message, type) {
         const errorDiv = document.getElementById('error-message');
         const successDiv = document.getElementById('success-message');
-        
+
         if (type === 'error') {
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
@@ -754,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
             successDiv.style.display = 'block';
             errorDiv.style.display = 'none';
         }
-        
+
         // Auto-hide success messages
         if (type === 'success') {
             setTimeout(() => {
@@ -767,12 +752,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.fanData && window.fanData.weights && window.fanData.costs) {
         displayCalculationResults(window.fanData);
     }
-    
+
     // Initialize vendor rate display
     initializeVendorRateDisplay();
 
     // Warn before leaving page with unsaved changes
-    window.addEventListener('beforeunload', function(e) {
+    window.addEventListener('beforeunload', function (e) {
         if (isDirty) {
             e.preventDefault();
             e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
@@ -783,12 +768,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeVendorRateDisplay() {
         const vendorSelect = document.getElementById('vendor');
         const materialSelect = document.getElementById('material');
-        
+
         if (vendorSelect && materialSelect) {
             // Add event listeners
             vendorSelect.addEventListener('change', updateVendorRate);
             materialSelect.addEventListener('change', updateVendorRate);
-            
+
             // Initial update
             updateVendorRate();
         }

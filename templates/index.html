@@ -11,194 +11,68 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-600: #1d4ed8;
-            --text: #1e293b;
-            --muted: #64748b;
-            --border: #e2e8f0;
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --radius: 12px;
-        }
-
-        .container {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .header h1 {
-            color: var(--text);
-            margin-bottom: 8px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .header p {
-            color: var(--muted);
-        }
-
-        .form-section {
-            background: var(--surface);
-            padding: 32px;
-            border-radius: var(--radius);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-            border: 1px solid var(--border);
-            margin-bottom: 20px;
-        }
-
-        .form-section h2 {
-            margin: 0 0 20px 0;
-            color: var(--text);
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 8px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px 24px;
-        }
-
-        .form-group {
-            margin-bottom: 0;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .hint {
-            color: var(--muted);
-            font-size: 12px;
-            margin-top: 6px;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px 14px;
-            font-size: 14px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #fff;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-        }
-
-        .required::after {
-            content: " *";
-            color: #ef4444;
-        }
-
-        .form-actions {
-            margin-top: 24px;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .btn {
-            padding: 12px 18px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-600);
-        }
-
-        .load-section {
-            margin-top: 24px;
-        }
-
-        .load-section h3 {
-            margin: 0 0 12px 0;
-            color: var(--text);
-        }
-
-        @media (max-width: 768px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-actions {
-                justify-content: center;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_style.css') }}">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
     <div class="container">
-        <div class="header">
-            <h1>TCF Fan Pricing Tool v7.0</h1>
-            <p>Enter enquiry details to start pricing your fans</p>
+        <div class="modern-header">
+            <h1>
+                <span class="material-icons-round">wind_power</span>
+                TCF Fan Pricing Tool <span style="font-size: 0.6em; opacity: 0.7; margin-left: 10px;">v7.0</span>
+            </h1>
+            <p class="header-subtitle">Enter enquiry details to start pricing your fans</p>
         </div>
 
-        <div class="form-section">
-            <h2>Enquiry Details</h2>
+        <div class="section">
+            <h2 class="text-center">Enquiry Details</h2>
             <form id="enquiry-form">
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label for="enquiry_number" class="required">Enquiry Number</label>
-                        <input type="text" id="enquiry_number" name="enquiry_number" required>
-                        <div class="hint">Unique enquiry ID, e.g. TCF-2025-001</div>
+                    <div class="input-group">
+                        <label for="enquiry_number">Enquiry Number <span class="text-error">*</span></label>
+                        <input type="text" id="enquiry_number" name="enquiry_number" required
+                            placeholder="e.g. TCF-2025-001">
                     </div>
 
-                    <div class="form-group">
-                        <label for="customer_name" class="required">Customer Name</label>
-                        <input type="text" id="customer_name" name="customer_name" required>
+                    <div class="input-group">
+                        <label for="customer_name">Customer Name <span class="text-error">*</span></label>
+                        <input type="text" id="customer_name" name="customer_name" required
+                            placeholder="Enter customer name">
                     </div>
 
-                    <div class="form-group">
-                        <label for="sales_engineer" class="required">Sales Engineer</label>
+                    <div class="input-group">
+                        <label for="sales_engineer">Sales Engineer <span class="text-error">*</span></label>
                         <select id="sales_engineer" name="sales_engineer" required>
                             <option value="">Select Sales Engineer</option>
                         </select>
-                        <div class="hint">Pick from your team list</div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="total_fans" class="required">Number of Fans</label>
-                        <input type="number" id="total_fans" name="total_fans" min="1" required>
-                        <div class="hint">We’ll create that many calculators</div>
+                    <div class="input-group">
+                        <label for="total_fans">Number of Fans <span class="text-error">*</span></label>
+                        <input type="number" id="total_fans" name="total_fans" min="1" required
+                            placeholder="Total quantity">
                     </div>
                 </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Create Project & Start Calculator</button>
+                <div class="button-group">
+                    <button type="submit" class="btn">
+                        <span class="material-icons-round">add_circle</span>
+                        Create Project & Start Calculator
+                    </button>
                 </div>
             </form>
 
-            <div id="error-message" class="error-message" style="display: none;"></div>
-            <div id="success-message" class="success-message" style="display: none;"></div>
+            <div id="error-message" class="alert alert-error" style="display: none; margin-top: 20px;"></div>
+            <div id="success-message" class="alert alert-success" style="display: none; margin-top: 20px;"></div>
         </div>
 
-        <div class="form-section load-section">
-            <h3>Load Existing Enquiry</h3>
-            <div class="form-group">
+        <div class="section">
+            <h3 class="text-center">Load Existing Enquiry</h3>
+            <div class="input-group" style="max-width: 600px; margin: 0 auto;">
                 <label for="saved-enquiries">Saved Enquiries</label>
                 <select id="saved-enquiries">
                     <option value="">Select an enquiry...</option>

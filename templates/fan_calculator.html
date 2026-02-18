@@ -10,382 +10,25 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1000, 9999) | random }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_style.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --secondary-color: #64748b;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --background: #f8fafc;
-            --surface: #ffffff;
-            --surface-elevated: #ffffff;
-            --border: #e2e8f0;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --radius-sm: 6px;
-            --radius-md: 8px;
-            --radius-lg: 12px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--background);
-            color: var(--text-primary);
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-
-        .header {
-            background: var(--surface-elevated);
-            padding: 32px;
+        /* Custom overrides specific to calculator if needed */
+        .rate-display {
+            background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
+            color: white;
+            padding: var(--space-4);
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            margin-bottom: 24px;
-            border: 1px solid var(--border);
-        }
-
-        .header h1 {
-            color: var(--text-primary);
-            margin: 0 0 16px 0;
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-        }
-
-        .project-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-
-        .project-info div {
-            padding: 16px;
-            background: var(--background);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-        }
-
-        .project-info strong {
-            color: var(--text-primary);
-            font-weight: 600;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .project-info span {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .fan-navigation {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-        }
-
-        .fan-nav-buttons {
-            display: flex;
-            gap: 12px;
-        }
-
-        .fan-status {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .status-draft {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-added {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 24px;
-        }
-
-        .calculator-section {
-            background: var(--surface-elevated);
-            padding: 32px;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--border);
-        }
-
-        .calculator-section h3 {
-            margin-top: 0;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--border);
-            color: var(--text-primary);
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: -0.025em;
-        }
-
-        .calculator-section h4 {
-            margin-top: 24px;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .sidebar {
-            background: var(--surface-elevated);
-            padding: 24px;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            height: fit-content;
-            border: 1px solid var(--border);
-        }
-
-        /* Compact two-column layout for key selects */
-        .form-grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px 20px;
-            align-items: end;
-        }
-
-        @media (max-width: 900px) {
-            .form-grid-2 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .sidebar h3 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            color: var(--text-primary);
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            font-size: 14px;
-            background: var(--surface);
-            color: var(--text-primary);
-            transition: all 0.2s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-        }
-
-        .form-group input:hover,
-        .form-group select:hover {
-            border-color: var(--primary-color);
-        }
-
-        .required::after {
-            content: " *";
-            color: var(--danger-color);
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
             text-align: center;
-            transition: all 0.2s ease;
-            margin: 4px;
-            min-height: 44px;
-            letter-spacing: 0.025em;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
             box-shadow: var(--shadow-md);
         }
 
-        .btn-success {
-            background-color: var(--success-color);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background-color: #059669;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-secondary {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #475569;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-outline {
-            background-color: transparent;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background-color: var(--primary-color);
-            color: white;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-            flex-wrap: wrap;
-        }
-
-        .fan-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .fan-list li {
-            padding: 16px;
-            margin-bottom: 8px;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid var(--border);
-            font-weight: 500;
-        }
-
-        .fan-list li:hover {
-            background-color: var(--background);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .fan-list li.current {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .fan-list li.added {
-            background-color: #d1fae5;
-            color: #065f46;
-            border-color: #a7f3d0;
-        }
-
-        .fan-list li.draft {
-            background-color: #fef3c7;
-            color: #92400e;
-            border-color: #fde68a;
-        }
-
-        .calculation-results {
-            margin-top: 24px;
-            padding: 24px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            background: var(--background);
-        }
-
-        .calculation-results h3 {
-            margin-top: 0;
-            color: var(--text-primary);
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .calculation-results p {
-            margin: 8px 0;
-            font-size: 16px;
-            color: var(--text-primary);
-        }
-
-        .error-message {
-            color: var(--danger-color);
-            margin-top: 12px;
-            padding: 16px;
-            background-color: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: var(--radius-md);
-            font-weight: 500;
-        }
-
-        .success-message {
-            color: #065f46;
-            margin-top: 12px;
-            padding: 16px;
-            background-color: #d1fae5;
-            border: 1px solid #a7f3d0;
-            border-radius: var(--radius-md);
-            font-weight: 500;
+        .rate-value {
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            display: block;
         }
 
         .autosave-indicator {
@@ -393,10 +36,9 @@
             top: 24px;
             right: 24px;
             padding: 12px 20px;
-            background-color: var(--secondary-color);
+            background-color: var(--secondary-500);
             color: white;
             border-radius: var(--radius-md);
-            font-size: 14px;
             font-weight: 500;
             opacity: 0;
             transition: all 0.3s ease;
@@ -409,173 +51,16 @@
         }
 
         .autosave-indicator.saving {
-            background-color: var(--warning-color);
-            color: #000;
+            background-color: var(--warning-500);
+            color: black;
         }
 
         .autosave-indicator.saved {
-            background-color: var(--success-color);
+            background-color: var(--success-500);
         }
 
         .autosave-indicator.error {
-            background-color: var(--danger-color);
-        }
-
-        /* Checkbox styling */
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--primary-color);
-            margin-right: 8px;
-        }
-
-        /* Grid layouts for accessories */
-        .accessories-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .accessory-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px;
-            background: var(--background);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            transition: all 0.2s ease;
-        }
-
-        .accessory-item:hover {
-            background: var(--surface);
-            border-color: var(--primary-color);
-        }
-
-        .accessory-item input[type="checkbox"] {
-            margin: 0;
-        }
-
-        .accessory-item label {
-            margin: 0;
-            font-weight: 500;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        /* Custom accessories and optional items */
-        .custom-section {
-            background: var(--background);
-            padding: 20px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-            margin-bottom: 20px;
-        }
-
-        .custom-section h4 {
-            margin-top: 0;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .custom-input-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .custom-list {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .custom-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            margin-bottom: 8px;
-        }
-
-        .custom-item span {
-            font-weight: 500;
-        }
-
-        .custom-item button {
-            padding: 6px 12px;
-            font-size: 12px;
-            background: var(--danger-color);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-        }
-
-        /* Responsive design */
-        @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 16px;
-            }
-
-            .header {
-                padding: 20px;
-            }
-
-            .calculator-section {
-                padding: 20px;
-            }
-
-            .project-info {
-                grid-template-columns: 1fr;
-            }
-
-            .fan-navigation {
-                flex-direction: column;
-                gap: 16px;
-            }
-        }
-
-        .rate-display {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .rate-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .rate-info {
-            font-size: 0.9rem;
-            opacity: 0.9;
+            background-color: var(--error-500);
         }
     </style>
 </head>
@@ -584,45 +69,97 @@
     <div class="autosave-indicator" id="autosave-indicator">Auto-saving...</div>
 
     <div class="container">
-        <div class="header">
-            <h1>Fan {{ fan_number }} Calculator</h1>
-            <div class="project-info">
+        <div class="modern-header">
+            <h1>
+                <span class="material-icons-round">calculate</span>
+                Fan {{ fan_number }} Calculator
+            </h1>
+            <p class="header-subtitle">Configure specifications for this fan</p>
+        </div>
+
+        <div class="section">
+            <div class="form-grid"
+                style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: center;">
                 <div>
-                    <strong>Enquiry:</strong> {{ project.enquiry_number }}<br>
-                    <strong>Customer:</strong> {{ project.customer_name }}
+                    <label>Enquiry</label>
+                    <div class="text-lg" style="font-weight: 700;">{{ project.enquiry_number }}</div>
                 </div>
                 <div>
-                    <strong>Sales Engineer:</strong> {{ project.sales_engineer }}<br>
-                    <strong>Total Fans:</strong> {{ project.total_fans }}
+                    <label>Customer</label>
+                    <div class="text-lg">{{ project.customer_name }}</div>
                 </div>
                 <div>
-                    <strong>Status:</strong> <span class="fan-status status-{{ fan.status }}" id="fan-status">{{
-                        fan.status }}</span>
+                    <label>Sales Engineer</label>
+                    <div class="text-lg">{{ project.sales_engineer }}</div>
+                </div>
+                <div>
+                    <label>Total Fans</label>
+                    <div class="text-lg">{{ project.total_fans }}</div>
+                </div>
+                <div>
+                    <label>Status</label>
+                    <div>
+                        <span class="fan-status status-{{ fan.status }}" id="fan-status"
+                            style="padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.9em; display: inline-block; background-color: var(--primary-100); color: var(--primary-800);">
+                            {{ fan.status|title }}
+                        </span>
+                    </div>
                 </div>
             </div>
-            <div class="fan-navigation">
-                <div class="fan-nav-buttons">
+
+            <div class="button-group"
+                style="margin-top: 20px; justify-content: space-between; border-top: 1px solid var(--gray-200); padding-top: 20px;">
+                <div class="fan-nav-buttons" style="display: flex; gap: 10px;">
                     <button class="btn btn-outline" onclick="navigateToFan({{ fan_number - 1 }})" {{ 'disabled' if
                         fan_number <=1 else '' }}>
-                        ← Previous Fan
+                        <span class="material-icons-round">arrow_back</span> Previous Fan
                     </button>
                     <button class="btn btn-outline" onclick="navigateToFan({{ fan_number + 1 }})" {{ 'disabled' if
                         fan_number>= project.total_fans else '' }}>
-                        Next Fan →
+                        Next Fan <span class="material-icons-round">arrow_forward</span>
                     </button>
                 </div>
                 <div>
-                    <a href="/enquiries/{{ project.enquiry_number }}/summary" class="btn btn-secondary">View Summary</a>
+                    <a href="/enquiries/{{ project.enquiry_number }}/summary" class="btn btn-secondary">
+                        <span class="material-icons-round">assignment</span> View Summary
+                    </a>
                 </div>
             </div>
         </div>
 
-        <div class="main-content">
-            <div class="calculator-section">
+        <div class="main-content" style="display: grid; grid-template-columns: 1fr 300px; gap: 24px;">
+            <div class="section">
                 <form id="fan-calculator-form">
+                    <input type="hidden" id="total_weight" name="total_weight"
+                        value="{{ fan.weights.get('total_weight', 0) }}">
                     <!-- Fan Specifications -->
-                    <h3>Fan Specifications</h3>
-                    <div class="form-grid-2">
+                    <h3
+                        style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px; margin-bottom: 24px;">
+                        <span class="material-icons-round">settings</span> Fan Specifications
+                    </h3>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="fan_tag">Fan Tag</label>
+                            <input type="text" id="fan_tag" name="fan_tag"
+                                value="{{ fan.specifications.get('fan_tag', '') }}" placeholder="e.g. AHU-01"
+                                style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="air_flow">Air Flow (CMH)</label>
+                            <input type="number" id="air_flow" name="air_flow" step="0.1"
+                                value="{{ fan.specifications.get('air_flow', '') }}" placeholder="e.g. 15000"
+                                style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="static_pressure">Static Pressure (mmwc)</label>
+                            <input type="number" id="static_pressure" name="static_pressure" step="0.1"
+                                value="{{ fan.specifications.get('static_pressure', '') }}" placeholder="e.g. 50"
+                                style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;">
+                        </div>
+
                         <div class="form-group">
                             <label for="fan_model" class="required">Fan Model</label>
                             <div style="display: flex; gap: 8px;">
@@ -634,7 +171,9 @@
                                     {% endfor %}
                                 </select>
                                 <button type="button" class="btn btn-outline" onclick="openAddFanModelModal()"
-                                    style="white-space: nowrap;">+ Add New</button>
+                                    style="white-space: nowrap; padding: 0 16px;">
+                                    <span class="material-icons-round" style="font-size: 1.2em;">add</span> New
+                                </button>
                             </div>
                         </div>
 
@@ -672,50 +211,81 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="vendor">Vendor</label>
-                        <select id="vendor" name="vendor">
-                            {% for vendor in vendors %}
-                            <option value="{{ vendor }}" {{ 'selected' if fan.specifications.get('vendor')==vendor or
-                                (not fan.specifications.get('vendor') and vendor=='TCF Factory' ) else '' }}>{{ vendor
-                                }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="vendor">Vendor</label>
+                            <select id="vendor" name="vendor">
+                                {% for vendor in vendors %}
+                                <option value="{{ vendor }}" {{ 'selected' if fan.specifications.get('vendor')==vendor
+                                    or (not fan.specifications.get('vendor') and vendor=='TCF Factory' ) else '' }}>{{
+                                    vendor }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="material">Material</label>
+                            <select id="material" name="material">
+                                <option value="ms" {{ 'selected' if fan.specifications.get('material')=='ms' else '' }}>
+                                    MS</option>
+                                <option value="ss304" {{ 'selected' if fan.specifications.get('material')=='ss304'
+                                    else '' }}>SS304</option>
+                                <option value="mixed" {{ 'selected' if fan.specifications.get('material')=='mixed'
+                                    else '' }}>Mixed</option>
+                                <option value="others" {{ 'selected' if fan.specifications.get('material')=='others'
+                                    else '' }}>Others</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="mixed-material-section" style="display:none;">
+                            <label for="ms_percentage" class="required">MS Percentage (%)</label>
+                            <input type="number" id="ms_percentage" name="ms_percentage" min="1" max="99" step="1"
+                                value="{{ fan.specifications.get('ms_percentage', '') }}">
+                            <small class="form-text text-muted"
+                                style="display: block; margin-top: 4px; font-size: 0.85em; color: var(--gray-500);">Remaining
+                                percentage will be SS304.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vendor-rate">Per Kg Rate (₹)</label>
+                            <input type="number" step="0.01" id="vendor-rate" name="vendor_rate"
+                                value="{{ fan.specifications.get('vendor_rate', '') }}"
+                                style="font-weight: 700; color: var(--success-700); background-color: var(--success-50); border-color: var(--success-200);">
+                            <small class="form-text" style="color: var(--gray-500); font-size: 0.85em;">Auto-calculated,
+                                editable</small>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="material">Material</label>
-                        <select id="material" name="material">
-                            <option value="ms" {{ 'selected' if fan.specifications.get('material')=='ms' else '' }}>MS
-                            </option>
-                            <option value="ss304" {{ 'selected' if fan.specifications.get('material')=='ss304' else ''
-                                }}>SS304</option>
-                            <option value="mixed" {{ 'selected' if fan.specifications.get('material')=='mixed' else ''
-                                }}>Mixed</option>
-                            <option value="others" {{ 'selected' if fan.specifications.get('material')=='others' else ''
-                                }}>Others</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" id="mixed-material-section" style="display:none;">
-                        <label for="ms_percentage" class="required">MS Percentage (%)</label>
-                        <input type="number" id="ms_percentage" name="ms_percentage" min="1" max="99" step="1"
-                            value="{{ fan.specifications.get('ms_percentage', '') }}">
-                        <small class="form-text text-muted">Remaining percentage will be SS304.</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="vendor-rate-display">Per Kg Rate</label>
-                        <div id="vendor-rate-display" class="rate-display">
-                            <span class="rate-value">₹0.00</span>
-                            <span class="rate-info">per kg</span>
+                    <!-- Shaft & Isolators (Global Manual Overrides) -->
+                    <div class="form-grid"
+                        style="grid-template-columns: 1fr 1fr; margin-top: 16px; background-color: var(--gray-50); padding: 12px; border-radius: 8px;">
+                        <div class="form-group">
+                            <label for="shaft_diameter">Shaft Diameter (mm)</label>
+                            <input type="number" step="0.01" id="shaft_diameter" name="shaft_diameter"
+                                value="{{ fan.weights.get('shaft_diameter', '') if fan.weights else '' }}"
+                                placeholder="Auto-filled from DB">
+                            <small class="form-text" style="color: var(--gray-500); font-size: 0.85em;">Enter manually
+                                if
+                                missing in DB</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="no_of_isolators">No. of Isolators</label>
+                            <input type="number" id="no_of_isolators" name="no_of_isolators"
+                                value="{{ fan.weights.get('no_of_isolators', '') if fan.weights else '' }}"
+                                placeholder="Auto-filled from DB">
+                            <small class="form-text" style="color: var(--gray-500); font-size: 0.85em;">Enter manually
+                                if
+                                missing in DB</small>
                         </div>
                     </div>
 
                     <!-- Fabrication Section -->
-                    <h3>Fabrication</h3>
+                    <h3
+                        style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px; margin-bottom: 24px; margin-top: 32px;">
+                        <span class="material-icons-round">build</span> Fabrication
+                    </h3>
 
-                    <h4>Accessories</h4>
+                    <h4 style="margin-bottom: 16px; color: var(--gray-700);">Accessories</h4>
                     <div class="accessories-grid">
                         {% set accs = [
                         ['unitary_base_frame','Unitary Base Frame'],
@@ -736,10 +306,10 @@
                     </div>
 
                     <!-- Custom Material Inputs (visible when material == others) -->
-                    <div id="custom-materials-section" style="display:none;">
-                        <h4>Custom Materials</h4>
+                    <div id="custom-materials-section" style="display:none; margin-top: 24px;">
+                        <h4 style="margin-bottom: 16px; color: var(--gray-700);">Custom Materials</h4>
                         {% for i in range(0,5) %}
-                        <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                        <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 12px;">
                             <div>
                                 <label for="material_name_{{ i }}">Material {{ i+1 }} Name</label>
                                 <input type="text" id="material_name_{{ i }}" name="material_name_{{ i }}"
@@ -758,27 +328,16 @@
                             </div>
                         </div>
                         {% endfor %}
-
-                        <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                            <div>
-                                <label for="shaft_diameter">Shaft Diameter (mm)</label>
-                                <input type="number" step="0.01" id="shaft_diameter" name="shaft_diameter"
-                                    value="{{ fan.weights.get('shaft_diameter', '') if fan.weights else '' }}">
-                            </div>
-                            <div>
-                                <label for="no_of_isolators">No. of Isolators</label>
-                                <input type="number" id="no_of_isolators" name="no_of_isolators"
-                                    value="{{ fan.weights.get('no_of_isolators', '') if fan.weights else '' }}">
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Bought Out Section -->
-                    <h3>Bought Out</h3>
+                    <h3
+                        style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px; margin-bottom: 24px; margin-top: 32px;">
+                        <span class="material-icons-round">shopping_cart</span> Bought Out
+                    </h3>
 
-                    <!-- Motor Specifications -->
-                    <h4>Motor Specifications</h4>
-                    <div class="form-grid-2x3">
+                    <h4 style="margin-bottom: 16px; color: var(--gray-700);">Motor Specifications</h4>
+                    <div class="form-grid">
                         <div class="form-group">
                             <label for="motor_brand">Motor Brand</label>
                             <select id="motor_brand" name="motor_brand">
@@ -830,7 +389,7 @@
                         </div>
                     </div>
 
-                    <div class="form-grid-2x2">
+                    <div class="form-grid">
                         <div class="form-group">
                             <label for="bearing_brand">Bearing Brand</label>
                             <select id="bearing_brand" name="bearing_brand">
@@ -869,20 +428,26 @@
                     </div>
 
                     <!-- Custom Accessories -->
-                    <h4>Custom Accessories</h4>
-                    <div class="custom-section">
-                        <div class="custom-input-group">
+                    <h4 style="margin-bottom: 16px; margin-top: 24px; color: var(--gray-700);">Custom Accessories</h4>
+                    <div class="custom-section"
+                        style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 16px;">
+                        <div class="custom-input-group"
+                            style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; margin-bottom: 16px;">
                             <input type="text" placeholder="Name" id="ca-name">
                             <input type="number" step="0.01" placeholder="Weight (kg)" id="ca-weight">
-                            <button type="button" class="btn btn-outline" onclick="addCustomAccessory()">Add</button>
+                            <button type="button" class="btn btn-outline" onclick="addCustomAccessory()">
+                                <span class="material-icons-round">add</span> Add
+                            </button>
                         </div>
                         <div id="custom-accessories-list" class="custom-list"></div>
                     </div>
 
                     <!-- Optional Items -->
-                    <h4>Optional Items</h4>
-                    <div class="custom-section">
-                        <div class="custom-input-group">
+                    <h4 style="margin-bottom: 16px; margin-top: 24px; color: var(--gray-700);">Optional Items</h4>
+                    <div class="custom-section"
+                        style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 16px;">
+                        <div class="custom-input-group"
+                            style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; margin-bottom: 16px;">
                             <select id="oi-standard" style="width:100%">
                                 <option value="">Select standard optional item...</option>
                                 <option value="flex_connectors">Flex Connectors</option>
@@ -893,63 +458,88 @@
                                 <option value="packing_charges">Packing Charges</option>
                             </select>
                             <input type="number" step="0.01" placeholder="Price (₹)" id="oi-standard-price">
-                            <button type="button" class="btn btn-outline"
-                                onclick="addStandardOptionalItem()">Add</button>
+                            <button type="button" class="btn btn-outline" onclick="addStandardOptionalItem()">
+                                <span class="material-icons-round">add</span> Add
+                            </button>
                         </div>
-                        <div class="custom-input-group">
+                        <div class="custom-input-group"
+                            style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; margin-bottom: 16px;">
                             <input type="text" placeholder="Custom Item Name" id="oi-name">
                             <input type="number" step="0.01" placeholder="Price (₹)" id="oi-price">
-                            <button type="button" class="btn btn-outline" onclick="addOptionalItem()">Add</button>
+                            <button type="button" class="btn btn-outline" onclick="addOptionalItem()">
+                                <span class="material-icons-round">add</span> Add
+                            </button>
                         </div>
                         <div id="optional-items-list" class="custom-list"></div>
                     </div>
 
                     <!-- Margins -->
-                    <h4>Margins</h4>
-                    <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div>
+                    <h3
+                        style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px; margin-bottom: 24px; margin-top: 32px;">
+                        <span class="material-icons-round">percent</span> Margins
+                    </h3>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group">
                             <label for="fabrication_margin">Fabrication Margin (%)</label>
                             <input type="number" id="fabrication_margin" name="fabrication_margin" min="0" max="100"
                                 step="0.1" value="{{ fan.specifications.get('fabrication_margin', 25) }}">
                         </div>
-                        <div>
+                        <div class="form-group">
                             <label for="bought_out_margin">Bought Out Margin (%)</label>
                             <input type="number" id="bought_out_margin" name="bought_out_margin" min="0" max="100"
                                 step="0.1" value="{{ fan.specifications.get('bought_out_margin', 25) }}">
                         </div>
                     </div>
 
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-primary" onclick="calculateFan()">Calculate</button>
-                        <button type="button" class="btn btn-primary" onclick="saveFan()">Save</button>
-                        <button type="button" class="btn btn-success" onclick="addToProject()">Add to Project</button>
+                    <div class="button-group"
+                        style="margin-top: 40px; border-top: 1px solid var(--gray-200); padding-top: 24px;">
+                        <button type="button" class="btn btn-primary" onclick="calculateFan()">
+                            <span class="material-icons-round">calculate</span> Calculate
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveFan()">
+                            <span class="material-icons-round">save</span> Save
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="addToProject()">
+                            <span class="material-icons-round">add_circle</span> Add to Project
+                        </button>
                         <button type="button" class="btn btn-secondary" onclick="navigateToFan({{ fan_number + 1 }})"
-                            {{ 'disabled' if fan_number>= project.total_fans else '' }}>Save & Next</button>
+                            {{ 'disabled' if fan_number>= project.total_fans else '' }}>
+                            Save & Next <span class="material-icons-round">arrow_forward</span>
+                        </button>
                     </div>
                 </form>
 
-                <div id="error-message" class="error-message" style="display: none;"></div>
-                <div id="success-message" class="success-message" style="display: none;"></div>
+                <div id="error-message" class="alert alert-error" style="display: none; margin-top: 20px;"></div>
+                <div id="success-message" class="alert alert-success" style="display: none; margin-top: 20px;"></div>
 
-                <div id="calculation-results" class="calculation-results" style="display: none;">
-                    <h3>Calculation Results</h3>
+                <div id="calculation-results" class="section"
+                    style="display: none; margin-top: 24px; background: white; border: 1px solid var(--gray-200);">
+                    <h3 style="display: flex; align-items: center; gap: 10px; color: var(--primary-700);">
+                        <span class="material-icons-round">analytics</span> Calculation Results
+                    </h3>
                     <div id="results-content"></div>
                 </div>
             </div>
 
-            <div class="sidebar">
-                <h3>Project Fans</h3>
-                <ul class="fan-list">
+            <div class="section" style="height: fit-content; align-self: start;">
+                <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                    <span class="material-icons-round">view_list</span> Project Fans
+                </h3>
+                <ul class="fan-list" style="list-style: none; padding: 0;">
                     {% for i in range(1, project.total_fans + 1) %}
                     <li class="{% if i == fan_number %}current{% else %}{{ project.fans[i-1].status if project.fans[i-1] else 'draft' }}{% endif %}"
-                        onclick="navigateToFan({{ i }})">
-                        Fan {{ i }}
+                        onclick="navigateToFan({{ i }})"
+                        style="padding: 12px; border-bottom: 1px solid var(--gray-100); cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                        <span>Fan {{ i }}</span>
                         {% if i == fan_number %}
-                        (Current)
+                        <span class="badge"
+                            style="background: var(--primary-100); color: var(--primary-700); padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">Current</span>
                         {% elif project.fans[i-1] and project.fans[i-1].status == 'added' %}
-                        ✓ Added
+                        <span class="material-icons-round"
+                            style="color: var(--success-500); font-size: 1.2em;">check_circle</span>
                         {% else %}
-                        Draft
+                        <span class="badge"
+                            style="background: var(--gray-100); color: var(--gray-600); padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">Draft</span>
                         {% endif %}
                     </li>
                     {% endfor %}
@@ -1050,10 +640,12 @@
 
     <script src="{{ url_for('static', filename='js/fan_calculator.js') }}?v={{ range(1000, 9999) | random }}"></script>
     <script>
-        // Initialize the calculator with current data
+        // Initialize data
         window.projectData = {{ project | tojson }};
         window.fanData = {{ fan | tojson }};
         window.fanNumber = {{ fan_number }};
+        // Use rates passed from backend, fallback to empty object if not present
+        window.vendorRates = {{ vendor_rates_json | safe if vendor_rates_json else "{}" }};
 
         // Add New Fan Model functionality
         function openAddFanModelModal() {
@@ -1155,6 +747,15 @@
             }
         });
     </script>
+
+    <!-- Inject data for JS -->
+    <script>
+        window.fanData = {{ fan | tojson | safe }};
+        window.vendorRates = {{ vendor_rates_json | safe }};
+        window.projectData = {{ project | tojson | safe }};
+    </script>
+    <!-- Include main JS -->
+    <script src="{{ url_for('static', filename='js/fan_calculator.js') }}"></script>
 </body>
 
 </html>

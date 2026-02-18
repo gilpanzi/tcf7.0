@@ -132,7 +132,8 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
                     logger.warning(f"Missing weight or rate for custom material {i}")
             
             logger.info(f"Total fabrication cost for custom materials: {fabrication_cost}")
-            return fabrication_cost, total_weight, custom_weights, None
+            # For custom materials, rate isn't a single value, so we can return None or 0
+            return fabrication_cost, total_weight, custom_weights, 0.0, None
         
         # Initialize base prices
         ms_price = 0
@@ -140,17 +141,22 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
         
         # Check if custom vendor_rate is provided
         custom_vendor_rate = fan_data.get('vendor_rate')
+        logger.info(f"DEBUG: custom_vendor_rate input: {custom_vendor_rate} (type: {type(custom_vendor_rate)})")
         rate_source = "db"
         
         if custom_vendor_rate is not None:
             try:
                 # Use the custom vendor rate
                 base_rate = float(custom_vendor_rate)
-                logger.info(f"Using custom vendor rate: {base_rate} per kg")
-                ms_price = base_rate
-                ss_multiplier = 2.5
-                ss304_price = base_rate * ss_multiplier
-                rate_source = "custom"
+                if base_rate > 0:
+                    logger.info(f"Using custom vendor rate: {base_rate} per kg")
+                    ms_price = base_rate
+                    ss_multiplier = 2.5
+                    ss304_price = base_rate * ss_multiplier
+                    rate_source = "custom"
+                else: 
+                     logger.info(f"Custom vendor rate is {base_rate}, falling back to DB lookup")
+                     custom_vendor_rate = None
             except (ValueError, TypeError) as e:
                 logger.warning(f"Error using custom vendor rate ({custom_vendor_rate}): {str(e)}. Falling back to database lookup.")
                 custom_vendor_rate = None # Validation failed, fall back
@@ -168,7 +174,9 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
             
             if not price_row:
                 logger.error(f"No matching vendor price found for vendor: {vendor}, weight: {total_weight}")
-                return None, None, None, {
+            if not price_row:
+                logger.error(f"No matching vendor price found for vendor: {vendor}, weight: {total_weight}")
+                return None, None, None, None, {
                     'error': 'No matching vendor price found',
                     'details': {
                         'vendor': vendor,
@@ -192,7 +200,9 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
             ms_percentage = float(fan_data.get('ms_percentage', 0))
             if ms_percentage <= 0 or ms_percentage > 100:
                 logger.error(f"Invalid MS percentage for mixed construction: {ms_percentage}")
-                return None, None, None, {
+            if ms_percentage <= 0 or ms_percentage > 100:
+                logger.error(f"Invalid MS percentage for mixed construction: {ms_percentage}")
+                return None, None, None, None, {
                     'error': 'Invalid MS percentage for mixed construction',
                     'details': {
                         'ms_percentage': ms_percentage
@@ -227,12 +237,37 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
         except Exception:
             custom_accessory_costs = {}
 
+        rate_used = 0.0
+        if material == 'ms':
+            rate_used = ms_price
+        elif material == 'ss304':
+            rate_used = ss304_price
+        # For mixed, it's complicated, maybe return MS price as base? 
+        # Or blended rate? Let's return MS price as primary indicator if majority MS.
+        # But user wants "Per Kg Rate" valid for the main material. 
+        # If mixed, maybe just return 0 or leave as is? 
+        # Actually, simpler: if Rate Source is "custom", return base_rate.
+        # If DB, return ms_price (if MS) or ss304_price (if SS).
+        
+        if custom_vendor_rate:
+             rate_used = float(custom_vendor_rate)
+        elif material == 'ms':
+             rate_used = ms_price
+        elif material == 'ss304':
+             rate_used = ss304_price
+        elif material == 'mixed':
+             if total_weight > 0:
+                 rate_used = fabrication_cost / total_weight
+             else:
+                 rate_used = 0.0
+        
         logger.info(f"Fabrication cost calculated ({rate_source}): {fabrication_cost}")
-        return fabrication_cost, total_weight, custom_accessory_costs, None
+        logger.info(f"DEBUG: Final rate_used: {rate_used}, ms_price: {ms_price}, ss304_price: {ss304_price}, source: {rate_source}")
+        return fabrication_cost, total_weight, custom_accessory_costs, rate_used, None
         
     except Exception as e:
         logger.error(f"Error calculating fabrication cost: {str(e)}", exc_info=True)
-        return None, None, None, {
+        return None, None, None, None, {
             'error': 'Error calculating fabrication cost',
             'details': str(e)
         }
