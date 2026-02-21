@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TCF Pricing Tool</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+
+<body class="dashboard-body">
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>TCF Dashboard</h2>
+                <div class="version-badge">v7.0</div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-item"><span
+                            class="material-icons-round">home</span>Home</a></li>
+                <li><a href="{{ url_for('dashboard') }}" class="nav-item active"><span
+                            class="material-icons-round">analytics</span>Dashboard</a></li>
+                <li><a href="{{ url_for('enquiry_register') }}" class="nav-item"><span
+                            class="material-icons-round">assignment</span>Enquiry Register</a></li>
+                <li><a href="{{ url_for('orders_dashboard') }}" class="nav-item"><span
+                            class="material-icons-round">insights</span>Order Details</a></li>
+                {% if session.get('is_admin') %}
+                <li><a href="{{ url_for('db_admin.index') }}" class="nav-item"><span
+                            class="material-icons-round">settings</span>DB Admin</a></li>
+                {% endif %}
+                <li class="nav-spacer"></li>
+                <li><a href="{{ url_for('logout') }}" class="nav-item text-error"><span
+                            class="material-icons-round">logout</span>Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <header class="dashboard-topbar animate-fade-in">
+                <div class="title-area">
+                    <h1>Command Center</h1>
+                    <p class="subtitle">Unified intelligence across Enquiries & Orders</p>
+                </div>
+                <div class="user-profile glass-card">
+                    <span class="material-icons-round">account_circle</span>
+                    <span>{{ session.get('full_name', 'User') }}</span>
+                </div>
+            </header>
+
+            <!-- Unified Filters -->
+            <div class="unified-filter-bar animate-fade-in">
+                <div class="filter-group">
+                    <span class="material-icons-round">calendar_today</span>
+                    <select id="filter-year">
+                        <option value="All">All Years</option>
+                        <option value="2026">2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                        <option value="2020">2020</option>
+                        <option value="2019">2019</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="material-icons-round">person</span>
+                    <select id="filter-engineer">
+                        <option value="">All Engineers</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="flex-grow: 1;">
+                    <span class="material-icons-round">search</span>
+                    <input type="text" id="filter-search" placeholder="Search enquiries or customers..."
+                        style="width: 100%;">
+                </div>
+                <button id="btn-clear-filters" class="btn btn-secondary"
+                    style="background: #f1f5f9; color: #475569; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600;">Reset</button>
+            </div>
+
+            <!-- Conversion Hub -->
+            <div class="conversion-widget animate-fade-in">
+                <div class="conversion-stat">
+                    <label>Total Enquiries</label>
+                    <value id="val-total-enquiries">--</value>
+                </div>
+                <div class="conversion-divider"></div>
+                <div class="conversion-stat">
+                    <label>Converted Orders</label>
+                    <value id="val-total-orders">--</value>
+                </div>
+                <div class="conversion-divider"></div>
+                <div class="conversion-rate-ring">
+                    <span class="pct" id="val-conversion-rate">--%</span>
+                    <span class="label">Win Rate</span>
+                </div>
+                <div class="conversion-divider"></div>
+                <div class="conversion-stat">
+                    <label>Win Value</label>
+                    <value id="val-win-value">₹ 0</value>
+                </div>
+            </div>
+
+            <!-- Operational Intelligence (Attention Hub) -->
+            <div class="attention-grid animate-fade-in">
+                <div class="risk-card risk-stale glass-card">
+                    <div class="risk-header">
+                        <span class="risk-type">Stale Enquiries</span>
+                        <span class="material-icons-round" style="color: #f97316;">timer_off</span>
+                    </div>
+                    <div class="risk-count" id="count-stale">0</div>
+                    <div class="risk-desc">Enquiries with no updates in 30+ days. Requires follow-up.</div>
+                </div>
+                <div class="risk-card risk-high-value glass-card">
+                    <div class="risk-header">
+                        <span class="risk-type">High-Value Risks</span>
+                        <span class="material-icons-round" style="color: #0ea5e9;">priority_high</span>
+                    </div>
+                    <div class="risk-count" id="count-high-value">0</div>
+                    <div class="risk-desc">Live enquiries worth >₹50L. Critical for target achievement.</div>
+                </div>
+            </div>
+
+            <!-- Old KPI cards removed for unified Conversion widget -->
+
+            <div class="dashboard-content-grid">
+                <!-- Sales Engineer Table -->
+                <div class="card panel sidemenu-panel">
+                    <div class="card-header">
+                        <h2>Team Performance</h2>
+                    </div>
+                    <div class="card-body">
+                        <table class="data-table compact" id="engineer-table">
+                            <thead>
+                                <tr>
+                                    <th>Engineer</th>
+                                    <th>Live Val</th>
+                                    <th>Ordered</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recent Enquiries -->
+                <div class="card panel main-panel">
+                    <div class="card-header flex-between">
+                        <h2>Recent Enquiries</h2>
+                        <a href="{{ url_for('index') }}" class="btn btn-small">
+                            <span class="material-icons-round">add</span> New Enquiry
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="data-table dashboard-table" id="pipeline-table">
+                                <thead>
+                                    <tr>
+                                        <th>Enquiry #</th>
+                                        <th>Customer</th>
+                                        <th>Sales Eng.</th>
+                                        <th>Month</th>
+                                        <th>Updated</th>
+                                        <th>Total Value</th>
+                                        <th>Status</th>
+                                        <th>Prob (%)</th>
+                                        <th>Remarks</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Loaded via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+
+</html>

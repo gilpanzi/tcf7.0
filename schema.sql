@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS projects (
     customer_name TEXT NOT NULL,
     total_fans INTEGER NOT NULL,
     sales_engineer TEXT NOT NULL,
+    status TEXT DEFAULT 'Live',
+    probability INTEGER DEFAULT 50,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

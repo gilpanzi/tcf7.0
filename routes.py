@@ -436,8 +436,10 @@ def register_routes(app):
             if not isinstance(total_fans, int) or total_fans < 1:
                 return jsonify({'error': 'total_fans must be a positive integer'}), 400
             
+            month = data.get('month')
+            
             from database import create_or_update_project
-            project_id = create_or_update_project(enquiry_number, customer_name, total_fans, sales_engineer)
+            project_id = create_or_update_project(enquiry_number, customer_name, total_fans, sales_engineer, month)
 
             return jsonify({'success': True, 'project_id': project_id, 'enquiry_number': enquiry_number})
                 
@@ -1005,6 +1007,96 @@ def register_routes(app):
             flash(f'Error loading project summary: {str(e)}')
             return redirect(url_for('index'))
 
+    @app.route('/dashboard')
+    @login_required
+    def dashboard():
+        """Render the Enquiry Tracking Dashboard."""
+        try:
+            return render_template('dashboard.html')
+        except Exception as e:
+            logger.error(f"Error loading dashboard: {str(e)}")
+            return str(e), 500
+            
+    @app.route('/api/dashboard_stats', methods=['GET'])
+    @login_required
+    def api_dashboard_stats():
+        """API endpoint to get dashboard statistics."""
+        try:
+            from database import get_dashboard_stats
+            
+            # Extract filter parameters
+            sales_engineer = request.args.get('sales_engineer')
+            status = request.args.get('status')
+            month = request.args.get('month')
+            search = request.args.get('search')
+            
+            stats = get_dashboard_stats(
+                sales_engineer=sales_engineer, 
+                status=status, 
+                month=month, 
+                search=search
+            )
+            return jsonify(stats)
+        except Exception as e:
+            logger.error(f"Error fetching dashboard stats: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/enquiry-register')
+    @login_required
+    def enquiry_register():
+        """Render the integrated Enquiry Register tab."""
+        return render_template('enquiry_register.html')
+
+    @app.route('/api/combined-enquiries')
+    @login_required
+    def api_combined_enquiries():
+        """Returns the combined enquiry data from Register + Pricing Tool."""
+        try:
+            from database import get_combined_enquiry_data
+            sales_eng = request.args.get('sales_engineer')
+            month = request.args.get('month')
+            region = request.args.get('region')
+            customer = request.args.get('customer')
+            search = request.args.get('search')
+            
+            data = get_combined_enquiry_data(sales_eng, month, region, customer, search)
+            return jsonify({'success': True, 'enquiries': data})
+        except Exception as e:
+            logger.error(f"Error fetching combined enquiries: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)})
+            
+    @app.route('/api/project/<enquiry_number>/status', methods=['POST'])
+    @login_required
+    def api_update_project_status(enquiry_number):
+        """API endpoint to update a project's status and probability."""
+        try:
+            data = request.json
+            if not data or 'status' not in data or 'probability' not in data:
+                return jsonify({'error': 'Missing status or probability'}), 400
+                
+            status = str(data['status'])
+            probability = int(data['probability'])
+            
+            if status not in ['Live', 'Ordered', 'Lost']:
+                return jsonify({'error': 'Invalid status'}), 400
+                
+            if not (0 <= probability <= 100):
+                return jsonify({'error': 'Probability must be between 0 and 100'}), 400
+            
+            remarks = data.get('remarks')
+                
+            from database import update_project_status
+            success = update_project_status(enquiry_number, status, probability, remarks)
+            
+            if success:
+                return jsonify({'success': True, 'message': 'Status updated'})
+            else:
+                return jsonify({'error': 'Project not found or update failed'}), 404
+                
+        except Exception as e:
+            logger.error(f"Error updating project status: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+
     @app.route('/add_fan_model', methods=['POST'])
     @login_required
     def add_fan_model():
@@ -1108,5 +1200,23 @@ def register_routes(app):
         except Exception as e:
             logger.error(f"Error adding/updating fan model: {str(e)}", exc_info=True)
             return jsonify({'success': False, 'message': f'Error with fan model: {str(e)}'})
+
+    @app.route('/orders')
+    @login_required
+    def orders_dashboard():
+        """Render the new Order Details dashboard."""
+        return render_template('orders.html')
+        
+    @app.route('/api/orders')
+    @login_required
+    def api_orders():
+        """Returns the raw orders data imported from the Excel sheet."""
+        try:
+            from database import get_orders
+            orders_data = get_orders()
+            return jsonify({'success': True, 'orders': orders_data})
+        except Exception as e:
+            logger.error(f"Error fetching orders data: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)})
 
     return app 

@@ -188,6 +188,28 @@ def fix_database_schema():
         conn = get_db_connection()
         cursor = conn.cursor()
         
+        # Check if Projects table exists and has required columns
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Projects'")
+        if cursor.fetchone():
+            cursor.execute("PRAGMA table_info(Projects)")
+            project_columns = {row[1] for row in cursor.fetchall()}
+
+            if 'status' not in project_columns:
+                cursor.execute("ALTER TABLE Projects ADD COLUMN status TEXT DEFAULT 'Live'")
+                logger.info("Added status column to Projects table")
+                
+            if 'probability' not in project_columns:
+                cursor.execute("ALTER TABLE Projects ADD COLUMN probability INTEGER DEFAULT 50")
+                logger.info("Added probability column to Projects table")
+
+            if 'remarks' not in project_columns:
+                cursor.execute("ALTER TABLE Projects ADD COLUMN remarks TEXT DEFAULT ''")
+                logger.info("Added remarks column to Projects table")
+                
+            if 'month' not in project_columns:
+                cursor.execute("ALTER TABLE Projects ADD COLUMN month TEXT")
+                logger.info("Added month column to Projects table")
+
         # Check if Fans table exists and has required columns
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Fans'")
         if cursor.fetchone():
@@ -240,6 +262,10 @@ def migrate_to_unified_schema():
                 customer_name TEXT NOT NULL,
                 total_fans INTEGER NOT NULL,
                 sales_engineer TEXT NOT NULL,
+                status TEXT DEFAULT 'Live',
+                probability INTEGER DEFAULT 50,
+                remarks TEXT DEFAULT '',
+                month TEXT,
                 created_at TIMESTAMP,
                 updated_at TIMESTAMP
             )
@@ -248,6 +274,14 @@ def migrate_to_unified_schema():
         # Ensure required columns exist on Projects (for older databases)
         cursor.execute("PRAGMA table_info(Projects)")
         project_columns = {row[1] for row in cursor.fetchall()}
+        if 'status' not in project_columns:
+            cursor.execute("ALTER TABLE Projects ADD COLUMN status TEXT DEFAULT 'Live'")
+        if 'probability' not in project_columns:
+            cursor.execute("ALTER TABLE Projects ADD COLUMN probability INTEGER DEFAULT 50")
+        if 'remarks' not in project_columns:
+            cursor.execute("ALTER TABLE Projects ADD COLUMN remarks TEXT DEFAULT ''")
+        if 'month' not in project_columns:
+            cursor.execute("ALTER TABLE Projects ADD COLUMN month TEXT")
         if 'created_at' not in project_columns:
             cursor.execute("ALTER TABLE Projects ADD COLUMN created_at TIMESTAMP")
         if 'updated_at' not in project_columns:
@@ -294,6 +328,46 @@ def migrate_to_unified_schema():
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_fans_project_id ON Fans(project_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_fans_status ON Fans(status)')
         
+        # Create Orders table for the Order Details Dashboard
+        # Only create if it doesn't exist to preserve data
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_ref TEXT,
+                year TEXT,
+                customer_name TEXT,
+                sales_engineer TEXT,
+                region TEXT,
+                order_value REAL,
+                our_cost REAL,
+                warranty TEXT,
+                contribution_value REAL,
+                contribution_percentage REAL,
+                qty INTEGER,
+                month TEXT,
+                rep TEXT,
+                type_of_customer TEXT,
+                sector TEXT,
+                po_number TEXT,
+                end_user TEXT,
+                remarks TEXT
+            )
+        ''')
+        
+        # Create EnquiryRegister table for the Enquiry Tracking Dashboard
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS EnquiryRegister (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                enquiry_number TEXT UNIQUE,
+                year TEXT,
+                month TEXT,
+                sales_engineer TEXT,
+                customer_name TEXT,
+                region TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         # Skip ProjectFans migration for now to avoid errors
         # TODO: Fix ProjectFans migration later
         logger.info("Skipping ProjectFans migration to avoid errors")
@@ -306,24 +380,51 @@ def migrate_to_unified_schema():
         logger.error(f"Error migrating to unified schema: {str(e)}")
         return False
 
-# Project/Fan CRUD functions
-def create_or_update_project(enquiry_number, customer_name, total_fans, sales_engineer):
+def create_or_update_project(enquiry_number, customer_name, total_fans, sales_engineer, month=None):
     """Create or update a project and ensure fan placeholders exist."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Insert or update project (be compatible with older schemas without updated_at)
-        if _table_has_column(cursor, 'Projects', 'updated_at'):
-            cursor.execute('''
-                INSERT OR REPLACE INTO Projects (enquiry_number, customer_name, total_fans, sales_engineer, updated_at)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (enquiry_number, customer_name, total_fans, sales_engineer))
+        # Check if project exists by enquiry_number
+        cursor.execute("SELECT id FROM Projects WHERE enquiry_number = ?", (enquiry_number,))
+        existing_row = cursor.fetchone()
+        
+        # Determine schema capabilities
+        has_updated_at = _table_has_column(cursor, 'Projects', 'updated_at')
+        has_month = _table_has_column(cursor, 'Projects', 'month')
+        
+        if existing_row:
+            update_clause = "customer_name = ?, total_fans = ?, sales_engineer = ?"
+            params = [customer_name, total_fans, sales_engineer]
+            
+            if has_month and month:
+                update_clause += ", month = ?"
+                params.append(month)
+                
+            if has_updated_at:
+                update_clause += ", updated_at = CURRENT_TIMESTAMP"
+                
+            params.append(enquiry_number)
+            
+            cursor.execute(f'''
+                UPDATE Projects SET {update_clause} WHERE enquiry_number = ?
+            ''', params)
         else:
-            cursor.execute('''
-                INSERT OR REPLACE INTO Projects (enquiry_number, customer_name, total_fans, sales_engineer)
-                VALUES (?, ?, ?, ?)
-            ''', (enquiry_number, customer_name, total_fans, sales_engineer))
+            cols = "enquiry_number, customer_name, total_fans, sales_engineer, status, probability"
+            vals = "?, ?, ?, ?, 'Live', 50"
+            params = [enquiry_number, customer_name, total_fans, sales_engineer]
+            
+            if has_month and month:
+                cols += ", month"
+                vals += ", ?"
+                params.append(month)
+                
+            if has_updated_at:
+                cols += ", updated_at"
+                vals += ", CURRENT_TIMESTAMP"
+                
+            cursor.execute(f"INSERT INTO Projects ({cols}) VALUES ({vals})", params)
         
         # Get reliable project_id regardless of INSERT OR REPLACE semantics
         cursor.execute('SELECT id FROM Projects WHERE enquiry_number = ?', (enquiry_number,))
@@ -381,6 +482,10 @@ def get_project(enquiry_number):
                 'customer_name': project['customer_name'],
                 'total_fans': project['total_fans'],
                 'sales_engineer': project['sales_engineer'],
+                'status': project['status'] if 'status' in project.keys() else 'Live',
+                'probability': project['probability'] if 'probability' in project.keys() else 50,
+                'remarks': project['remarks'] if 'remarks' in project.keys() else '',
+                'month': project['month'] if 'month' in project.keys() else None,
                 'created_at': project['created_at'] if 'created_at' in project.keys() else None,
                 'updated_at': project['updated_at'] if 'updated_at' in project.keys() else None,
                 'fans': [
@@ -416,7 +521,17 @@ def search_projects(query=None, limit=50):
             order_col = 'created_at' if _table_has_column(cursor, 'Projects', 'created_at') else 'enquiry_number'
 
         select_updated = _table_has_column(cursor, 'Projects', 'updated_at')
-        select_cols = 'enquiry_number, customer_name, total_fans, sales_engineer' + (', updated_at' if select_updated else '')
+        has_status = _table_has_column(cursor, 'Projects', 'status')
+        has_probability = _table_has_column(cursor, 'Projects', 'probability')
+        has_remarks = _table_has_column(cursor, 'Projects', 'remarks')
+        has_month = _table_has_column(cursor, 'Projects', 'month')
+        
+        select_cols = 'enquiry_number, customer_name, total_fans, sales_engineer' 
+        select_cols += (', updated_at' if select_updated else '')
+        select_cols += (', status' if has_status else '')
+        select_cols += (', probability' if has_probability else '')
+        select_cols += (', remarks' if has_remarks else '')
+        select_cols += (', month' if has_month else '')
 
         if query:
             cursor.execute(f'''
@@ -443,7 +558,11 @@ def search_projects(query=None, limit=50):
                 'enquiry_number': p['enquiry_number'],
                 'customer_name': p['customer_name'],
                 'total_fans': p['total_fans'],
-                'sales_engineer': p['sales_engineer']
+                'sales_engineer': p['sales_engineer'],
+                'status': p['status'] if 'status' in p.keys() else 'Live',
+                'probability': p['probability'] if 'probability' in p.keys() else 50,
+                'remarks': p['remarks'] if 'remarks' in p.keys() else '',
+                'month': p['month'] if 'month' in p.keys() else None
             }
             if 'updated_at' in p.keys():
                 item['updated_at'] = p['updated_at']
@@ -578,4 +697,342 @@ def init_db():
         return True
     except Exception as e:
         logger.error(f"Error initializing database: {str(e)}")
-        return False 
+        return False
+
+def get_dashboard_stats(sales_engineer=None, status=None, month=None, search=None):
+    """Calculate and return dashboard statistics, with optional filtering."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check for new columns
+        has_remarks = _table_has_column(cursor, 'Projects', 'remarks')
+        has_month = _table_has_column(cursor, 'Projects', 'month')
+        
+        cols = "p.id, p.enquiry_number, p.customer_name, p.sales_engineer, p.status, p.probability, p.updated_at, p.created_at, f.costs"
+        if has_remarks:
+            cols += ", p.remarks"
+        if has_month:
+            cols += ", p.month"
+            
+        # Build query dynamically based on filters
+        query = f'''
+        SELECT {cols}
+        FROM Projects p
+        LEFT JOIN Fans f ON p.id = f.project_id
+        WHERE p.status != 'removed'
+        '''
+        
+        params = []
+        if sales_engineer:
+            query += " AND p.sales_engineer = ?"
+            params.append(sales_engineer)
+        if status:
+            query += " AND p.status = ?"
+            params.append(status)
+        if month:
+            query += " AND p.month = ?"
+            params.append(month)
+        if search:
+            query += " AND (p.enquiry_number LIKE ? OR p.customer_name LIKE ?)"
+            params.extend([f'%{search}%', f'%{search}%'])
+            
+        cursor.execute(query, params)
+        
+        rows = cursor.fetchall()
+        
+        # Process rows into project summaries
+        projects_dict = {}
+        for row in rows:
+            p_id = int(row['id'])
+            if p_id not in projects_dict:
+                projects_dict[p_id] = {
+                    'enquiry_number': str(row['enquiry_number']),
+                    'customer_name': str(row['customer_name']),
+                    'sales_engineer': str(row['sales_engineer']),
+                    'status': str(row['status']) if row['status'] else 'Live',
+                    'probability': int(row['probability']) if row['probability'] is not None else 50,
+                    'remarks': str(row['remarks']) if 'remarks' in row.keys() and row['remarks'] is not None else '',
+                    'month': str(row['month']) if 'month' in row.keys() and row['month'] is not None else '',
+                    'updated_at': str(row['updated_at']) if 'updated_at' in row.keys() else str(row['created_at']),
+                    'total_value': 0.0,
+                    'fan_count': 0
+                }
+            
+            # extract cost
+            costs_json = _safe_json_load(row['costs'])
+            if costs_json and 'total_selling_price' in costs_json:
+                projects_dict[p_id]['total_value'] += float(costs_json['total_selling_price'])
+                projects_dict[p_id]['fan_count'] += 1
+                
+        # Now aggregate stats
+        all_projects = list(projects_dict.values())
+        all_projects.sort(key=lambda x: str(x['updated_at']), reverse=True)
+        
+        stats = {
+            'total_live_value': sum(float(p['total_value']) for p in all_projects if p['status'] == 'Live'),
+            'total_ordered_value': sum(float(p['total_value']) for p in all_projects if p['status'] == 'Ordered'),
+            'active_enquiries': sum(1 for p in all_projects if p['status'] == 'Live'),
+            'avg_conversion': 0.0,
+            
+            # Sales Engineer breakdown
+            'engineers': {},
+            
+            # List of all recent projects
+            'recent_projects': all_projects[:100] # Cap for UI performance
+        }
+        
+        # Calculate Average Conversion across active
+        live_projects = [p for p in all_projects if p['status'] == 'Live']
+        if live_projects:
+            stats['avg_conversion'] = float(sum(int(p['probability']) for p in live_projects)) / len(live_projects)
+            
+        # Group by Sales Engineer
+        for p in all_projects:
+            se = str(p['sales_engineer'])
+            if not se: continue
+            
+            if se not in stats['engineers']:
+                stats['engineers'][se] = {'live_enquiries': 0, 'live_value': 0.0, 'ordered_value': 0.0}
+            
+            if p['status'] == 'Live':
+                stats['engineers'][se]['live_enquiries'] += 1
+                stats['engineers'][se]['live_value'] += float(p['total_value'])
+            elif p['status'] == 'Ordered':
+                stats['engineers'][se]['ordered_value'] += float(p['total_value'])
+                
+        conn.close()
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Error getting dashboard stats: {str(e)}")
+        raise
+
+def update_project_status(enquiry_number, status, probability, remarks=None):
+    """Update just the status, probability, and optionally remarks of a project."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Safely determine updated_at and remarks columns
+        update_clause = "status = ?, probability = ?"
+        params = [status, probability]
+        
+        if remarks is not None and _table_has_column(cursor, 'Projects', 'remarks'):
+            update_clause += ", remarks = ?"
+            params.append(remarks)
+            
+        if _table_has_column(cursor, 'Projects', 'updated_at'):
+            update_clause += ", updated_at = CURRENT_TIMESTAMP"
+            
+        params.append(enquiry_number)
+            
+        cursor.execute(f'''
+            UPDATE Projects 
+            SET {update_clause}
+            WHERE enquiry_number = ?
+        ''', params)
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        return success
+    except Exception as e:
+        logger.error(f"Error updating project status: {str(e)}")
+        raise 
+
+def import_orders_from_excel(file) -> bool:
+    """Import orders from the uploaded Excel file using pandas."""
+    try:
+        import pandas as pd
+        import numpy as np
+        
+        logger.info("Starting order import from Excel")
+        # Read the "Order Register - From 2019" sheet
+        df = pd.read_excel(file, sheet_name="Order Register - From 2019")
+        
+        # Mapping Excel columns to DB columns
+        col_map = {
+            'JOB REF': 'job_ref',
+            'YEAR': 'year',
+            'Customer Name': 'customer_name',
+            'Sales Engineer': 'sales_engineer',
+            'Region': 'region',
+            'Order Value, INR': 'order_value',
+            'Our Cost, INR': 'our_cost',
+            'Warranty': 'warranty',
+            'Contribution Value, INR': 'contribution_value',
+            'Contribution Value, %': 'contribution_percentage',
+            'QTY': 'qty',
+            'Month': 'month',
+            'REP': 'rep',
+            'TYPE OF CUSTOMER': 'type_of_customer',
+            'SECTOR': 'sector',
+            'CUSTOMER PO NUMBER': 'po_number',
+            'END USER': 'end_user',
+            'REMARKS': 'remarks'
+        }
+        
+        # Select and rename columns
+        df = df[list(col_map.keys())].rename(columns=col_map)
+        
+        # Clean data: drop rows without JOB REF
+        df = df.dropna(subset=['job_ref'])
+        df['job_ref'] = df['job_ref'].astype(str).str.strip()
+        df = df[df['job_ref'] != '']
+        df = df[df['job_ref'] != 'nan']
+        
+        # Convert numerical columns
+        num_cols = ['order_value', 'our_cost', 'contribution_value', 'contribution_percentage', 'qty']
+        for col in num_cols:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            
+        # Replace NaN with None for SQLite
+        df = df.replace({np.nan: None})
+        
+        records = df.to_dict('records')
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Clear existing orders to rely entirely on the Excel sheet as truth
+        cursor.execute("DELETE FROM Orders")
+        
+        # Insert new records
+        cursor.executemany('''
+            INSERT INTO Orders (
+                job_ref, year, customer_name, sales_engineer, region, 
+                order_value, our_cost, warranty, contribution_value, 
+                contribution_percentage, qty, month, rep, type_of_customer, 
+                sector, po_number, end_user, remarks
+            ) VALUES (
+                :job_ref, :year, :customer_name, :sales_engineer, :region,
+                :order_value, :our_cost, :warranty, :contribution_value,
+                :contribution_percentage, :qty, :month, :rep, :type_of_customer,
+                :sector, :po_number, :end_user, :remarks
+            )
+        ''', records)
+        
+        conn.commit()
+        conn.close()
+        logger.info(f"Successfully imported {len(records)} orders")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error importing sequences from Excel: {str(e)}")
+        return False
+
+def get_orders():
+    """Retrieve all order data for the dashboard."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT * FROM Orders ORDER BY year DESC, month DESC, job_ref DESC")
+        rows = cursor.fetchall()
+        
+        orders = []
+        for row in rows:
+            orders.append(dict(row))
+            
+        conn.close()
+        return orders
+    except Exception as e:
+        logger.error(f"Error retrieving orders: {str(e)}")
+        return []
+
+def import_enquiries_from_excel(file) -> bool:
+    """Import enquiry register from Excel."""
+    try:
+        import pandas as pd
+        import numpy as np
+        df = pd.read_excel(file, sheet_name='Enquiry Register - From 2019')
+        df.columns = [str(c).strip() for c in df.columns]
+        mapping = {'ENQ NO': 'enquiry_number', 'YEAR': 'year', 'SALES ENGINEER': 'sales_engineer', 'CUSTOMER NAME': 'customer_name', 'Region': 'region'}
+        cols = [c for c in mapping.keys() if c in df.columns]
+        df = df[cols].rename(columns=mapping)
+        if 'enquiry_number' not in df.columns: return False
+        df = df.dropna(subset=['enquiry_number'])
+        df['enquiry_number'] = df['enquiry_number'].astype(str).str.strip()
+        df = df.drop_duplicates(subset=['enquiry_number'], keep='first')
+        def get_m(enq):
+            if len(enq) >= 6 and enq.startswith('EQ'):
+                m = {'01':'January','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December'}
+                return m.get(enq[4:6], 'Unknown')
+            return 'Unknown'
+        df['month'] = df['enquiry_number'].apply(get_m)
+        df = df.replace({np.nan: None})
+        recs = df.to_dict('records')
+        conn = get_db_connection(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM EnquiryRegister")
+        cursor.executemany('INSERT OR REPLACE INTO EnquiryRegister (enquiry_number, year, month, sales_engineer, customer_name, region) VALUES (:enquiry_number, :year, :month, :sales_engineer, :customer_name, :region)', recs)
+        conn.commit(); conn.close()
+        return True
+    except Exception as e:
+        logger.error(f"Error importing enquiries: {e}")
+        return False
+
+def bulk_import_from_excel(file) -> dict:
+    """Import both Orders and Enquiries from a single Excel file."""
+    results = {"orders": False, "enquiries": False, "messages": []}
+    try:
+        import pandas as pd
+        # Load the Excel file once
+        xlsx = pd.ExcelFile(file)
+        sheet_names = xlsx.sheet_names
+        
+        # Import Orders if sheet exists
+        if "Order Register - From 2019" in sheet_names:
+            try:
+                # We need to pass the file-like object or the xlsx object? 
+                # pandas read_excel can take the xlsx object.
+                success = import_orders_from_excel(file)
+                results["orders"] = success
+                if success: results["messages"].append("Successfully imported Orders.")
+                else: results["messages"].append("Failed to import Orders.")
+            except Exception as e:
+                results["messages"].append(f"Order import error: {str(e)}")
+        else:
+            results["messages"].append("'Order Register - From 2019' sheet not found.")
+
+        # Import Enquiries if sheet exists
+        # Reset file pointer for the second read if we passed the file
+        if hasattr(file, 'seek'):
+            file.seek(0)
+            
+        if "Enquiry Register - From 2019" in sheet_names:
+            try:
+                success = import_enquiries_from_excel(file)
+                results["enquiries"] = success
+                if success: results["messages"].append("Successfully imported Enquiry Register.")
+                else: results["messages"].append("Failed to import Enquiry Register.")
+            except Exception as e:
+                results["messages"].append(f"Enquiry import error: {str(e)}")
+        else:
+            results["messages"].append("'Enquiry Register - From 2019' sheet not found.")
+            
+        return results
+    except Exception as e:
+        logger.error(f"Bulk import failed: {str(e)}")
+        results["messages"].append(f"Critical error: {str(e)}")
+        return results
+
+def get_combined_enquiry_data(sales_engineer=None, month=None, region=None, customer=None, search=None, year=None):
+    try:
+        conn = get_db_connection(); cursor = conn.cursor()
+        query = 'SELECT r.*, p.status as pricing_status, p.probability, p.remarks, (SELECT SUM(CAST(json_extract(f.costs, "$.total_selling_price") AS REAL)) FROM Fans f WHERE f.project_id = p.id) as total_value, (SELECT COUNT(*) FROM Fans f WHERE f.project_id = p.id) as fan_count FROM EnquiryRegister r LEFT JOIN Projects p ON r.enquiry_number = p.enquiry_number WHERE 1=1'
+        params = []
+        if sales_engineer: query += " AND r.sales_engineer = ?"; params.append(sales_engineer)
+        if month: query += " AND r.month = ?"; params.append(month)
+        if region: query += " AND r.region = ?"; params.append(region)
+        if customer: query += " AND r.customer_name = ?"; params.append(customer)
+        if year and year != 'All': query += " AND r.year = ?"; params.append(year)
+        if search: query += " AND (r.enquiry_number LIKE ? OR r.customer_name LIKE ?)"; params.append(f'%{search}%'); params.append(f'%{search}%')
+        query += " ORDER BY r.year DESC, r.enquiry_number DESC"
+        cursor.execute(query, params); rows = cursor.fetchall()
+        res = [dict(r) for r in rows]
+        for r in res:
+            if not r['pricing_status']: r['pricing_status'] = 'Not Started'
+        conn.close(); return res
+    except Exception as e:
+        logger.error(f"Error: {e}"); return []

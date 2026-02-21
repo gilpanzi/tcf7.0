@@ -3,6 +3,7 @@ import logging
 from flask import Flask, send_from_directory, request, jsonify
 from flask_cors import CORS
 from routes import register_routes
+from database import get_db_connection
 import create_projects_table  # Import the create_projects_table module
 import create_bearing_lookup  # Import create_bearing_lookup module
 import update_central_database  # Import the update_central_database module
@@ -143,12 +144,12 @@ def create_app():
             if not all(field in data for field in required_fields):
                 return jsonify({'error': 'Missing required fields'}), 400
             
-            cursor = get_db().cursor()
+            cursor = get_db_connection().cursor()
             cursor.execute(
                 'INSERT INTO AccessoryWeights (fan_model, fan_size, accessory, weight, is_custom) VALUES (?, ?, ?, ?, 1)',
                 (data['fan_model'], data['fan_size'], data['name'], data['weight'])
             )
-            get_db().commit()
+            get_db_connection().commit()
             
             return jsonify({'message': 'Custom accessory added successfully', 'id': cursor.lastrowid})
         except Exception as e:
@@ -161,7 +162,7 @@ def create_app():
             if not data or 'fan_model' not in data or 'fan_size' not in data:
                 return jsonify({'error': 'Fan model and size are required'}), 400
             
-            cursor = get_db().cursor()
+            cursor = get_db_connection().cursor()
             cursor.execute(
                 'SELECT id, accessory, weight, is_custom FROM AccessoryWeights WHERE fan_model = ? AND fan_size = ?',
                 (data['fan_model'], data['fan_size'])
@@ -178,12 +179,12 @@ def create_app():
             if not data or 'id' not in data:
                 return jsonify({'error': 'Accessory ID is required'}), 400
             
-            cursor = get_db().cursor()
+            cursor = get_db_connection().cursor()
             cursor.execute(
                 'DELETE FROM AccessoryWeights WHERE id = ? AND is_custom = 1',
                 (data['id'],)
             )
-            get_db().commit()
+            get_db_connection().commit()
             
             if cursor.rowcount == 0:
                 return jsonify({'error': 'Custom accessory not found or cannot be deleted'}), 404

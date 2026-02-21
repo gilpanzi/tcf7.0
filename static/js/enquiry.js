@@ -1,5 +1,5 @@
 // Enquiry Details Page JavaScript
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const enquiryForm = document.getElementById('enquiry-form');
     const salesEngineerSelect = document.getElementById('sales_engineer');
     const savedEnquiriesSelect = document.getElementById('saved-enquiries');
@@ -7,14 +7,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const successMessage = document.getElementById('success-message');
 
     // Form submission handler
-    enquiryForm.addEventListener('submit', async function(e) {
+    enquiryForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         const formData = new FormData(enquiryForm);
         const data = {
             enquiry_number: formData.get('enquiry_number'),
             customer_name: formData.get('customer_name'),
             sales_engineer: formData.get('sales_engineer'),
+            month: formData.get('month'),
             total_fans: parseInt(formData.get('total_fans'))
         };
 
@@ -31,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             showSuccess('Creating project...');
-            
+
             const response = await fetch('/api/projects', {
                 method: 'POST',
                 headers: {
@@ -86,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
 
     // Handle selecting a saved enquiry
-    savedEnquiriesSelect.addEventListener('change', async function() {
+    savedEnquiriesSelect.addEventListener('change', async function () {
         const enquiryNumber = this.value;
         if (!enquiryNumber) return;
         await loadProject(enquiryNumber);
@@ -105,10 +106,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Load project function (called from search results)
-    window.loadProject = async function(enquiryNumber) {
+    window.loadProject = async function (enquiryNumber) {
         try {
             showSuccess('Loading project...');
-            
+
             const response = await fetch(`/api/projects/${enquiryNumber}`);
             const project = await response.json();
 
@@ -117,10 +118,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('enquiry_number').value = project.enquiry_number;
                 document.getElementById('customer_name').value = project.customer_name;
                 document.getElementById('sales_engineer').value = project.sales_engineer;
+                if (project.month) {
+                    document.getElementById('month').value = project.month;
+                }
                 document.getElementById('total_fans').value = project.total_fans;
-                
+
                 showSuccess('Project loaded successfully! Redirecting to project summary...');
-                
+
                 // Automatically redirect to project summary page
                 setTimeout(() => {
                     window.location.href = `/enquiries/${enquiryNumber}/summary`;

@@ -20,12 +20,19 @@
 
 <body>
     <div class="container">
-        <div class="modern-header">
+        <div class="modern-header" style="position: relative;">
             <h1>
                 <span class="material-icons-round">wind_power</span>
                 TCF Fan Pricing Tool <span style="font-size: 0.6em; opacity: 0.7; margin-left: 10px;">v7.0</span>
             </h1>
             <p class="header-subtitle">Enter enquiry details to start pricing your fans</p>
+            <div style="position: absolute; top: 20px; right: 20px;">
+                <a href="{{ url_for('dashboard') }}" class="btn"
+                    style="background: white; color: #2563eb; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.5rem 1rem;">
+                    <span class="material-icons-round">analytics</span>
+                    View Dashboard
+                </a>
+            </div>
         </div>
 
         <div class="section">
@@ -49,6 +56,11 @@
                         <select id="sales_engineer" name="sales_engineer" required>
                             <option value="">Select Sales Engineer</option>
                         </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="month">Month <span class="text-error">*</span></label>
+                        <input type="month" id="month" name="month" required>
                     </div>
 
                     <div class="input-group">
