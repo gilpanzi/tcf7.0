@@ -19,8 +19,8 @@ def get_render_db_path():
         # Use the mounted disk path on Render
         base_path = '/opt/render/project/src/data'
     else:
-        # Local development path
-        base_path = 'data'
+        # Local development path - standardize to data/ directory
+        base_path = os.environ.get('DB_PATH', 'data')
     
     # Ensure the data directory exists
     os.makedirs(base_path, exist_ok=True)
@@ -1036,3 +1036,104 @@ def get_combined_enquiry_data(sales_engineer=None, month=None, region=None, cust
         conn.close(); return res
     except Exception as e:
         logger.error(f"Error: {e}"); return []
+
+def get_ai_insights():
+    """Generate rule-based AI insights from historical data."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        insights = []
+        
+        # 1. Lead Prioritization (Hot Leads)
+        cursor.execute('''
+            SELECT enquiry_number, customer_name, probability 
+            FROM Projects 
+            WHERE status = 'Live' 
+            ORDER BY probability DESC, id DESC 
+            LIMIT 3
+        ''')
+        hot_leads = cursor.fetchall()
+        if hot_leads:
+            enqs = ", ".join([row['enquiry_number'] for row in hot_leads])
+            insights.append({
+                'type': 'hot_lead',
+                'title': 'Lead Prioritization',
+                'text': f"Focus on these leads—they have the highest win chance: {enqs}.",
+                'icon': 'trending_up',
+                'color': '#10b981'
+            })
+
+        # 2. Stale Alerts
+        # Assuming updated_at exists, if not, use a fallback or skip
+        has_updated_at = _table_has_column(cursor, 'Projects', 'updated_at')
+        if has_updated_at:
+            cursor.execute('''
+                SELECT enquiry_number, total_fans 
+                FROM Projects 
+                WHERE status = 'Live' AND updated_at < datetime('now', '-15 days')
+                LIMIT 2
+            ''')
+            stale_leads = cursor.fetchall()
+            for lead in stale_leads:
+                insights.append({
+                    'type': 'stale',
+                    'title': 'Stale Alert',
+                    'text': f"Enquiry {lead['enquiry_number']} hasn't been updated in 15 days. Don't let it go cold!",
+                    'icon': 'timer',
+                    'color': '#f59e0b'
+                })
+
+        # 3. Revenue Forecasting
+        cursor.execute('''
+            SELECT SUM((SELECT SUM(CAST(json_extract(f.costs, "$.total_selling_price") AS REAL)) 
+                        FROM Fans f WHERE f.project_id = p.id) * p.probability / 100.0) as forecast
+            FROM Projects p
+            WHERE p.status = 'Live'
+        ''')
+        forecast = cursor.fetchone()['forecast'] or 0
+        if forecast > 0:
+            insights.append({
+                'type': 'forecast',
+                'title': 'Revenue Forecast',
+                'text': f"High confidence of hitting ₹{(forecast/10000000):.2f}Cr in orders based on current 'Live' pipeline.",
+                'icon': 'insights',
+                'color': '#3b82f6'
+            })
+
+        # 4. Market Intelligence (Region Trends)
+        cursor.execute('''
+            SELECT region, COUNT(*) as count 
+            FROM Orders 
+            WHERE year = strftime('%Y', 'now')
+            GROUP BY region 
+            ORDER BY count DESC 
+            LIMIT 1
+        ''')
+        top_region = cursor.fetchone()
+        if top_region:
+            insights.append({
+                'type': 'market',
+                'title': 'Market Intelligence',
+                'text': f"{top_region['region']} is your most active region this year. Ensure material pricing is competitive there!",
+                'icon': 'public',
+                'color': '#8b5cf6'
+            })
+
+        # 5. Team Performance
+        cursor.execute("SELECT COUNT(*) as count FROM Orders WHERE month = strftime('%m', 'now')")
+        this_month_orders = cursor.fetchone()['count'] or 0
+        insights.append({
+            'type': 'team',
+            'title': 'Team Performance',
+            'text': f"The team has closed {this_month_orders} orders so far this month. Keep the momentum going!",
+            'icon': 'groups',
+            'color': '#6366f1'
+        })
+        
+        conn.close()
+        return insights
+        
+    except Exception as e:
+        logger.error(f"Error generating AI insights: {str(e)}")
+        return []
