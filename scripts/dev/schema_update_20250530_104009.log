@@ -1,0 +1,60 @@
+2025-05-30 10:40:09,877 - INFO - Created backup of fan_pricing.db at database_backups\fan_pricing.db_20250530_104009.bak
+2025-05-30 10:40:09,886 - INFO - Created backup of data\fan_pricing.db at database_backups\fan_pricing.db_20250530_104009.bak
+2025-05-30 10:40:09,893 - INFO - Created backup of data\central_database\all_projects.db at database_backups\all_projects.db_20250530_104009.bak
+2025-05-30 10:40:09,894 - INFO - Processing database: fan_pricing.db
+2025-05-30 10:40:09,910 - INFO - Added column enquiry_number (TEXT) to fan_pricing.db
+2025-05-30 10:40:09,919 - INFO - Added column size (TEXT) to fan_pricing.db
+2025-05-30 10:40:09,928 - INFO - Added column accessory_weight (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:09,935 - INFO - Added column fabrication_weight (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:09,940 - INFO - Added column bought_out_weight (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:09,948 - INFO - Added column motor_cost (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:09,956 - INFO - Added column vibration_isolators_cost (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:09,965 - INFO - Added column drive_pack_cost (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:09,973 - INFO - Added column bearing_cost (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:09,983 - INFO - Added column optional_items_cost (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:09,994 - INFO - Added column flex_connectors_cost (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:10,001 - INFO - Added column custom_no_of_isolators (INTEGER DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:10,007 - INFO - Added column custom_shaft_diameter (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:10,014 - INFO - Added column amca_spark_proof (BOOLEAN DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:10,021 - INFO - Added column amca_spark_proof_cost (REAL DEFAULT 0) to fan_pricing.db
+2025-05-30 10:40:10,030 - INFO - Added column optional_items_json (TEXT) to fan_pricing.db
+2025-05-30 10:40:10,037 - INFO - Added column custom_optional_items_json (TEXT) to fan_pricing.db
+2025-05-30 10:40:10,037 - INFO - Added 17 missing columns to fan_pricing.db
+2025-05-30 10:40:10,038 - INFO - ProjectFans table in fan_pricing.db now has 70 columns
+2025-05-30 10:40:10,039 - INFO - Successfully updated schema in fan_pricing.db
+2025-05-30 10:40:10,039 - INFO - Processing database: data\fan_pricing.db
+2025-05-30 10:40:10,050 - INFO - Added column custom_no_of_isolators (INTEGER DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,057 - INFO - Added column custom_shaft_diameter (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,065 - INFO - Added column material_name_0 (TEXT) to data\fan_pricing.db
+2025-05-30 10:40:10,071 - INFO - Added column material_weight_0 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,079 - INFO - Added column material_rate_0 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,086 - INFO - Added column material_name_1 (TEXT) to data\fan_pricing.db
+2025-05-30 10:40:10,095 - INFO - Added column material_weight_1 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,103 - INFO - Added column material_rate_1 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,111 - INFO - Added column material_name_2 (TEXT) to data\fan_pricing.db
+2025-05-30 10:40:10,119 - INFO - Added column material_weight_2 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,128 - INFO - Added column material_rate_2 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,135 - INFO - Added column material_name_3 (TEXT) to data\fan_pricing.db
+2025-05-30 10:40:10,143 - INFO - Added column material_weight_3 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,150 - INFO - Added column material_rate_3 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,156 - INFO - Added column material_name_4 (TEXT) to data\fan_pricing.db
+2025-05-30 10:40:10,162 - INFO - Added column material_weight_4 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,168 - INFO - Added column material_rate_4 (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,175 - INFO - Added column amca_spark_proof (BOOLEAN DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,182 - INFO - Added column amca_spark_proof_cost (REAL DEFAULT 0) to data\fan_pricing.db
+2025-05-30 10:40:10,189 - INFO - Added column optional_items_json (TEXT) to data\fan_pricing.db
+2025-05-30 10:40:10,196 - INFO - Added column custom_optional_items_json (TEXT) to data\fan_pricing.db
+2025-05-30 10:40:10,196 - INFO - Added 21 missing columns to data\fan_pricing.db
+2025-05-30 10:40:10,197 - INFO - ProjectFans table in data\fan_pricing.db now has 64 columns
+2025-05-30 10:40:10,198 - INFO - Successfully updated schema in data\fan_pricing.db
+2025-05-30 10:40:10,198 - INFO - Processing database: data\central_database\all_projects.db
+2025-05-30 10:40:10,208 - INFO - Added column amca_spark_proof (BOOLEAN DEFAULT 0) to data\central_database\all_projects.db
+2025-05-30 10:40:10,216 - INFO - Added column amca_spark_proof_cost (REAL DEFAULT 0) to data\central_database\all_projects.db
+2025-05-30 10:40:10,223 - INFO - Added column optional_items_json (TEXT) to data\central_database\all_projects.db
+2025-05-30 10:40:10,230 - INFO - Added column custom_optional_items_json (TEXT) to data\central_database\all_projects.db
+2025-05-30 10:40:10,231 - INFO - Added 4 missing columns to data\central_database\all_projects.db
+2025-05-30 10:40:10,231 - INFO - ProjectFans table in data\central_database\all_projects.db now has 64 columns
+2025-05-30 10:40:10,232 - INFO - Successfully updated schema in data\central_database\all_projects.db
+2025-05-30 10:40:10,233 - INFO - Schema update completed. Successfully updated 3 out of 3 databases.
+2025-05-30 10:40:10,241 - INFO - Found 44 rows with optional_items data in fan_pricing.db
+2025-05-30 10:40:10,249 - INFO - Migrated optional items data for 44 rows in fan_pricing.db
