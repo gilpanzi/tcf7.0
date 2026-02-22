@@ -1219,4 +1219,16 @@ def register_routes(app):
             logger.error(f"Error fetching orders data: {str(e)}")
             return jsonify({'success': False, 'message': str(e)})
 
+    @app.route('/api/ai_insights')
+    @login_required
+    def api_ai_insights():
+        """API endpoint to get AI-driven insights and tips."""
+        try:
+            from database import get_ai_insights
+            insights = get_ai_insights()
+            return jsonify({'success': True, 'insights': insights})
+        except Exception as e:
+            logger.error(f"Error fetching AI insights: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)})
+
     return app 

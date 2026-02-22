@@ -1,8 +1,99 @@
 // dashboard.js - Command Center Logic
+/* AI Advisor Functions */
+async function initAIAdvisor() {
+    try {
+        const response = await fetch('/api/ai_insights');
+        const data = await response.json();
+        if (data.success && data.insights.length > 0) {
+            window.aiInsights = data.insights;
+            // Store hot leads for sparkle icons
+            window.hotLeadEnquiries = data.insights
+                .filter(i => i.type === 'hot_lead')
+                .flatMap(i => {
+                    // Extract enquiry numbers from text like "Focus on ...: EQ-1, EQ-2"
+                    const match = i.text.match(/EQ-\d+-\d+/g);
+                    return match || [];
+                });
+
+            renderAIInsights(data.insights);
+            document.getElementById('ai-advisor-widget').style.display = 'block';
+            startAICarousel();
+        }
+    } catch (e) {
+        console.error("AI Advisor Error:", e);
+    }
+}
+
+function renderAIInsights(insights) {
+    const carousel = document.getElementById('ai-insight-carousel');
+    const dotsContainer = document.getElementById('ai-carousel-dots');
+    carousel.innerHTML = '';
+    dotsContainer.innerHTML = '';
+
+    insights.forEach((insight, index) => {
+        const card = document.createElement('div');
+        card.className = 'ai-insight-card';
+        card.innerHTML = `
+            <div class="ai-insight-icon" style="background: ${insight.color}20; color: ${insight.color}">
+                <span class="material-icons-round">${insight.icon}</span>
+            </div>
+            <div class="ai-insight-content">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h3>${insight.title}</h3>
+                    ${insight.type === 'hot_lead' ? '<span class="ai-badge">High Probability</span>' : ''}
+                </div>
+                <p>${insight.text}</p>
+            </div>
+        `;
+        carousel.appendChild(card);
+
+        const dot = document.createElement('div');
+        dot.className = `ai-dot ${index === 0 ? 'active' : ''}`;
+        dot.onclick = () => goToSlide(index);
+        dotsContainer.appendChild(dot);
+    });
+}
+
+let currentSlide = 0;
+let carouselInterval;
+
+function startAICarousel() {
+    if (carouselInterval) clearInterval(carouselInterval);
+    carouselInterval = setInterval(() => {
+        currentSlide = (currentSlide + 1) % window.aiInsights.length;
+        updateCarousel();
+    }, 6000);
+}
+
+function updateCarousel() {
+    const carousel = document.getElementById('ai-insight-carousel');
+    const dots = document.querySelectorAll('.ai-dot');
+    const offset = currentSlide * -100;
+
+    Array.from(carousel.children).forEach(card => {
+        card.style.transform = `translateX(${offset}%)`;
+    });
+
+    dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentSlide);
+    });
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    updateCarousel();
+    startAICarousel(); // Reset timer
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initFilters();
     initDashboard();
 });
+
+async function initDashboard() {
+    await loadDashboardStats();
+    await initAIAdvisor();
+}
 
 let debounceTimer;
 function debounce(func, delay) {
@@ -51,7 +142,7 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
     maximumFractionDigits: 0
 });
 
-async function initDashboard() {
+async function loadDashboardStats() {
     try {
         // Show loading state
         document.body.style.cursor = 'wait';
@@ -156,11 +247,15 @@ function renderPipelineTable(projects) {
 
     projects.forEach(project => {
         const tr = document.createElement('tr');
-        const dateStr = project.updated_at ? new Date(project.updated_at).toLocaleDateString() : '-';
+        const updatedDate = new Date(project.updated_at);
+        const dateStr = (project.updated_at && !isNaN(updatedDate.getTime())) ? updatedDate.toLocaleDateString() : '-';
         const statusClass = `status-${project.status.toLowerCase()}`;
 
+        const isHotLead = window.hotLeadEnquiries && window.hotLeadEnquiries.includes(project.enquiry_number);
+        const sparkleIcon = isHotLead ? `<span class="material-icons-round sparkle-icon" title="AI Priority Lead">auto_awesome</span>` : '';
+
         tr.innerHTML = `
-            <td><strong><a href="/enquiries/${project.enquiry_number}/summary">${project.enquiry_number}</a></strong></td>
+            <td><strong><a href="/enquiries/${project.enquiry_number}/summary">${project.enquiry_number}</a></strong>${sparkleIcon}</td>
             <td>${project.customer_name}</td>
             <td>${project.sales_engineer}</td>
             <td>${project.month || '-'}</td>
@@ -173,10 +268,22 @@ function renderPipelineTable(projects) {
                     <option value="Lost" ${project.status === 'Lost' ? 'selected' : ''}>Lost</option>
                 </select>
             </td>
-            <td>${project.probability}%</td>
-            <td><small>${project.remarks || '-'}</small></td>
             <td>
-                <button class="btn btn-secondary btn-small save-status-btn" data-enquiry="${project.enquiry_number}" style="display:none;">Save</button>
+                <input type="number" class="probability-input" value="${project.probability}" min="0" max="100" style="width: 60px; padding: 4px; border-radius: 4px; border: 1px solid #ddd;">%
+            </td>
+            <td>
+                <textarea class="remarks-input" placeholder="Add remarks..." style="width: 100%; min-height: 40px; font-size: 0.8rem; padding: 4px; border-radius: 4px; border: 1px solid #ddd;">${project.remarks || ''}</textarea>
+            </td>
+            <td style="white-space: nowrap;">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <a href="/enquiries/${project.enquiry_number}/summary" class="action-btn" title="View Summary">
+                        <span class="material-icons-round" style="font-size: 1.2rem; color: #3b82f6;">description</span>
+                    </a>
+                    <a href="/enquiries/${project.enquiry_number}/fans/1" class="action-btn" title="Edit Fans">
+                        <span class="material-icons-round" style="font-size: 1.2rem; color: #10b981;">edit_note</span>
+                    </a>
+                    <button class="btn btn-secondary btn-small save-status-btn" data-enquiry="${project.enquiry_number}" style="display:none; padding: 4px 8px;">Save</button>
+                </div>
             </td>
         `;
         tbody.appendChild(tr);
@@ -187,13 +294,27 @@ function renderPipelineTable(projects) {
 
 function attachTableListeners() {
     const table = document.getElementById('pipeline-table');
-    table.querySelectorAll('.status-select').forEach(select => {
-        select.addEventListener('change', (e) => {
-            const el = e.target;
-            el.className = `status-select status-${el.value.toLowerCase()}`;
-            const row = el.closest('tr');
+    table.querySelectorAll('.status-select, .probability-input, .remarks-input').forEach(el => {
+        el.addEventListener('change', (e) => {
+            const row = e.target.closest('tr');
+            if (e.target.classList.contains('status-select')) {
+                e.target.className = `status-select status-${e.target.value.toLowerCase()}`;
+
+                // Auto-update probability for Ordered/Lost
+                const probInput = row.querySelector('.probability-input');
+                if (e.target.value === 'Ordered') probInput.value = 100;
+                else if (e.target.value === 'Lost') probInput.value = 0;
+            }
             row.querySelector('.save-status-btn').style.display = 'inline-flex';
         });
+
+        // Also show save button on input (for remarks/probability typing)
+        if (el.tagName !== 'SELECT') {
+            el.addEventListener('input', (e) => {
+                const row = e.target.closest('tr');
+                row.querySelector('.save-status-btn').style.display = 'inline-flex';
+            });
+        }
     });
 
     table.querySelectorAll('.save-status-btn').forEach(btn => {
@@ -201,12 +322,18 @@ function attachTableListeners() {
             const row = e.target.closest('tr');
             const enq = e.target.dataset.enquiry;
             const status = row.querySelector('.status-select').value;
+            const probability = row.querySelector('.probability-input').value;
+            const remarks = row.querySelector('.remarks-input').value;
 
             try {
                 const response = await fetch(`/api/project/${encodeURIComponent(enq)}/status`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: status, probability: status === 'Ordered' ? 100 : (status === 'Lost' ? 0 : 50) })
+                    body: JSON.stringify({
+                        status: status,
+                        probability: parseInt(probability),
+                        remarks: remarks
+                    })
                 });
                 if (response.ok) {
                     e.target.innerText = 'Saved';

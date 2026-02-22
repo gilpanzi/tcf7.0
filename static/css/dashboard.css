@@ -578,3 +578,140 @@ select.status-lost {
 .animate-fade-in {
     animation: fadeInUp 0.4s ease forwards;
 }
+
+/* AI Advisor Widget */
+.ai-advisor-container {
+    margin-bottom: 2rem;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    background: linear-gradient(to right, #ffffff, #f8faff);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-advisor-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.ai-advisor-header h2 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6366f1;
+    margin: 0;
+}
+
+.ai-carousel {
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    min-height: 80px;
+}
+
+.ai-insight-card {
+    flex: 0 0 100%;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.5rem;
+    transition: transform 0.5s ease;
+}
+
+.ai-insight-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ai-insight-icon .material-icons-round {
+    font-size: 1.5rem;
+}
+
+.ai-insight-content {
+    flex-grow: 1;
+}
+
+.ai-insight-content h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.ai-insight-content p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.ai-carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.ai-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ai-dot.active {
+    background: #6366f1;
+    width: 12px;
+    border-radius: 4px;
+}
+
+.sparkle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #f59e0b;
+    vertical-align: middle;
+    margin-left: 4px;
+    animation: sparkle-float 2s ease-in-out infinite;
+}
+
+@keyframes sparkle-float {
+
+    0%,
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.2) rotate(15deg);
+        opacity: 1;
+    }
+}
+
+.ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+}

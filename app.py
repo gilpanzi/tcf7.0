@@ -4,18 +4,15 @@ from flask import Flask, send_from_directory, request, jsonify
 from flask_cors import CORS
 from routes import register_routes
 from database import get_db_connection
-import create_projects_table  # Import the create_projects_table module
-import create_bearing_lookup  # Import create_bearing_lookup module
-import update_central_database  # Import the update_central_database module
+from database.utils import create_projects_table, create_bearing_lookup, update_central_database
 from datetime import timedelta
-from db_admin import register_db_admin_routes  # Import the new db_admin module
+from db_admin import register_db_admin_routes
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("app.log"),
         logging.StreamHandler()
     ]
 )
