@@ -27,6 +27,13 @@ let trendChart, regionChart;
 
 async function initOrdersDashboard() {
     try {
+        // Show loading states
+        const targets = ['se-performance-list', 'customer-performance-list', 'modal-table-body'];
+        targets.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '<div class="loading-spinner"></div>';
+        });
+
         const response = await fetch('/api/orders');
         const data = await response.json();
 
@@ -405,7 +412,12 @@ function renderSEPerformance(data) {
     container.innerHTML = '';
 
     if (sortedEngineers.length === 0) {
-        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #64748b;">No data</div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-icons-round">person_pin_circle</span>
+                <h3>No Sales Engineers</h3>
+                <p>No orders recorded for this filter</p>
+            </div>`;
         return;
     }
 
@@ -498,7 +510,12 @@ function renderCustomerList(customers) {
     container.innerHTML = '';
 
     if (customers.length === 0) {
-        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #64748b;">No data</div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-icons-round">corporate_fare</span>
+                <h3>No Customer Data</h3>
+                <p>Try searching for another name</p>
+            </div>`;
         return;
     }
 

@@ -145,6 +145,11 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
 async function loadDashboardStats() {
     try {
         // Show loading state
+        const pipelineBody = document.querySelector('#pipeline-table tbody');
+        const engineerBody = document.querySelector('#engineer-table tbody');
+        if (pipelineBody) pipelineBody.innerHTML = '<tr><td colspan="10"><div class="loading-spinner"></div></td></tr>';
+        if (engineerBody) engineerBody.innerHTML = '<tr><td colspan="3"><div class="loading-spinner"></div></td></tr>';
+
         document.body.style.cursor = 'wait';
 
         const params = new URLSearchParams();
@@ -221,7 +226,16 @@ function renderEngineerTable(engineers) {
     const sorted = Object.entries(engineers).sort((a, b) => b[1].live_value - a[1].live_value);
 
     if (sorted.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No data</td></tr>';
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3">
+                    <div class="empty-state">
+                        <span class="material-icons-round">person_off</span>
+                        <h3>No Sales Engineer Data</h3>
+                        <p>Try adjusting your filters</p>
+                    </div>
+                </td>
+            </tr>`;
         return;
     }
 
@@ -241,7 +255,16 @@ function renderPipelineTable(projects) {
     tbody.innerHTML = '';
 
     if (!projects || projects.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No items found</td></tr>';
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10">
+                    <div class="empty-state">
+                        <span class="material-icons-round">search_off</span>
+                        <h3>No Enquiries Found</h3>
+                        <p>Adjust your search/filters to see more projects</p>
+                    </div>
+                </td>
+            </tr>`;
         return;
     }
 

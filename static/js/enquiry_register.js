@@ -21,6 +21,13 @@ let modalYearChart;
 
 async function initEnquiryDashboard() {
     try {
+        // Show loading states
+        const targets = ['se-performance-list', 'customer-performance-list', 'modal-table-body'];
+        targets.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '<div class="loading-spinner"></div>';
+        });
+
         const response = await fetch('/api/combined-enquiries');
         const data = await response.json();
 
@@ -301,7 +308,12 @@ function renderSEPerformance(data) {
     container.innerHTML = '';
 
     if (sorted.length === 0) {
-        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #64748b;">No data</div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-icons-round">analytics_off</span>
+                <h3>No SE Performance Data</h3>
+                <p>No enquiries found for this period</p>
+            </div>`;
         return;
     }
 
@@ -351,7 +363,12 @@ function renderCustomerList(customers) {
     const container = document.getElementById('customer-performance-list');
     container.innerHTML = '';
     if (customers.length === 0) {
-        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #64748b;">No customers</div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <span class="material-icons-round">groups_off</span>
+                <h3>No Customers Found</h3>
+                <p>Try a different search term</p>
+            </div>`;
         return;
     }
 
