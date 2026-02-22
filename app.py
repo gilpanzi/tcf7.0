@@ -64,8 +64,9 @@ def create_app():
         logger.error("Failed to create project tables")
     
     # Apply schema.sql only if database is empty (safe initialization)
-    if os.path.exists('schema.sql'):
-        logger.info("Found schema.sql - checking if database needs initialization...")
+    schema_path = os.path.join(os.path.dirname(__file__), 'database', 'schema.sql')
+    if os.path.exists(schema_path):
+        logger.info(f"Found schema.sql at {schema_path} - checking if database needs initialization...")
         try:
             from database import get_db_connection, migrate_to_unified_schema
             conn = get_db_connection()
@@ -87,7 +88,7 @@ def create_app():
             
             if not has_data:
                 logger.info("Database is empty - applying schema.sql for initialization...")
-                with open('schema.sql', 'r') as f:
+                with open(schema_path, 'r') as f:
                     conn.executescript(f.read())
                 logger.info("Successfully applied schema.sql to database")
             else:

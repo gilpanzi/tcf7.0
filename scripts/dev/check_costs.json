@@ -1,0 +1,30 @@
+{
+  "fabrication_cost": 283200.0,
+  "fabrication_cost_breakdown": {
+    "base_fabrication_cost": 169200.0,
+    "accessories_fabrication_cost": 114000.0
+  },
+  "bought_out_cost": 77105.5,
+  "optional_items_cost": 0,
+  "optional_items_detail": {},
+  "total_raw_cost": 360305.5,
+  "total_cost": 360305.5,
+  "fabrication_selling_price": 377600.0,
+  "bought_out_selling_price": 102807.33333333333,
+  "total_selling_price": 480407.3333333333,
+  "total_job_margin": 24.999999999999996,
+  "vibration_isolators_price": 8000,
+  "bearing_price": 18905.5,
+  "drive_pack_price": 6000.0,
+  "motor_list_price": 176800.0,
+  "discounted_motor_price": 44200.0,
+  "motor_discount": 75.0,
+  "selected_accessories": [
+    "unitary_base_frame",
+    "isolation_base_frame"
+  ],
+  "accessory_cost_estimates": {
+    "Unitary Base Frame": 57000.0,
+    "Isolation Base Frame": 57000.0
+  }
+}
