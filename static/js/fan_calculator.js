@@ -8,23 +8,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Helper function to get rate based on weight range
     function getVendorRate(vendor, material, weight) {
-        // If material is mixed, use MS rate
-        if (material === 'mixed') {
-            material = 'ms';
+        // If material is mixed, use MS rate as default in frontend
+        let materialKey = material;
+        if (material === 'mixed' || material === 'others') {
+            materialKey = 'ms';
         }
 
-        if (!vendorRates[vendor] || !vendorRates[vendor][material]) {
+        if (!vendorRates[vendor] || !vendorRates[vendor][materialKey]) {
             return 0;
         }
 
-        const ranges = vendorRates[vendor][material];
+        const ranges = vendorRates[vendor][materialKey];
+        if (!ranges || ranges.length === 0) return 0;
+
         for (const range of ranges) {
-            if (weight >= range.min && weight <= range.max) {
+            // ranges are sorted by min weight
+            if (weight >= range.min && (range.max === 0 || weight < range.max)) {
                 return range.rate;
             }
         }
 
-        // If no range matches, return the last rate
+        // Default to last range if weight exceeds all ranges
         return ranges[ranges.length - 1].rate;
     }
 
@@ -39,66 +43,57 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Update vendor rate display using calculation results
-    async function updateVendorRate() {
+    async function updateVendorRate(options = { force: false }) {
         const vendorSelect = document.getElementById('vendor');
         const materialSelect = document.getElementById('material');
-        const vendor = vendorSelect.value;
-        const material = materialSelect.value;
-        const rateDisplay = document.getElementById('vendor-rate'); // Changed ID
+        const msPercentageInput = document.getElementById('ms_percentage');
+        const vendor = vendorSelect?.value;
+        const material = materialSelect?.value;
+        const rateInput = document.getElementById('vendor-rate');
 
-        if (!vendor || !material) {
-            if (rateDisplay) rateDisplay.value = '0.00';
-            return;
+        if (!vendor || !material || !rateInput) return;
+
+        // If force update (user action), clear current rate to avoid it being sent as an override
+        if (options.force) {
+            rateInput.value = '';
         }
 
         // Handle "others" material case
         if (material === 'others') {
-            // rateDisplay.value = 'Custom'; // Can't set 'Custom' to number input
             return;
         }
 
+        // Get current weight for rate calculation (use 100 as default for first-time estimate if 0)
+        const weightInput = document.getElementById('total_weight');
+        let weight = parseFloat(weightInput?.value || 0);
+        if (weight <= 0) weight = 100;
 
-        // Get current weight for rate calculation
-        const totalWeight = parseFloat(document.getElementById('total_weight')?.value || 0);
-        const weight = totalWeight; // Use actual weight (0 if new fan)
+        let url = `/api/vendor-rate/${encodeURIComponent(vendor)}/${encodeURIComponent(material)}/${weight}`;
+        if (material === 'mixed' && msPercentageInput) {
+            url += `?ms_percentage=${msPercentageInput.value || 70}`;
+        }
 
-        // Always show vendor rate based on weight ranges
-        // This ensures the display updates when vendor changes
-        // Always show vendor rate based on weight ranges
-        // This ensures the display updates when vendor changes
-        // Only update if current value is 0 or empty, OR if we want to enforce auto-update on dropdown change
-        // For better UX, if user changed vendor/material, we should likely update the rate
-        const rate = getVendorRate(vendor, material, weight);
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
 
-        // Only update if the field is empty or 0 (initial load/default), OR if triggered by user change
-        // We need a flag to know if it's a user action vs initial load
-        // For now, if value is present and non-zero, don't overwrite it blindly unless weight/material changed?
-        // Better approach: In initializeForm, set a flag 'initialLoadComplete'. 
-        // Or simply: check if the calculated rate is different from current? No, user might have custom rate.
+            if (response.ok && data.success) {
+                const calculatedRate = data.rate;
 
-        // Revised Logic:
-        // If the current value in the input matches the *previous* calculated rate, update it.
-        // If the current value is custom (different from standard), KEEP IT.
-        // But how to know?
+                // Update if forced or if field is currently 0/empty
+                if (options.force || !rateInput.value || parseFloat(rateInput.value) === 0) {
+                    if (calculatedRate > 0) {
+                        rateInput.value = calculatedRate.toFixed(2);
 
-        // Simplest Fix for "Per Kg Rate is 0":
-        // If the calculated rate is > 0, update it. 
-        // BUT, if we have a saved custom rate (e.g. 350) and standard is 85...
-        // The issue is updateVendorRate called on load overwrites 350 with 85 (or 0 if w=0).
-
-        // We should NOT call updateVendorRate on load if we have a value.
-        // `initializeForm` sets the value. `initializeVendorRateDisplay` calls `updateVendorRate`?
-
-        // Let's modify `updateVendorRate` to respect existing value if it's "custom"?
-        // No, difficult.
-
-        // Better: Remove `updateVendorRate` call from `initializeVendorRateDisplay` or make it conditional.
-        if (rate > 0) {
-            // Only overwrite if incorrect? No.
-            // If we are currently 0, update.
-            if (parseFloat(rateDisplay.value || 0) === 0) {
-                rateDisplay.value = rate.toFixed(2);
+                        // Trigger change event for autosave if forced by user action
+                        if (options.force) {
+                            handleFormChange();
+                        }
+                    }
+                }
             }
+        } catch (e) {
+            console.error('Error fetching vendor rate:', e);
         }
     }
 
@@ -118,8 +113,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add event listeners for autosave
     const inputs = form.querySelectorAll('input, select');
     inputs.forEach(input => {
-        input.addEventListener('input', handleFormChange);
-        input.addEventListener('change', handleFormChange);
+        input.addEventListener('input', () => handleFormChange());
+        input.addEventListener('change', (e) => {
+            // Major fields trigger immediate update
+            const immediateFields = ['vendor', 'material', 'ms_percentage'];
+            const isImmediate = immediateFields.includes(e.target.id);
+            handleFormChange({ immediate: isImmediate });
+        });
     });
 
     // Dependent dropdowns: sizes -> classes -> arrangements
@@ -175,10 +175,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Handle form changes
-    function handleFormChange() {
+    function handleFormChange(options = { immediate: false }) {
         isDirty = true;
         applyDynamicVisibility();
-        scheduleAutosave();
+
+        if (options.immediate) {
+            if (autosaveTimeout) clearTimeout(autosaveTimeout);
+            saveFan(true);
+        } else {
+            scheduleAutosave();
+        }
     }
 
     // Schedule autosave with debouncing
@@ -242,8 +248,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (response.ok && result.success) {
                 displayCalculationResults(result);
                 showMessage('Calculation completed', 'success');
+            } else if (response.status === 400 && result.error_type === 'missing_weights') {
+                showMissingWeightsModal(result.missing_accessories);
             } else {
-                showMessage(result.error || 'Failed to calculate', 'error');
+                showMessage(result.error || result.message || 'Failed to calculate', 'error');
             }
         } catch (e) {
             showMessage('Error calculating', 'error');
@@ -610,10 +618,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (isolatorInput) isolatorInput.value = data.weights.no_of_isolators;
             }
 
-            // Update vendor rate if provided
+            // Update vendor rate if provided by backend calculation
             if (data.vendor_rate !== undefined && data.vendor_rate !== null) {
                 const vendorRateInput = document.getElementById('vendor-rate');
-                if (vendorRateInput) vendorRateInput.value = data.vendor_rate;
+                if (vendorRateInput) {
+                    vendorRateInput.value = parseFloat(data.vendor_rate).toFixed(2);
+                }
             }
 
             const c = data.costs || {};
@@ -738,10 +748,8 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
             resultsDiv.style.display = 'block';
 
-            // Update vendor rate display after calculation
-            if (window.updateVendorRate) {
-                window.updateVendorRate();
-            }
+            // No need to call updateVendorRate() here because the backend already returned the final rate
+            // and we updated the input field above in displayCalculationResults
         }
     }
 
@@ -803,12 +811,95 @@ document.addEventListener('DOMContentLoaded', function () {
         const materialSelect = document.getElementById('material');
 
         if (vendorSelect && materialSelect) {
-            // Add event listeners
-            vendorSelect.addEventListener('change', updateVendorRate);
-            materialSelect.addEventListener('change', updateVendorRate);
+            // Add event listeners with force update
+            vendorSelect.addEventListener('change', () => updateVendorRate({ force: true }));
+            materialSelect.addEventListener('change', () => updateVendorRate({ force: true }));
 
-            // Initial update
+            // Initial update naturally (don't force if we loaded a saved value)
             updateVendorRate();
         }
     }
+
+    // Missing Weights Modal Control logic
+    window.showMissingWeightsModal = function (missingAccessories) {
+        const modal = document.getElementById('missingWeightsModal');
+        const container = document.getElementById('missing-weights-inputs');
+        container.innerHTML = '';
+
+        missingAccessories.forEach(acc => {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            div.style.marginBottom = '16px';
+            div.innerHTML = `
+                <label style="display:block;margin-bottom:8px;font-weight:600;">${acc} Weight (kg)</label>
+                <input type="number" step="0.01" class="missing-weight-input" data-accessory="${acc}" 
+                       style="width:100%;padding:10px;border:1px solid var(--gray-300);border-radius:6px;" required>
+            `;
+            container.appendChild(div);
+        });
+
+        modal.style.display = 'block';
+    };
+
+    window.closeMissingWeightsModal = function () {
+        document.getElementById('missingWeightsModal').style.display = 'none';
+    };
+
+    window.saveMissingWeights = async function () {
+        const inputs = document.querySelectorAll('.missing-weight-input');
+        const weights = {};
+        let allValid = true;
+
+        inputs.forEach(input => {
+            const val = parseFloat(input.value);
+            if (isNaN(val) || val <= 0) {
+                allValid = false;
+                input.style.borderColor = 'var(--error-500)';
+            } else {
+                weights[input.getAttribute('data-accessory')] = val;
+                input.style.borderColor = 'var(--gray-300)';
+            }
+        });
+
+        if (!allValid) {
+            alert('Please enter valid positive weights for all accessories.');
+            return;
+        }
+
+        const formData = new FormData(document.getElementById('fan-calculator-form'));
+        const payload = {
+            fan_model: formData.get('fan_model'),
+            fan_size: formData.get('fan_size'),
+            class: formData.get('class'),
+            arrangement: formData.get('arrangement'),
+            weights: weights
+        };
+
+        const saveButton = document.querySelector('#missingWeightsModal button[onclick="saveMissingWeights()"]');
+        const originalText = saveButton.textContent;
+        saveButton.textContent = 'Saving...';
+        saveButton.disabled = true;
+
+        try {
+            const response = await fetch('/api/update_accessory_weights', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+                closeMissingWeightsModal();
+                // Re-trigger calculation
+                calculateFan();
+            } else {
+                alert('Error saving weights: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error saving weights: ' + error.message);
+        } finally {
+            saveButton.textContent = originalText;
+            saveButton.disabled = false;
+        }
+    };
 });

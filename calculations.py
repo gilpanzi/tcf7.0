@@ -175,9 +175,7 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
             
             if not price_row:
                 logger.error(f"No matching vendor price found for vendor: {vendor}, weight: {total_weight}")
-            if not price_row:
-                logger.error(f"No matching vendor price found for vendor: {vendor}, weight: {total_weight}")
-                return None, None, None, None, {
+                return 0, total_weight, {}, 0.0, {
                     'error': 'No matching vendor price found',
                     'details': {
                         'vendor': vendor,

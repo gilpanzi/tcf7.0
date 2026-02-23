@@ -296,7 +296,9 @@ def register_routes(app):
                     logger.warning(f"Missing weights for accessories: {missing_accessories}")
                     return jsonify({
                         'success': False, 
-                        'message': f"Weight data missing for: {', '.join(missing_accessories)}. Please use Custom Accessories for these items."
+                        'message': f"Weight data missing for: {', '.join(missing_accessories)}.",
+                        'error_type': 'missing_weights',
+                        'missing_accessories': missing_accessories
                     }), 400
                 
                 # Logic for Isolators and Shaft Diameter:
@@ -693,9 +695,13 @@ def register_routes(app):
                             total_acc_weight += weight
                 
                 if missing_weight_accessories:
-                    error_msg = f"Missing weight for accessories: {', '.join(missing_weight_accessories)}. Please add them as custom accessories or update the database."
+                    error_msg = f"Missing weight for accessories: {', '.join(missing_weight_accessories)}."
                     logger.error(error_msg)
-                    return jsonify({'error': error_msg}), 400
+                    return jsonify({
+                        'error': error_msg,
+                        'error_type': 'missing_weights',
+                        'missing_accessories': missing_weight_accessories
+                    }), 400
 
                 weights['accessory_weight'] = total_acc_weight
                 
@@ -879,48 +885,38 @@ def register_routes(app):
         """Get vendor rate for specific material and weight."""
         logger.info(f"Vendor rate endpoint called: vendor={vendor}, material={material}, weight={weight}")
         try:
+            ms_percentage = request.args.get('ms_percentage')
+            
+            fan_data = {
+                'vendor': vendor,
+                'material': material
+            }
+            if ms_percentage:
+                fan_data['ms_percentage'] = float(ms_percentage)
+            
             with get_db_connection() as conn:
                 cursor = conn.cursor()
+                # Use the centralized calculation logic
+                fabrication_cost, _, _, rate_used, error = calculate_fabrication_cost(
+                    cursor, fan_data, weight
+                )
                 
-                # Get rate from VendorWeightDetails table
-                cursor.execute('''
-                    SELECT MSPrice, SS304Price FROM VendorWeightDetails
-                    WHERE Vendor = ? AND WeightStart <= ? AND WeightEnd > ?
-                ''', (vendor, weight, weight))
+                if error:
+                    logger.error(f"Error in backend rate calculation: {error}")
+                    return jsonify({'success': False, 'message': error.get('error', 'Calculation error')}), 400
                 
-                vendor_row = cursor.fetchone()
-                if not vendor_row:
-                    logger.warning(f"No rate found for vendor {vendor} at weight {weight}")
-                    return jsonify({'error': f'No rate found for vendor {vendor} at weight {weight}'}), 404
-                
-                ms_price, ss304_price = vendor_row
-                logger.info(f"Found rates: MS={ms_price}, SS304={ss304_price}")
-                
-                # Determine rate based on material
-                if material == 'ms':
-                    rate = ms_price
-                elif material == 'ss304':
-                    rate = ss304_price
-                elif material == 'mixed':
-                    # For mixed, return MS rate (user will specify percentage)
-                    rate = ms_price
-                else:
-                    # For others, return MS rate as default
-                    rate = ms_price
-                
-                logger.info(f"Returning rate: {rate} for material: {material}")
+                logger.info(f"Returning calculated rate: {rate_used} for material: {material}")
                 return jsonify({
+                    'success': True,
                     'vendor': vendor,
                     'material': material,
                     'weight': weight,
-                    'rate': rate,
-                    'ms_rate': ms_price,
-                    'ss304_rate': ss304_price
+                    'rate': rate_used
                 })
                 
         except Exception as e:
             logger.error(f"Error getting vendor rate: {str(e)}")
-            return jsonify({'error': str(e)}), 500
+            return jsonify({'success': False, 'message': str(e)}), 500
 
     # New page routes
     @app.route('/enquiries/<enquiry_number>/fans/<int:fan_number>')
@@ -1096,6 +1092,52 @@ def register_routes(app):
         except Exception as e:
             logger.error(f"Error updating project status: {str(e)}")
             return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/update_accessory_weights', methods=['POST'])
+    @login_required
+    def api_update_accessory_weights():
+        """Update multiple accessory weights in FanWeights table."""
+        try:
+            data = request.json
+            fan_model = data.get('fan_model')
+            fan_size = data.get('fan_size')
+            fan_class = data.get('class')
+            arrangement = data.get('arrangement')
+            weights = data.get('weights', {}) # { 'Unitary Base Frame': 100, ... }
+
+            if not all([fan_model, fan_size, fan_class, arrangement]):
+                return jsonify({'success': False, 'message': 'Missing configuration details'}), 400
+
+            if not weights:
+                return jsonify({'success': False, 'message': 'No weights provided'}), 400
+
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Build update query dynamically
+                update_parts = []
+                params = []
+                for name, weight in weights.items():
+                    # Sanitize name or use a map to be safe
+                    # Standard accessories only for now
+                    if name in ACCESSORY_NAME_MAP.values():
+                        update_parts.append(f'"{name}" = ?')
+                        params.append(float(weight))
+                
+                if not update_parts:
+                    return jsonify({'success': False, 'message': 'No valid accessories found'}), 400
+
+                query = f"UPDATE FanWeights SET {', '.join(update_parts)} WHERE \"Fan Model\" = ? AND \"Fan Size\" = ? AND \"Class\" = ? AND \"Arrangement\" = ?"
+                params.extend([fan_model, fan_size, fan_class, arrangement])
+                
+                cursor.execute(query, params)
+                conn.commit()
+                
+                return jsonify({'success': True, 'message': 'Weights updated successfully'})
+                
+        except Exception as e:
+            logger.error(f"Error updating accessory weights: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)}), 500
 
     @app.route('/add_fan_model', methods=['POST'])
     @login_required
