@@ -57,7 +57,7 @@ function attachFilterListeners() {
 }
 
 function populateFilters() {
-    const yearSet = new Set();
+    const yearSet = new Set([2026]);
     const seSet = new Set();
 
     allEnquiriesData.forEach(e => {
@@ -75,6 +75,12 @@ function populateFilters() {
         opt.textContent = y;
         yearSelect.appendChild(opt);
     });
+    // Default to 2026 if available, else latest year
+    if (years.includes(2026)) {
+        yearSelect.value = 2026;
+    } else if (years.length > 0) {
+        yearSelect.value = years[0];
+    }
 
     const seSelect = document.getElementById('filter-se');
     ses.forEach(se => {
@@ -185,29 +191,57 @@ function renderComparison(elementId, current, previous, isCurrency = false) {
     `;
 }
 
+const valFormatterLakhs = v => '₹' + (v / 100000).toFixed(0) + 'L';
+
+Chart.register(ChartDataLabels);
+Chart.defaults.set('plugins.datalabels', {
+    display: false // default off globally, turn on specifically
+});
+
 function renderCharts(data) {
     const trendMap = {};
     const regionMap = {};
     const selectedYear = document.getElementById('filter-year').value;
 
     const isAllYears = selectedYear === 'All';
-    if (!isAllYears) {
-        // Initialize all months for the selected year to ensure a continuous trend
-        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].forEach(m => {
-            trendMap[`${m} ${selectedYear}`] = 0;
-        });
+
+    const latestPeriod = allEnquiriesData.reduce((max, e) => {
+        const y = Math.floor(e.year);
+        const m = monthMap[e.month] || 0;
+        if (y > max.y || (y === max.y && m > max.m)) return { y, m };
+        return max;
+    }, { y: 0, m: 0 });
+
+    // Always show Rolling 12 Months for the trend chart
+    const periods = [];
+    let curY = latestPeriod.y;
+    let curM = latestPeriod.m;
+    for (let i = 0; i < 12; i++) {
+        const mName = Object.keys(monthMap).find(key => monthMap[key] === curM && key.length === 3);
+        periods.push(`${mName} ${curY}`);
+        curM--;
+        if (curM === 0) { curM = 12; curY--; }
+    }
+    periods.reverse().forEach(p => trendMap[p] = 0);
+
+    // Filter allEnquiriesData by status/SE even for the rolling chart? 
+    // Usually it should respect other filters except Year.
+    const selectedSE = document.getElementById('filter-se').value;
+    let chartData = allEnquiriesData;
+    if (selectedSE !== 'All') {
+        chartData = chartData.filter(e => e.sales_engineer && e.sales_engineer.trim() === selectedSE);
     }
 
-    data.forEach(e => {
+    chartData.forEach(e => {
         if (e.year && e.month) {
-            const periodKey = isAllYears
-                ? `${Math.floor(e.year)}`
-                : `${e.month.substring(0, 3)} ${Math.floor(e.year)}`;
-            trendMap[periodKey] = (trendMap[periodKey] || 0) + 1;
+            const key = `${e.month.substring(0, 3)} ${Math.floor(e.year)}`;
+            if (trendMap.hasOwnProperty(key)) trendMap[key]++;
         }
-        if (e.region) {
-            regionMap[e.region] = (regionMap[e.region] || 0) + 1;
-        }
+    });
+
+    // Populate regionMap from the actually filtered data (data parameter)
+    data.forEach(e => {
+        if (e.region) regionMap[e.region] = (regionMap[e.region] || 0) + 1;
     });
 
     // Trend Chart
@@ -215,8 +249,8 @@ function renderCharts(data) {
     if (trendChart) trendChart.destroy();
 
     const sortedKeys = Object.keys(trendMap).sort((a, b) => {
-        if (selectedYear === 'All') return parseInt(a) - parseInt(b);
         const partsA = a.split(' '), partsB = b.split(' ');
+        if (partsA.length === 1 || partsB.length === 1) return parseInt(a) - parseInt(b);
         if (partsA[1] !== partsB[1]) return parseInt(partsA[1]) - parseInt(partsB[1]);
         return (monthMap[partsA[0]] || 0) - (monthMap[partsB[0]] || 0);
     });
@@ -240,12 +274,13 @@ function renderCharts(data) {
             responsive: true, maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return `Enquiries: ${context.parsed.y}`;
-                        }
-                    }
+                datalabels: {
+                    display: true,
+                    align: 'top',
+                    anchor: 'end',
+                    color: '#475569',
+                    font: { size: 10, weight: 600 },
+                    formatter: (value) => value > 0 ? value : ''
                 }
             },
             scales: {
@@ -419,8 +454,13 @@ function openDrilldownModal(entityName, entityType) {
         else if (entityType === 'Sales Engineer') match = e.sales_engineer === entityName;
         else if (entityType === 'Customer') match = e.customer_name?.trim().toUpperCase() === entityName.toUpperCase();
 
-        if (match && year !== 'All') return Math.floor(e.year) === Number(year);
-        return match;
+        if (match) {
+            // For customers, show all years. For others, respect the year filter.
+            if (entityType === 'Customer') return true;
+            if (year !== 'All') return Math.floor(e.year) === Number(year);
+            return true;
+        }
+        return false;
     }).reverse();
 
     const totVal = history.reduce((s, x) => s + (Number(x.total_value) || 0), 0);
@@ -436,18 +476,57 @@ function openDrilldownModal(entityName, entityType) {
     renderModalChart(history, entityName);
 
     const tbody = document.getElementById('modal-table-body');
+    const tableHeader = document.querySelector('#drilldownModal thead tr');
     tbody.innerHTML = '';
-    history.forEach(e => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td style="padding: 1rem; font-weight: 600;">${e.enquiry_number}</td>
-            <td style="padding: 1rem;">${e.month} ${Math.floor(e.year)}</td>
-            <td style="padding: 1rem;">${e.customer_name || '-'}</td>
-            <td style="padding: 1rem;"><span style="color: ${e.pricing_status === 'Not Started' ? '#64748b' : '#10b981'}; font-weight: 500;">${e.pricing_status}</span></td>
-            <td style="padding: 1rem; text-align: right; font-weight: 500;">${currencyFormatter.format(Number(e.total_value) || 0)}</td>
+
+    if (entityType === 'Customer') {
+        tableHeader.innerHTML = `
+            <th style="padding: 1rem; text-align: left;">Year</th>
+            <th style="padding: 1rem; text-align: right;">Total Value</th>
+            <th style="padding: 1rem; text-align: right;">Enquiry Count</th>
+            <th style="padding: 1rem; text-align: right;">Avg Fans</th>
         `;
-        tbody.appendChild(tr);
-    });
+
+        const yearGroups = {};
+        history.forEach(e => {
+            const y = Math.floor(e.year);
+            if (!yearGroups[y]) yearGroups[y] = { val: 0, count: 0, fans: 0 };
+            yearGroups[y].val += Number(e.total_value) || 0;
+            yearGroups[y].count += 1;
+            yearGroups[y].fans += Number(e.fan_count) || 1;
+        });
+
+        Object.keys(yearGroups).sort((a, b) => b - a).forEach(y => {
+            const g = yearGroups[y];
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding: 1rem; font-weight: 600;">${y}</td>
+                <td style="padding: 1rem; text-align: right;">${currencyFormatter.format(g.val)}</td>
+                <td style="padding: 1rem; text-align: right;">${g.count}</td>
+                <td style="padding: 1rem; text-align: right;">${(g.fans / g.count).toFixed(1)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } else {
+        tableHeader.innerHTML = `
+            <th style="padding: 1rem; text-align: left;">Enquiry #</th>
+            <th style="padding: 1rem; text-align: left;">Period</th>
+            <th style="padding: 1rem; text-align: left;">Customer</th>
+            <th style="padding: 1rem; text-align: left;">Status</th>
+            <th style="padding: 1rem; text-align: right;">Value</th>
+        `;
+        history.forEach(e => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding: 1rem; font-weight: 600;">${e.enquiry_number}</td>
+                <td style="padding: 1rem;">${e.month} ${Math.floor(e.year)}</td>
+                <td style="padding: 1rem;">${e.customer_name || '-'}</td>
+                <td style="padding: 1rem;"><span style="color: ${e.pricing_status === 'Not Started' ? '#64748b' : '#10b981'}; font-weight: 500;">${e.pricing_status}</span></td>
+                <td style="padding: 1rem; text-align: right; font-weight: 500;">${currencyFormatter.format(Number(e.total_value) || 0)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 
     document.getElementById('drilldownModal').style.display = 'flex';
 }

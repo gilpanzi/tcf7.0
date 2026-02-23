@@ -65,7 +65,7 @@ function attachFilterListeners() {
 }
 
 function populateFilters() {
-    const yearSet = new Set();
+    const yearSet = new Set([2026]);
     const seSet = new Set();
 
     allOrdersData.forEach(o => {
@@ -85,8 +85,10 @@ function populateFilters() {
         yearSelect.appendChild(opt);
     });
 
-    // Default to latest year
-    if (years.length > 0) {
+    // Default to 2026 if available, else latest year
+    if (years.includes(2026)) {
+        yearSelect.value = 2026;
+    } else if (years.length > 0) {
         yearSelect.value = years[0];
     }
 
@@ -245,17 +247,44 @@ function renderCharts(data) {
     const trendMap = {};
     const regionMap = {};
 
-    const selectedYear = document.getElementById('filter-year').value;
-    const sortedOrders = [...data].reverse();
+    const latestPeriod = allOrdersData.reduce((max, o) => {
+        const y = Math.floor(o.year);
+        const m = o.month ? (monthMap[o.month.substring(0, 3)] || 0) : 0;
+        if (y > max.y || (y === max.y && m > max.m)) return { y, m };
+        return max;
+    }, { y: 0, m: 0 });
 
-    sortedOrders.forEach(o => {
-        const val = Number(o.order_value) || 0;
+    // Always show Rolling 12 Months for the trend chart
+    const periods = [];
+    let curY = latestPeriod.y;
+    let curM = latestPeriod.m;
+    for (let i = 0; i < 12; i++) {
+        const mName = Object.keys(monthMap).find(key => monthMap[key] === curM);
+        periods.push(`${mName} ${curY}`);
+        curM--;
+        if (curM === 0) { curM = 12; curY--; }
+    }
+    periods.reverse().forEach(p => trendMap[p] = 0);
+
+    const selectedSE = document.getElementById('filter-engineer')?.value || '';
+    let chartData = allOrdersData;
+    if (selectedSE) {
+        chartData = chartData.filter(o => o.sales_engineer && o.sales_engineer.trim() === selectedSE);
+    }
+
+    chartData.forEach(o => {
         if (o.year && o.month) {
-            const periodKey = selectedYear === 'All'
-                ? `${Math.floor(o.year)}`
-                : `${String(o.month).substring(0, 3)} ${Math.floor(o.year)}`;
-            trendMap[periodKey] = (trendMap[periodKey] || 0) + val;
+            const mShort = String(o.month).substring(0, 3);
+            const key = `${mShort} ${Math.floor(o.year)}`;
+            if (trendMap.hasOwnProperty(key)) {
+                trendMap[key] += Number(o.order_value) || 0;
+            }
         }
+    });
+
+    // Populate regionMap from filtered data
+    data.forEach(o => {
+        const val = Number(o.order_value) || 0;
         if (o.region) {
             regionMap[o.region] = (regionMap[o.region] || 0) + val;
         }
@@ -274,17 +303,10 @@ function renderCharts(data) {
 
     const monthOrder = { 'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12 };
     const sortedKeys = Object.keys(trendMap).sort((a, b) => {
-        if (selectedYear === 'All') {
-            return parseInt(a) - parseInt(b);
-        } else {
-            const partsA = a.split(' ');
-            const partsB = b.split(' ');
-            if (partsA.length === 2 && partsB.length === 2) {
-                if (partsA[1] !== partsB[1]) return parseInt(partsA[1]) - parseInt(partsB[1]);
-                return (monthOrder[partsA[0]] || 0) - (monthOrder[partsB[0]] || 0);
-            }
-            return 0;
-        }
+        const partsA = a.split(' '), partsB = b.split(' ');
+        if (partsA.length === 1 || partsB.length === 1) return parseInt(a) - parseInt(b);
+        if (partsA[1] !== partsB[1]) return parseInt(partsA[1]) - parseInt(partsB[1]);
+        return (monthOrder[partsA[0]] || 0) - (monthOrder[partsB[0]] || 0);
     });
 
     trendChart = new Chart(tCtx, {
