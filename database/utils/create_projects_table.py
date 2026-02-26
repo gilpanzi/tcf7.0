@@ -8,8 +8,13 @@ logger = logging.getLogger(__name__)
 def create_projects_tables():
     """Create tables for storing projects and fans data."""
     try:
+        # Use relative path that matches database/__init__.py local default
+        import os
+        db_path = os.path.join('data', 'fan_pricing.db')
+        os.makedirs('data', exist_ok=True)
+        
         # Connect to the database
-        conn = sqlite3.connect('fan_pricing.db')
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
         logger.info("Connected to database")
@@ -115,7 +120,12 @@ def create_projects_tables():
 def create_users_table():
     """Create the users table and insert default users if not present."""
     try:
-        conn = sqlite3.connect('fan_pricing.db')
+        # Use relative path that matches database/__init__.py local default
+        import os
+        db_path = os.path.join('data', 'fan_pricing.db')
+        os.makedirs('data', exist_ok=True)
+        
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (

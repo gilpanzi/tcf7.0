@@ -483,6 +483,38 @@ def register_routes(app):
             logger.error(f"Error getting project: {str(e)}")
             return jsonify({'error': str(e)}), 500
 
+    @app.route('/api/generate_quote/<enquiry_number>', methods=['GET'])
+    @login_required
+    def api_generate_quote(enquiry_number):
+        """Generate and download a PDF quote for the given project."""
+        try:
+            from database import get_project
+            from services.pdf_generator import generate_quotation_pdf
+            import importlib
+            import os
+            
+            project = get_project(enquiry_number)
+            if not project:
+                return jsonify({'error': 'Project not found'}), 404
+                
+            pdf_dir = os.path.join(app.root_path, 'static', 'quotes')
+            os.makedirs(pdf_dir, exist_ok=True)
+            pdf_path = os.path.join(pdf_dir, f'Quote_{enquiry_number}.pdf')
+            
+            generate_quotation_pdf(project, project.get('fans', []), pdf_path)
+            
+            return send_file(
+                pdf_path,
+                mimetype='application/pdf',
+                as_attachment=False,
+                download_name=f'TCF_Quote_{enquiry_number}.pdf'
+            )
+        except Exception as e:
+            logger.error(f"Error generating PDF quote: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return jsonify({'error': str(e)}), 500
+
     @app.route('/api/projects/<enquiry_number>/export/excel', methods=['GET'])
     @login_required
     def api_export_project_excel(enquiry_number):
@@ -1080,9 +1112,10 @@ def register_routes(app):
                 return jsonify({'error': 'Probability must be between 0 and 100'}), 400
             
             remarks = data.get('remarks')
+            lost_reason = data.get('lost_reason')
                 
             from database import update_project_status
-            success = update_project_status(enquiry_number, status, probability, remarks)
+            success = update_project_status(enquiry_number, status, probability, remarks, lost_reason)
             
             if success:
                 return jsonify({'success': True, 'message': 'Status updated'})
@@ -1272,5 +1305,162 @@ def register_routes(app):
         except Exception as e:
             logger.error(f"Error fetching AI insights: {str(e)}")
             return jsonify({'success': False, 'message': str(e)})
+
+
+    @app.route('/customers')
+    @login_required
+    def customers_directory():
+        """Render the Customer Directory page."""
+        return render_template('customers.html')
+        
+    @app.route('/api/customers')
+    @login_required
+    def api_customers_list():
+        """Returns the list of customers with aggregate metrics."""
+        try:
+            from database import get_all_customers_with_metrics, get_customer_summary_stats
+            customers = get_all_customers_with_metrics()
+            stats = get_customer_summary_stats()
+            return jsonify({
+                'success': True, 
+                'customers': customers,
+                'stats': stats
+            })
+        except Exception as e:
+            logger.error(f"Error fetching customers list: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)}), 500
+            
+    @app.route('/customers/<int:customer_id>')
+    @login_required
+    def customer_360_profile(customer_id):
+        """Render the Customer 360 profile page."""
+        return render_template('customer_360.html', customer_id=customer_id)
+        
+    @app.route('/api/customers/<int:customer_id>')
+    @login_required
+    def api_customer_360(customer_id):
+        """Returns the detailed 360 dashboard data for a customer."""
+        try:
+            from database import get_customer_360
+            data = get_customer_360(customer_id)
+            if data:
+                return jsonify({'success': True, 'customer': data})
+            return jsonify({'success': False, 'message': 'Customer not found'}), 404
+        except Exception as e:
+            logger.error(f"Error fetching customer 360 data: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)}), 500
+            
+    @app.route('/api/customers/<int:customer_id>/visit', methods=['POST'])
+    @login_required
+    def api_update_customer_visit(customer_id):
+        """Update the last visit date for a customer."""
+        try:
+            from database import update_customer_visit
+            data = request.json
+            visit_date = data.get('visit_date')
+            if not visit_date:
+                return jsonify({'success': False, 'message': 'Missing visit_date'}), 400
+            
+            success = update_customer_visit(customer_id, visit_date)
+            if success:
+                return jsonify({'success': True, 'message': 'Visit date updated'})
+            return jsonify({'success': False, 'message': 'Update failed'}), 500
+        except Exception as e:
+            logger.error(f"Error updating visit date: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/manual_entry')
+    @login_required
+    def manual_entry():
+        """Render the Hybrid Data Entry forms."""
+        return render_template('manual_entry.html')
+
+    @app.route('/api/customers/search')
+    @login_required
+    def api_search_customers():
+        """API endpoint to search customers by name for autocomplete."""
+        try:
+            query = request.args.get('q', '')
+            if len(query) < 2:
+                return jsonify({'success': True, 'customers': []})
+            from database import search_customers
+            customers = search_customers(query)
+            return jsonify({'success': True, 'customers': customers})
+        except Exception as e:
+            logger.error(f"Error searching customers: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/manual/enquiry', methods=['POST'])
+    @login_required
+    def api_manual_enquiry():
+        """Process a manual enquiry submission."""
+        try:
+            data = request.json
+            from database import add_manual_enquiry
+            success, msg = add_manual_enquiry(data)
+            return jsonify({'success': success, 'message': msg}), 200 if success else 400
+        except Exception as e:
+            logger.error(f"Error saving manual enquiry: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/manual/order', methods=['POST'])
+    @login_required
+    def api_manual_order():
+        """Process a manual order submission."""
+        try:
+            data = request.json
+            from database import add_manual_order
+            success, msg = add_manual_order(data)
+            return jsonify({'success': success, 'message': msg}), 200 if success else 400
+        except Exception as e:
+            logger.error(f"Error saving manual order: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/customer/suggest_merges')
+    @login_required
+    def api_suggest_merges():
+        """Returns a list of suggested customer merges."""
+        try:
+            if not session.get('is_admin'):
+                return jsonify({'success': False, 'error': 'Admin access required'}), 403
+            from database import get_suggested_merges
+            suggestions = get_suggested_merges()
+            return jsonify({'success': True, 'suggestions': suggestions})
+        except Exception as e:
+            logger.error(f"Error suggesting merges: {str(e)}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/customer/merge', methods=['POST'])
+    @login_required
+    def api_merge_customers():
+        """Merges two customers into one."""
+        try:
+            if not session.get('is_admin'):
+                return jsonify({'success': False, 'error': 'Admin access required'}), 403
+            
+            data = request.json
+            primary_id = data.get('primary_id')
+            secondary_id = data.get('secondary_id')
+            
+            if not primary_id or not secondary_id:
+                return jsonify({'success': False, 'error': 'Missing primary_id or secondary_id'}), 400
+            
+            from database import merge_customers
+            success = merge_customers(primary_id, secondary_id)
+            if success:
+                return jsonify({'success': True, 'message': 'Successfully merged'})
+            return jsonify({'success': False, 'error': 'Merge procedure failed, check logs.'}), 500
+        except Exception as e:
+            logger.error(f"Error executing merge: {str(e)}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/customers/merge_center')
+    @login_required
+    def merge_center():
+        """Render the Merge Center UI for duplicating handling."""
+        if not session.get('is_admin'):
+            flash("Admin access required for Merge Center.", "error")
+            return redirect(url_for('customers_directory'))
+        return render_template('merge_center.html')
 
     return app 

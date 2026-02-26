@@ -464,6 +464,7 @@ def view_table(db_name, table_name, page=1):
             
             <div class="action-buttons">
                 <a href="/db-admin/add-record/{db_name}/{table_name}">Add New Record</a>
+                <a href="/db-admin/add-column/{db_name}/{table_name}" style="background-color: #f59e0b;">Add New Column</a>
             </div>
             
             <table>
@@ -851,6 +852,81 @@ def delete_record(db_name, table_name, rowid):
     except Exception as e:
         return f"Error deleting record: {str(e)}", 500
 
+@db_admin_bp.route('/add-column/<db_name>/<table_name>', methods=['GET', 'POST'])
+def add_column(db_name, table_name):
+    """Add a new column to the table."""
+    if db_name not in DATABASE_PATHS:
+        return "Database not found", 404
+    
+    db_path = DATABASE_PATHS[db_name]
+    
+    if request.method == 'POST':
+        column_name = request.form.get('column_name', '').strip()
+        column_type = request.form.get('column_type', 'TEXT')
+        
+        if not column_name:
+            return "Column name is required", 400
+            
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Simple sanitization - only allow alphanumeric and underscores
+            import re
+            if not re.match(r'^[a-zA-Z0-9_]+$', column_name):
+                return "Invalid column name. Use only letters, numbers, and underscores.", 400
+                
+            # Execute ALTER TABLE
+            cursor.execute(f'ALTER TABLE "{table_name}" ADD COLUMN "{column_name}" {column_type}')
+            conn.commit()
+            conn.close()
+            
+            return redirect(f'/db-admin/view-table/{db_name}/{table_name}')
+        except Exception as e:
+            return f"Error adding column: {str(e)}", 500
+            
+    # GET request: show form
+    html_content = f"""
+    <html>
+    <head>
+        <title>Add Column - {table_name}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; }}
+            .back-link {{ margin-bottom: 20px; }}
+            .form-group {{ margin-bottom: 15px; }}
+            label {{ display: block; margin-bottom: 5px; font-weight: bold; }}
+            input, select {{ width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }}
+            .btn {{ 
+                display: inline-block; background-color: #f59e0b; color: white; padding: 10px 15px; 
+                text-decoration: none; border: none; border-radius: 4px; cursor: pointer; 
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="back-link">
+            <a href="/db-admin/view-table/{db_name}/{table_name}">← Back to Table</a>
+        </div>
+        <h2>Add New Column to {table_name}</h2>
+        <form method="post">
+            <div class="form-group">
+                <label for="column_name">Column Name</label>
+                <input type="text" id="column_name" name="column_name" required placeholder="e.g. Remarks">
+            </div>
+            <div class="form-group">
+                <label for="column_type">Column Type</label>
+                <select id="column_type" name="column_type">
+                    <option value="TEXT">TEXT</option>
+                    <option value="INTEGER">INTEGER</option>
+                    <option value="REAL">REAL</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Add Column</button>
+        </form>
+    </body>
+    </html>
+    """
+    return html_content
+
 def register_db_admin_routes(app):
     """Register database admin routes."""
     # Setup Basic Authentication - Use environment variables for production
@@ -864,8 +940,10 @@ def register_db_admin_routes(app):
     # Create a wrapper function to protect all routes in the blueprint
     @db_admin_bp.before_request
     def require_auth():
-        if not basic_auth.authenticate():
-            return basic_auth.challenge()
+        if not session.get('is_admin'):
+            from flask import flash, url_for, redirect
+            flash('Admin access required for Database Admin')
+            return redirect(url_for('login'))
     
     # Register the blueprint
     app.register_blueprint(db_admin_bp, url_prefix='/db-admin')

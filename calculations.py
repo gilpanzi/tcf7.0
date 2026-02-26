@@ -139,6 +139,8 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
         # Initialize base prices
         ms_price = 0
         ss304_price = 0
+        ss316_price = 0
+        aluminium_price = 0
         
         # Check if custom vendor_rate is provided
         custom_vendor_rate = fan_data.get('vendor_rate')
@@ -154,6 +156,8 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
                     ms_price = base_rate
                     ss_multiplier = 2.5
                     ss304_price = base_rate * ss_multiplier
+                    ss316_price = base_rate * 3.0 # Dynamic estimate for SS316 if custom rate
+                    aluminium_price = base_rate * 4.0 # Dynamic estimate for Aluminium if custom rate
                     rate_source = "custom"
                 else: 
                      logger.info(f"Custom vendor rate is {base_rate}, falling back to DB lookup")
@@ -165,9 +169,9 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
         # If no custom rate (or invalid), use DB lookup
         if custom_vendor_rate is None:
             logger.info(f"Looking up rate for vendor: {vendor}, weight: {total_weight}")
-            # Correct schema: WeightStart, WeightEnd, MSPrice, SS304Price
+            # Correct schema: WeightStart, WeightEnd, MSPrice, SS304Price, SS316Price, AluminiumPrice
             cursor.execute('''
-                SELECT MSPrice, SS304Price FROM VendorWeightDetails 
+                SELECT MSPrice, SS304Price, SS316Price, AluminiumPrice FROM VendorWeightDetails 
                 WHERE Vendor = ? AND ? >= WeightStart AND ? <= WeightEnd
             ''', (vendor, total_weight, total_weight))
             
@@ -186,7 +190,9 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
             
             ms_price = float(price_row[0])
             ss304_price = float(price_row[1])
-            logger.debug(f"Vendor prices - MS: {ms_price}, SS304: {ss304_price}")
+            ss316_price = float(price_row[2]) if price_row[2] is not None else 800.0
+            aluminium_price = float(price_row[3]) if price_row[3] is not None else 1000.0
+            logger.debug(f"Vendor prices - MS: {ms_price}, SS304: {ss304_price}, SS316: {ss316_price}, Aluminium: {aluminium_price}")
 
         # Calculate fabrication cost based on material and determined prices
         fabrication_cost = 0
@@ -195,6 +201,10 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
             fabrication_cost = total_weight * ms_price
         elif material == 'ss304':
             fabrication_cost = total_weight * ss304_price
+        elif material == 'ss316':
+            fabrication_cost = total_weight * ss316_price
+        elif material == 'aluminium':
+            fabrication_cost = total_weight * aluminium_price
         elif material == 'mixed':
             ms_percentage = float(fan_data.get('ms_percentage', 0))
             if ms_percentage <= 0 or ms_percentage > 100:
@@ -221,7 +231,8 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
         custom_accessory_costs = {}
         try:
             # Determine rate to apply for accessories
-            rate_for_accessories = ms_price if material == 'ms' else ss304_price if material == 'ss304' else ms_price
+            # Determine rate to apply for accessories
+            rate_for_accessories = ms_price if material == 'ms' else ss304_price if material == 'ss304' else ss316_price if material == 'ss316' else aluminium_price if material == 'aluminium' else ms_price
             
             # Accept both camel and snake keys from frontend
             custom_acc = fan_data.get('customAccessories') or fan_data.get('custom_accessories') or {}
@@ -254,6 +265,10 @@ def calculate_fabrication_cost(cursor, fan_data, total_weight):
              rate_used = ms_price
         elif material == 'ss304':
              rate_used = ss304_price
+        elif material == 'ss316':
+             rate_used = ss316_price
+        elif material == 'aluminium':
+             rate_used = aluminium_price
         elif material == 'mixed':
              if total_weight > 0:
                  rate_used = fabrication_cost / total_weight

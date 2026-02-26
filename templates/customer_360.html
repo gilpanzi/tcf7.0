@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer 360° Profile - TCF Pricing Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <style>
+        .timeline {
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 4px;
+            height: 100%;
+            width: 2px;
+            background: #e2e8f0;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: -20px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid white;
+            z-index: 1;
+        }
+
+        .timeline-item.order::before {
+            background-color: #10b981;
+        }
+
+        .timeline-item.enquiry::before {
+            background-color: #6366f1;
+        }
+    </style>
+</head>
+
+<body class="dashboard-body">
+    <div class="dashboard-layout">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="material-icons-round">wind_power</span>
+                </div>
+                <div>
+                    <h2>TCF Tool</h2>
+                    <div class="version-badge">v7.0</div>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-item"><span
+                            class="material-icons-round">home</span>Home</a></li>
+                <li><a href="{{ url_for('dashboard') }}" class="nav-item"><span
+                            class="material-icons-round">analytics</span>Dashboard</a></li>
+                <li><a href="{{ url_for('enquiry_register') }}" class="nav-item"><span
+                            class="material-icons-round">assignment</span>Enquiry Register</a></li>
+                <li><a href="{{ url_for('orders_dashboard') }}" class="nav-item"><span
+                            class="material-icons-round">insights</span>Order Details</a></li>
+                <li><a href="{{ url_for('customers_directory') }}" class="nav-item active"><span
+                            class="material-icons-round">groups</span>Customer 360</a></li>
+                {% if session.get('is_admin') %}
+                <li><a href="{{ url_for('db_admin.index') }}" class="nav-item"><span
+                            class="material-icons-round">settings</span>DB Admin</a></li>
+                {% endif %}
+                <li class="nav-spacer"></li>
+                <li><a href="{{ url_for('logout') }}" class="nav-item text-error"><span
+                            class="material-icons-round">logout</span>Logout</a></li>
+            </ul>
+        </nav>
+
+        <main class="dashboard-main">
+            <!-- Loading State -->
+            <div id="loadingState" style="text-align: center; padding: 5rem 0;">
+                <p style="color: #64748b; font-size: 1.2rem;">Loading 360° Profile...</p>
+            </div>
+
+            <!-- Main Content -->
+            <div id="mainContent" style="display: none;">
+
+                <header class="dashboard-topbar"
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">
+                            <a href="/customers" style="color: #3b82f6; text-decoration: none;">Customers</a> / Profile
+                        </div>
+                        <h1 id="customerName" style="margin: 0; color: #0f172a; font-weight: 700; font-size: 2rem;">
+                            Customer Name</h1>
+                        <div style="display: flex; gap: 1rem; color: #64748b; margin-top: 8px; font-size: 0.9rem;">
+                            <span id="customerRegion"><i class="material-icons-round"
+                                    style="font-size: 1rem; vertical-align: middle;">place</i> Unknown Region</span>
+                            <span id="customerAliases"><i class="material-icons-round"
+                                    style="font-size: 1rem; vertical-align: middle;">sell</i> No Aliases</span>
+                        </div>
+                    </div>
+
+                    <div class="card panel"
+                        style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 1rem 1.5rem; text-align: right; min-width: 250px;">
+                        <span
+                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600;">Last
+                            Visited By Sales</span>
+                        <div
+                            style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; margin-top: 4px;">
+                            <i class="material-icons-round" style="color: #3b82f6;">event_available</i>
+                            <span id="lastVisitDate"
+                                style="font-weight: 600; font-size: 1.1rem; color: #0f172a;">Never</span>
+                            <button onclick="editVisitDate()"
+                                style="background: none; border: none; cursor: pointer; color: #3b82f6; padding: 4px;">
+                                <i class="material-icons-round" style="font-size: 1rem;">edit</i>
+                            </button>
+                        </div>
+                        <input type="date" id="visitDateInput"
+                            style="display: none; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.25rem 0.5rem; font-family: inherit; margin-top: 8px;">
+                        <button id="saveVisitBtn"
+                            style="display: none; width: 100%; font-family: inherit; padding: 0.4rem; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; margin-top: 8px;"
+                            onclick="saveVisitDate()">Save</button>
+                    </div>
+                </header>
+
+                <div class="kpi-grid" style="margin-bottom: 2rem;">
+                    <div class="kpi-card" style="border-top: 4px solid #8b5cf6;">
+                        <div class="kpi-icon" style="background: #ede9fe; color: #8b5cf6;"><span
+                                class="material-icons-round">request_quote</span></div>
+                        <div class="kpi-data">
+                            <p>Total Enquiries</p>
+                            <h3 id="totalEnquiries">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="border-top: 4px solid #10b981;">
+                        <div class="kpi-icon" style="background: #dcfce7; color: #10b981;"><span
+                                class="material-icons-round">check_circle</span></div>
+                        <div class="kpi-data">
+                            <p>Total Orders</p>
+                            <h3 id="totalOrders">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="background: linear-gradient(135deg, #3b82f6 0%, #4338ca 100%);">
+                        <div class="kpi-icon" style="background: rgba(255,255,255,0.2); color: white;"><span
+                                class="material-icons-round">monetization_on</span></div>
+                        <div class="kpi-data" style="color: white;">
+                            <p style="color: rgba(255,255,255,0.8);">Total Order Value</p>
+                            <h3 id="totalOrderValue" style="color: white;">₹0</h3>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="border-top: 4px solid #f59e0b;">
+                        <div class="kpi-icon" style="background: #fef3c7; color: #f59e0b;"><span
+                                class="material-icons-round">insights</span></div>
+                        <div class="kpi-data">
+                            <p>Win Rate %</p>
+                            <h3 id="conversionRate">0%</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div class="card panel" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <div class="card-header" style="border-bottom: 1px solid #e2e8f0; padding: 1.25rem 1.5rem;">
+                            <h2 style="font-size: 1.1rem; color: #0f172a; margin: 0;">Year-over-Year Funnel</h2>
+                        </div>
+                        <div class="card-body" style="padding: 1.5rem; height: 350px;">
+                            <canvas id="yoyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card panel"
+                        style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column;">
+                        <div class="card-header" style="border-bottom: 1px solid #e2e8f0; padding: 1.25rem 1.5rem;">
+                            <h2 style="font-size: 1.1rem; color: #0f172a; margin: 0;">Activity Timeline</h2>
+                        </div>
+                        <div class="card-body" style="padding: 1.5rem; flex: 1; overflow-y: auto; max-height: 350px;">
+                            <div class="timeline" id="activityTimeline">
+                                <!-- Timeline items injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const customerId = {{ customer_id }};
+        let chartInstance = null;
+
+        document.addEventListener('DOMContentLoaded', fetchProfile);
+
+        function fetchProfile() {
+            fetch(`/api/customers/${customerId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loadingState').style.display = 'none';
+                    if (data.success) {
+                        document.getElementById('mainContent').style.display = 'block';
+                        renderProfile(data.customer);
+                        renderChart(data.customer);
+                        renderTimeline(data.customer.timeline);
+                    } else {
+                        alert('Profile not found.');
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        function renderProfile(data) {
+            document.getElementById('customerName').textContent = data.primary_name;
+
+            if (data.year_bindings && data.year_bindings.length > 0) {
+                // Determine latest active and historic bindings
+                const latestRegion = data.year_bindings[0].region;
+                const latestSE = data.year_bindings[0].sales_engineer;
+
+                let html = `<div style="display:flex; flex-direction:column; gap:4px;">
+                              <span><i class="material-icons-round" style="font-size: 1rem; vertical-align: middle;">place</i> Latest Region: <strong>${latestRegion || 'Unknown'}</strong> (Assigned SE: <strong>${latestSE || 'Unknown'}</strong>)</span>`;
+
+                if (data.year_bindings.length > 1) {
+                    html += `<span style="font-size:0.8rem; color:#94a3b8;"><i class="material-icons-round" style="font-size: 0.9rem; vertical-align: middle;">history</i> Historic presence in: ${[...new Set(data.year_bindings.map(b => b.region))].filter(b => b && b !== latestRegion).join(', ')}</span>`;
+                }
+                html += `</div>`;
+                document.getElementById('customerRegion').innerHTML = html;
+            }
+
+            if (data.aliases && data.aliases.length > 0) {
+                const aliasList = data.aliases.filter(a => a !== data.primary_name).join(', ');
+                if (aliasList) {
+                    document.getElementById('customerAliases').innerHTML = `<i class="material-icons-round" style="font-size: 1rem; vertical-align: middle;">sell</i> Also known as: ${aliasList}`;
+                }
+            }
+
+            if (data.last_visit_date) {
+                const d = new Date(data.last_visit_date);
+                if (!isNaN(d.getTime())) {
+                    document.getElementById('lastVisitDate').textContent = d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+                    document.getElementById('visitDateInput').value = data.last_visit_date;
+                } else {
+                    document.getElementById('lastVisitDate').textContent = 'Never';
+                }
+            }
+
+            document.getElementById('totalEnquiries').textContent = data.total_enquiries;
+            document.getElementById('totalOrders').textContent = data.total_orders;
+
+            const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+            document.getElementById('totalOrderValue').textContent = data.total_order_value ? formatter.format(data.total_order_value) : '₹0';
+            document.getElementById('conversionRate').textContent = `${data.conversion_rate}%`;
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('yoyChart').getContext('2d');
+            const yearsSet = new Set();
+            data.orders_by_year.forEach(y => { if (y.year) yearsSet.add(y.year.toString().substring(0, 4)); });
+            data.enquiries_by_year.forEach(y => { if (y.year) yearsSet.add(y.year.toString().substring(0, 4)); });
+
+            let years = Array.from(yearsSet).sort();
+            if (years.length === 0) years = [(new Date().getFullYear()).toString()];
+
+            const enquiriesData = years.map(y => {
+                const found = data.enquiries_by_year.find(e => e.year && e.year.toString().startsWith(y));
+                return found ? found.count : 0;
+            });
+
+            const ordersData = years.map(y => {
+                const found = data.orders_by_year.find(o => o.year && o.year.toString().startsWith(y));
+                return found ? found.count : 0;
+            });
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [
+                        { label: 'Enquiries', data: enquiriesData, backgroundColor: '#6366f1', borderRadius: 4 },
+                        { label: 'Orders', data: ordersData, backgroundColor: '#10b981', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, grid: { color: '#f8fafc' } }, x: { grid: { display: false } } },
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#475569',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (value) => value > 0 ? value : ''
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        function renderTimeline(timeline) {
+            const container = document.getElementById('activityTimeline');
+            container.innerHTML = '';
+
+            if (timeline.length === 0) {
+                container.innerHTML = '<p style="color: #64748b; text-align: center; margin-top: 1rem;">No activity found.</p>';
+                return;
+            }
+
+            const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+
+            timeline.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `timeline-item ${item.type.toLowerCase()}`;
+
+                const d = item.date ? new Date(item.date) : null;
+                const dateStr = (d && !isNaN(d.getTime())) ? d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : 'No Date';
+                let valueBadge = '';
+                if (item.type === 'Order' && item.order_value) {
+                    valueBadge = `<span style="background: #dcfce7; color: #10b981; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${formatter.format(item.order_value)}</span>`;
+                }
+
+                const typeColor = item.type === 'Order' ? '#10b981' : '#6366f1';
+
+                div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-weight: 600; font-size: 0.85rem; color: ${typeColor};">${item.type}</span>
+                <span style="color: #64748b; font-size: 0.8rem;">${dateStr}</span>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; font-size: 0.9rem; color: #1e293b;">${item.ref}</span>
+                    ${valueBadge}
+                </div>
+                <div style="color: #64748b; font-size: 0.8rem; margin-top: 4px; display: flex; align-items: center;">
+                    <i class="material-icons-round" style="font-size: 1rem; margin-right: 4px;">person</i> ${item.sales_engineer || 'Unknown SE'}
+                </div>
+            </div>
+        `;
+                container.appendChild(div);
+            });
+        }
+
+        function editVisitDate() {
+            document.getElementById('lastVisitDate').style.display = 'none';
+            document.getElementById('visitDateInput').style.display = 'block';
+            document.getElementById('saveVisitBtn').style.display = 'block';
+        }
+
+        function saveVisitDate() {
+            const dateVal = document.getElementById('visitDateInput').value;
+            if (!dateVal) { alert('Please select a valid date'); return; }
+
+            const btn = document.getElementById('saveVisitBtn');
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            fetch(`/api/customers/${customerId}/visit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ visit_date: dateVal })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    btn.textContent = 'Save';
+                    btn.disabled = false;
+
+                    if (data.success) {
+                        document.getElementById('lastVisitDate').style.display = 'block';
+                        document.getElementById('lastVisitDate').textContent = new Date(dateVal).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+                        document.getElementById('visitDateInput').style.display = 'none';
+                        document.getElementById('saveVisitBtn').style.display = 'none';
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    btn.textContent = 'Save';
+                    btn.disabled = false;
+                });
+        }
+    </script>
+</body>
+
+</html>

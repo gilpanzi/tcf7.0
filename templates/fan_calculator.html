@@ -225,15 +225,19 @@
 
                         <div class="form-group">
                             <label for="material">Material</label>
-                            <select id="material" name="material">
-                                <option value="ms" {{ 'selected' if fan.specifications.get('material')=='ms' else '' }}>
-                                    MS</option>
-                                <option value="ss304" {{ 'selected' if fan.specifications.get('material')=='ss304'
-                                    else '' }}>SS304</option>
-                                <option value="mixed" {{ 'selected' if fan.specifications.get('material')=='mixed'
-                                    else '' }}>Mixed</option>
-                                <option value="others" {{ 'selected' if fan.specifications.get('material')=='others'
-                                    else '' }}>Others</option>
+                            <select id="material" name="material" class="form-select" required>
+                                <option value="ms" {% if fan.specifications.material=='ms' %}selected{% endif %}>Mild
+                                    Steel (MS)</option>
+                                <option value="ss304" {% if fan.specifications.material=='ss304' %}selected{% endif %}>
+                                    SS304</option>
+                                <option value="ss316" {% if fan.specifications.material=='ss316' %}selected{% endif %}>
+                                    SS316</option>
+                                <option value="aluminium" {% if fan.specifications.material=='aluminium' %}selected{%
+                                    endif %}>Aluminium</option>
+                                <option value="mixed" {% if fan.specifications.material=='mixed' %}selected{% endif %}>
+                                    Mixed (MS + SS304)</option>
+                                <option value="others" {% if fan.specifications.material=='others' %}selected{% endif
+                                    %}>Others (Custom)</option>
                             </select>
                         </div>
 

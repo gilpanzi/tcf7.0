@@ -58,6 +58,14 @@ def create_app():
     
     # Create database tables if they don't exist
     logger.info("Creating database tables if needed...")
+    from database import create_users_table, migrate_to_unified_schema, fix_database_schema
+    
+    # Initialize basic users table first
+    if create_users_table():
+        logger.info("Users table initialized in unified database")
+    else:
+        logger.error("Failed to initialize users table")
+
     if create_projects_table.create_projects_tables():
         logger.info("Project tables created or already exist")
     else:
@@ -68,12 +76,11 @@ def create_app():
     if os.path.exists(schema_path):
         logger.info(f"Found schema.sql at {schema_path} - checking if database needs initialization...")
         try:
-            from database import get_db_connection, migrate_to_unified_schema
             conn = get_db_connection()
             cursor = conn.cursor()
             
             # Check if any tables exist with data
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'users'")
             tables = cursor.fetchall()
             
             has_data = False
@@ -87,7 +94,7 @@ def create_app():
                     break
             
             if not has_data:
-                logger.info("Database is empty - applying schema.sql for initialization...")
+                logger.info("Database is empty (except users) - applying schema.sql for initialization...")
                 with open(schema_path, 'r') as f:
                     conn.executescript(f.read())
                 logger.info("Successfully applied schema.sql to database")
@@ -114,7 +121,6 @@ def create_app():
     
     # Fix database schema first
     logger.info("Fixing database schema...")
-    from database import fix_database_schema, migrate_to_unified_schema
     if fix_database_schema():
         logger.info("Database schema fixed successfully")
     else:

@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Directory - TCF Pricing Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <style>
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-item {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .summary-data h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .summary-data p {
+            margin: 0;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+
+        .toggle-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+        }
+
+        .toggle-btn.active {
+            background: white;
+            color: #2563eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .customer-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .customer-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .customer-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.15);
+            border-color: #3b82f6;
+        }
+
+        .region-badge {
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .stat-mini-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .stat-mini-item {
+            flex: 1;
+        }
+
+        .stat-mini-item label {
+            display: block;
+            font-size: 0.65rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .stat-mini-item span {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #1e293b;
+        }
+
+        .sort-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sort-header:hover {
+            background: #f1f5f9 !important;
+        }
+
+        .sort-header .sort-icon {
+            font-size: 1rem;
+            vertical-align: middle;
+            margin-left: 4px;
+            color: #cbd5e1;
+        }
+
+        .sort-header.active {
+            color: #2563eb;
+        }
+
+        .sort-header.active .sort-icon {
+            color: #2563eb;
+        }
+
+        .table-row-hover {
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .table-row-hover:hover {
+            background-color: #f8fafc;
+        }
+
+        .table-row-hover:hover .view-profile-btn {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .view-profile-btn {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%) translateX(10px);
+            opacity: 0;
+            transition: all 0.3s;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sticky-header th {
+            position: sticky;
+            top: 0;
+            background: #f8fafc;
+            z-index: 20;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-state {
+            padding: 5rem 2rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .empty-state .material-icons-round {
+            font-size: 4rem;
+            color: #e2e8f0;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h3 {
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #94a3b8;
+            max-width: 400px;
+            margin-bottom: 2rem;
+        }
+
+        #customersTable thead th:first-child {
+            border-top-left-radius: 12px;
+        }
+
+        #customersTable thead th:last-child {
+            border-top-right-radius: 12px;
+        }
+
+        .btn-secondary-outline {
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+        }
+
+        .btn-secondary-outline:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+    </style>
+</head>
+
+<body class="dashboard-body">
+    <div class="dashboard-layout">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="material-icons-round">wind_power</span>
+                </div>
+                <div>
+                    <h2>TCF Tool</h2>
+                    <div class="version-badge">v7.0</div>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-item"><span
+                            class="material-icons-round">home</span>Home</a></li>
+                <li><a href="{{ url_for('dashboard') }}" class="nav-item"><span
+                            class="material-icons-round">analytics</span>Dashboard</a></li>
+                <li><a href="{{ url_for('enquiry_register') }}" class="nav-item"><span
+                            class="material-icons-round">assignment</span>Enquiry Register</a></li>
+                <li><a href="{{ url_for('orders_dashboard') }}" class="nav-item"><span
+                            class="material-icons-round">insights</span>Order Details</a></li>
+                <li><a href="{{ url_for('customers_directory') }}" class="nav-item active"><span
+                            class="material-icons-round">groups</span>Customer 360</a></li>
+                {% if session.get('is_admin') %}
+                <li><a href="{{ url_for('db_admin.index') }}" class="nav-item"><span
+                            class="material-icons-round">settings</span>DB Admin</a></li>
+                {% endif %}
+                <li class="nav-spacer"></li>
+                <li><a href="{{ url_for('logout') }}" class="nav-item text-error"><span
+                            class="material-icons-round">logout</span>Logout</a></li>
+            </ul>
+        </nav>
+        <main class="dashboard-main">
+            <header class="dashboard-topbar">
+                <div class="title-area">
+                    <h1>Customer Directory</h1>
+                    <p class="subtitle">Browse and search through all integrated customer profiles.</p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-left: auto;">
+                    <div class="view-toggle">
+                        <button class="toggle-btn active" id="tableViewBtn">
+                            <span class="material-icons-round">list</span> Table
+                        </button>
+                        <button class="toggle-btn" id="cardViewBtn">
+                            <span class="material-icons-round">grid_view</span> Cards
+                        </button>
+                    </div>
+                    {% if session.get('is_admin') %}
+                    <div class="dropdown">
+                        <button class="btn btn-secondary-outline d-flex align-items-center" style="gap: 0.5rem;"
+                            id="moreActionsBtn">
+                            <span class="material-icons-round">more_vert</span>
+                        </button>
+                        <!-- Add dropdown menu if needed, for now just simple secondary button -->
+                        <div id="moreActionsMenu"
+                            style="display:none; position: absolute; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 100; min-width: 180px; margin-top: 0.5rem;">
+                            <a href="/customers/merge_center"
+                                style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: #475569; text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+                                <span class="material-icons-round" style="font-size: 1.2rem;">merge</span>
+                                Manage Duplicates
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <a href="/manual_entry" class="btn btn-primary d-flex align-items-center"
+                        style="padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600; text-decoration: none; gap: 0.5rem; background: #2563eb; color: white;">
+                        <span class="material-icons-round" style="font-size: 1.2rem;">add</span>
+                        Add Customer
+                    </a>
+                </div>
+            </header>
+
+            <div class="summary-bar" id="summaryBar">
+                <!-- Loaded via JS -->
+                <div class="summary-item loadingpulse" style="height: 80px;"></div>
+                <div class="summary-item loadingpulse" style="height: 80px;"></div>
+                <div class="summary-item loadingpulse" style="height: 80px;"></div>
+                <div class="summary-item loadingpulse" style="height: 80px;"></div>
+            </div>
+
+            <div class="filters-row glass-card"
+                style="padding: 1rem; border-radius: 12px; display: flex; gap: 1.5rem; align-items: center; margin-bottom: 2rem;">
+                <div class="search-box d-flex align-items-center"
+                    style="flex-grow: 1; background: #f8fafc; padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <span class="material-icons-round text-muted me-2" style="font-size: 1.2rem;">search</span>
+                    <input type="text" id="searchInput" placeholder="Search by name or region..."
+                        style="border: none; background: transparent; outline: none; width: 100%; font-family: inherit;">
+                </div>
+
+                <div class="filter-group d-flex align-items-center" style="gap: 0.5rem;">
+                    <span class="material-icons-round text-muted" style="font-size: 1.2rem;">public</span>
+                    <select id="regionFilter"
+                        style="border: none; background: transparent; outline: none; font-family: inherit; color: #475569; font-weight: 600; cursor: pointer;">
+                        <option value="">All Regions</option>
+                    </select>
+                </div>
+
+                <div class="filter-group d-flex align-items-center" style="gap: 0.5rem;">
+                    <span class="material-icons-round text-muted" style="font-size: 1.2rem;">person</span>
+                    <select id="engineerFilter"
+                        style="border: none; background: transparent; outline: none; font-family: inherit; color: #475569; font-weight: 600; cursor: pointer;">
+                        <option value="">All Engineers</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="tableView" class="card panel"
+                style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+                <div class="card-body p-0">
+                    <div class="table-container" style="max-height: calc(100vh - 400px); overflow-y: auto;">
+                        <table class="data-table dashboard-table w-100" id="customersTable"
+                            style="margin: 0; min-width: 900px;">
+                            <thead class="sticky-header">
+                                <tr>
+                                    <th class="sort-header active" data-sort="primary_name"
+                                        style="padding: 1.25rem 1.5rem;">
+                                        Customer <span class="material-icons-round sort-icon">expand_more</span>
+                                    </th>
+                                    <th class="sort-header" data-sort="region">Region <span
+                                            class="material-icons-round sort-icon">unfold_more</span></th>
+                                    <th class="sort-header" data-sort="total_enquiries" style="text-align: center;">
+                                        Enquiries <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                    <th class="sort-header" data-sort="total_orders" style="text-align: center;">Orders
+                                        <span class="material-icons-round sort-icon">unfold_more</span>
+                                    </th>
+                                    <th class="sort-header" data-sort="total_order_value" style="text-align: right;">
+                                        Total Value <span class="material-icons-round sort-icon">unfold_more</span></th>
+                                    <th class="sort-header" data-sort="last_activity"
+                                        style="padding-right: 1.5rem; text-align: right;">Last Activity <span
+                                            class="material-icons-round sort-icon">unfold_more</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="customersTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 4rem; color: #64748b;">
+                                        <div class="loadingpulse">Syncing customer records...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="cardView" class="customer-card-grid" style="display: none;">
+                <!-- Loaded via JS -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let allCustomers = [];
+            let currentView = 'table';
+            let sortConfig = { key: 'primary_name', direction: 'asc' };
+
+            // Dropdown logic
+            const moreActionsBtn = document.getElementById('moreActionsBtn');
+            const moreActionsMenu = document.getElementById('moreActionsMenu');
+            if (moreActionsBtn) {
+                moreActionsBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    moreActionsMenu.style.display = moreActionsMenu.style.display === 'none' ? 'block' : 'none';
+                };
+                window.onclick = () => moreActionsMenu.style.display = 'none';
+            }
+
+            fetch('/api/customers')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        allCustomers = data.customers;
+                        renderSummary(data.stats);
+                        populateFilters();
+                        applyFilters(); // Initial render
+                    } else {
+                        showError(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showError('Failed to connect to server.');
+                });
+
+            function renderSummary(stats) {
+                const summaryBar = document.getElementById('summaryBar');
+                if (!stats) return;
+
+                const items = [
+                    { label: 'Total Customers', val: stats.total_customers, icon: 'groups', color: '#3b82f6', bg: '#eff6ff' },
+                    { label: 'Active This Year', val: stats.active_this_year, icon: 'check_circle', color: '#10b981', bg: '#f0fdf4' },
+                    { label: 'New This Month', val: stats.new_this_month, icon: 'person_add', color: '#8b5cf6', bg: '#f5f3ff' },
+                    { label: 'Total Regions', val: stats.total_regions, icon: 'public', color: '#f59e0b', bg: '#fffbeb' },
+                ];
+
+                summaryBar.innerHTML = items.map(item => `
+                    <div class="summary-item">
+                        <div class="summary-icon" style="background: ${item.bg}; color: ${item.color};">
+                            <span class="material-icons-round">${item.icon}</span>
+                        </div>
+                        <div class="summary-data">
+                            <p>${item.label}</p>
+                            <h3>${item.val}</h3>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            function populateFilters() {
+                const regions = [...new Set(allCustomers.map(c => c.region).filter(r => r))].sort();
+                const engineers = [...new Set(allCustomers.map(c => c.latest_sales_engineer).filter(e => e))].sort();
+
+                const regionSelect = document.getElementById('regionFilter');
+                regions.forEach(r => regionSelect.add(new Option(r, r)));
+
+                const engSelect = document.getElementById('engineerFilter');
+                engineers.forEach(e => engSelect.add(new Option(e, e)));
+            }
+
+            function getInitials(name) {
+                if (!name) return '??';
+                const parts = name.split(' ').filter(part => part.length > 0);
+                if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+                return name.substring(0, 2).toUpperCase();
+            }
+
+            function getColorFromName(name) {
+                if (!name) return '#64748b';
+                const colors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#6366f1'];
+                let hash = 0;
+                for (let i = 0; i < name.length; i++) {
+                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return colors[Math.abs(hash) % colors.length];
+            }
+
+            function getRegionColor(region) {
+                const map = {
+                    'Maharashtra': { bg: '#dbeafe', color: '#1e40af' },
+                    'Tamil Nadu': { bg: '#dcfce7', color: '#166534' },
+                    'Gujarat': { bg: '#ffedd5', color: '#9a3412' },
+                    'Karnataka': { bg: '#fef9c3', color: '#854d0e' },
+                    'Delhi': { bg: '#f3e8ff', color: '#6b21a8' },
+                    'Middle East': { bg: '#fae8ff', color: '#86198f' },
+                    'International': { bg: '#fee2e2', color: '#991b1b' }
+                };
+                return map[region] || { bg: '#f1f5f9', color: '#475569' };
+            }
+
+            function formatCurrency(val) {
+                return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val || 0);
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return null;
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+            }
+
+            function applyFilters() {
+                const term = document.getElementById('searchInput').value.toLowerCase();
+                const selRegion = document.getElementById('regionFilter').value;
+                const selEngineer = document.getElementById('engineerFilter').value;
+
+                let filtered = allCustomers.filter(c => {
+                    const matchText = (c.primary_name && c.primary_name.toLowerCase().includes(term)) ||
+                        (c.region && c.region.toLowerCase().includes(term));
+                    const matchRegion = !selRegion || c.region === selRegion;
+                    const matchEngineer = !selEngineer || c.latest_sales_engineer === selEngineer;
+                    return matchText && matchRegion && matchEngineer;
+                });
+
+                // Sort logic
+                filtered.sort((a, b) => {
+                    let valA = a[sortConfig.key];
+                    let valB = b[sortConfig.key];
+
+                    // Specific case for calculated fields
+                    if (sortConfig.key === 'last_activity') {
+                        valA = a.last_activity || '';
+                        valB = b.last_activity || '';
+                    }
+
+                    if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                renderView(filtered);
+            }
+
+            function renderView(data) {
+                if (currentView === 'table') {
+                    renderTable(data);
+                } else {
+                    renderCards(data);
+                }
+            }
+
+            function renderTable(data) {
+                const tbody = document.getElementById('customersTableBody');
+                document.getElementById('tableView').style.display = 'block';
+                document.getElementById('cardView').style.display = 'none';
+
+                if (data.length === 0) {
+                    renderEmptyState();
+                    return;
+                }
+
+                tbody.innerHTML = data.map(c => {
+                    const avatarColor = getColorFromName(c.primary_name);
+                    const regStyle = getRegionColor(c.region);
+
+                    // Fallback logic for last activity
+                    let activityVal = '—';
+                    let activityType = '';
+                    if (c.last_activity) {
+                        activityVal = formatDate(c.last_activity);
+                        // Determine type for sub-label
+                        if (c.last_activity === c.last_visit_date) activityType = 'Last Visit';
+                        else if (c.last_activity === c.last_order_date) activityType = 'Last Order';
+                        else if (c.last_activity === c.last_enquiry_date) activityType = 'Last Enquiry';
+                    }
+
+                    return `
+                        <tr class="table-row-hover" onclick="window.location.href='/customers/${c.id}'" style="cursor: pointer;">
+                            <td style="padding: 1rem 1.5rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div class="avatar" style="background: ${avatarColor}">${getInitials(c.primary_name)}</div>
+                                    <div>
+                                        <div style="font-weight: 700; color: #0f172a;">${c.primary_name}</div>
+                                        <div style="font-size: 0.75rem; color: #64748b;">${c.latest_sales_engineer || 'No Assigned SE'}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="region-badge" style="background: ${regStyle.bg}; color: ${regStyle.color};">${c.region || 'Unknown'}</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <span style="font-weight: 700; color: #1e293b;">${c.total_enquiries || 0}</span>
+                                    <span style="font-size: 0.6rem; text-transform: uppercase; color: #94a3b8;">Total</span>
+                                </div>
+                            </td>
+                            <td style="text-align: center;">
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <span style="font-weight: 700; color: #10b981;">${c.total_orders || 0}</span>
+                                    <span style="font-size: 0.6rem; text-transform: uppercase; color: #94a3b8;">Closed</span>
+                                </div>
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: #1e293b;">${formatCurrency(c.total_order_value)}</td>
+                            <td style="padding-right: 1.5rem; text-align: right;">
+                                <div style="color: #475569; font-weight: 500;">${activityVal}</div>
+                                <div style="font-size: 0.7rem; color: #94a3b8; font-style: italic;">${activityType}</div>
+                                <button class="view-profile-btn">
+                                    View <span class="material-icons-round" style="font-size: 1rem;">chevron_right</span>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function renderCards(data) {
+                const cardGrid = document.getElementById('cardView');
+                document.getElementById('tableView').style.display = 'none';
+                document.getElementById('cardView').style.display = 'grid';
+
+                if (data.length === 0) {
+                    renderEmptyState();
+                    return;
+                }
+
+                cardGrid.innerHTML = data.map(c => {
+                    const avatarColor = getColorFromName(c.primary_name);
+                    const regStyle = getRegionColor(c.region);
+
+                    return `
+                        <div class="customer-card" onclick="window.location.href='/customers/${c.id}'">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                <div class="avatar" style="background: ${avatarColor}">${getInitials(c.primary_name)}</div>
+                                <span class="region-badge" style="background: ${regStyle.bg}; color: ${regStyle.color};">${c.region || 'Unknown'}</span>
+                            </div>
+                            <h3 style="margin: 0 0 0.25rem 0; font-size: 1.15rem;">${c.primary_name}</h3>
+                            <p style="margin: 0; font-size: 0.85rem; color: #64748b;">${c.latest_sales_engineer || 'Unassigned'}</p>
+                            
+                            <div class="stat-mini-row">
+                                <div class="stat-mini-item">
+                                    <label>Enquiries</label>
+                                    <span>${c.total_enquiries || 0}</span>
+                                </div>
+                                <div class="stat-mini-item">
+                                    <label>Orders</label>
+                                    <span style="color: #10b981;">${c.total_orders || 0}</span>
+                                </div>
+                                <div class="stat-mini-item">
+                                    <label>Value</label>
+                                    <span>${formatCurrency(c.total_order_value)}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #94a3b8; font-size: 0.75rem;">
+                                <span class="material-icons-round" style="font-size: 1rem;">event</span>
+                                Activity: ${formatDate(c.last_activity) || 'No record'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            function renderEmptyState() {
+                const term = document.getElementById('searchInput').value;
+                const html = `
+                    <div class="empty-state">
+                        <span class="material-icons-round">search_off</span>
+                        <h3>No matching customers</h3>
+                        <p>We couldn't find any results for "<b>${term}</b>". Try adjusting your search term or filters.</p>
+                        <a href="/manual_entry" class="btn btn-primary d-flex align-items-center" style="gap: 0.5rem;">
+                            <span class="material-icons-round">add</span> Add "${term}" as a new customer
+                        </a>
+                    </div>
+                `;
+                if (currentView === 'table') {
+                    document.getElementById('customersTableBody').innerHTML = `<tr><td colspan="6">${html}</td></tr>`;
+                } else {
+                    document.getElementById('cardView').innerHTML = html;
+                }
+            }
+
+            function showError(msg) {
+                document.getElementById('customersTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 4rem; color: #ef4444;">
+                    <div class="d-flex flex-column align-items-center">
+                        <span class="material-icons-round" style="font-size: 3rem; margin-bottom: 1rem;">error_outline</span>
+                        <div style="font-weight: 600;">Error loading customers</div>
+                        <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">${msg}</div>
+                    </div>
+                </td></tr>`;
+            }
+
+            // View Toggles
+            document.getElementById('tableViewBtn').onclick = function () {
+                this.classList.add('active');
+                document.getElementById('cardViewBtn').classList.remove('active');
+                currentView = 'table';
+                applyFilters();
+            };
+
+            document.getElementById('cardViewBtn').onclick = function () {
+                this.classList.add('active');
+                document.getElementById('tableViewBtn').classList.remove('active');
+                currentView = 'card';
+                applyFilters();
+            };
+
+            // Sorting logic
+            document.querySelectorAll('.sort-header').forEach(header => {
+                header.onclick = function () {
+                    const key = this.getAttribute('data-sort');
+
+                    if (sortConfig.key === key) {
+                        sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortConfig.key = key;
+                        sortConfig.direction = 'asc';
+                    }
+
+                    // Update UI
+                    document.querySelectorAll('.sort-header').forEach(h => {
+                        h.classList.remove('active');
+                        h.querySelector('.sort-icon').textContent = 'unfold_more';
+                    });
+                    this.classList.add('active');
+                    this.querySelector('.sort-icon').textContent = sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more';
+
+                    applyFilters();
+                };
+            });
+
+            // Filters
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            document.getElementById('regionFilter').addEventListener('change', applyFilters);
+            document.getElementById('engineerFilter').addEventListener('change', applyFilters);
+        });
+    </script>
+</body>
+
+</html>

@@ -106,8 +106,12 @@
 
         <div class="fans-grid" style="display: grid; grid-template-columns: 1fr; gap: 24px;">
             {% for fan in project.fans %}
+            {% set s_color = 'var(--success-500)' if fan.status == 'added' else 'var(--warning-500)' %}
+            {% set s_bg = 'var(--success-100)' if fan.status == 'added' else 'var(--warning-100)' %}
+            {% set s_text = 'var(--success-700)' if fan.status == 'added' else 'var(--warning-800)' %}
+            {% set s_border = 'var(--success-200)' if fan.status == 'added' else 'var(--warning-200)' %}
             <div class="section"
-                style="position: relative; overflow: hidden; border-left: 4px solid {{ 'var(--success-500)' if fan.status == 'added' else 'var(--warning-500)' }}; padding: 0;">
+                style="position: relative; overflow: hidden; border-left: 4px solid {{ s_color }}; padding: 0;">
 
                 <!-- Fan Card Header -->
                 <div
@@ -121,7 +125,7 @@
                         </span>
                         {% endif %}
                         <span class="badge"
-                            style="background: {{ 'var(--success-100)' if fan.status == 'added' else 'var(--warning-100)' }}; color: {{ 'var(--success-700)' if fan.status == 'added' else 'var(--warning-800)' }}; border: 1px solid {{ 'var(--success-200)' if fan.status == 'added' else 'var(--warning-200)' }};">
+                            style="background: {{ s_bg }}; color: {{ s_text }}; border: 1px solid {{ s_border }};">
                             {{ fan.status|title }}
                         </span>
                     </h3>
@@ -395,10 +399,16 @@
             </div>
         </div>
 
-        <div style="margin-top: 40px; text-align: center; border-top: 1px solid var(--gray-200); padding-top: 40px;">
+        <div
+            style="margin-top: 40px; text-align: center; border-top: 1px solid var(--gray-200); padding-top: 40px; display: flex; justify-content: center; gap: 20px;">
             <a href="/api/projects/{{ project.enquiry_number }}/export/excel" class="btn btn-success"
                 style="font-size: 1.1em; padding: 12px 32px; box-shadow: var(--shadow-md);">
                 <span class="material-icons-round">description</span> Export to Excel
+            </a>
+
+            <a href="/api/generate_quote/{{ project.enquiry_number }}" target="_blank" class="btn btn-primary"
+                style="font-size: 1.1em; padding: 12px 32px; box-shadow: var(--shadow-md); background: linear-gradient(135deg, #f43f5e, #e11d48); border: none;">
+                <span class="material-icons-round">picture_as_pdf</span> Generate PDF Quote
             </a>
         </div>
     </div>

@@ -42,6 +42,10 @@
                             class="material-icons-round">assignment</span>Enquiry Register</a></li>
                 <li><a href="{{ url_for('orders_dashboard') }}" class="nav-item"><span
                             class="material-icons-round">insights</span>Order Details</a></li>
+                <li><a href="{{ url_for('customers_directory') }}" class="nav-item"><span
+                            class="material-icons-round">groups</span>Customer 360</a></li>
+                <li><a href="{{ url_for('manual_entry') }}" class="nav-item"><span
+                            class="material-icons-round">post_add</span>Manual Entry</a></li>
                 {% if session.get('is_admin') %}
                 <li><a href="{{ url_for('db_admin.index') }}" class="nav-item"><span
                             class="material-icons-round">settings</span>DB Admin</a></li>

@@ -2,6 +2,8 @@ import sqlite3
 import logging
 import os
 import json
+import datetime
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +108,7 @@ def get_all_vendor_rates():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        cursor.execute('SELECT Vendor, "Material Type", WeightStart, WeightEnd, MSPrice, SS304Price FROM VendorWeightDetails')
+        cursor.execute('SELECT Vendor, "Material Type", WeightStart, WeightEnd, MSPrice, SS304Price, SS316Price, AluminiumPrice FROM VendorWeightDetails')
         rows = cursor.fetchall()
         conn.close()
         
@@ -115,16 +117,19 @@ def get_all_vendor_rates():
         
         for row in rows:
             vendor = row['Vendor']
-            material_type = row['Material Type'] # 'ms' or 'ss304' usually, but DB schema might differ
             weight_start = float(row['WeightStart'])
             weight_end = float(row['WeightEnd'])
-            ms_price = float(row['MSPrice'])
-            ss304_price = float(row['SS304Price'])
+            ms_price = float(row['MSPrice']) if row['MSPrice'] is not None else 0
+            ss304_price = float(row['SS304Price']) if row['SS304Price'] is not None else 0
+            ss316_price = float(row['SS316Price']) if row['SS316Price'] is not None else 800.0
+            aluminium_price = float(row['AluminiumPrice']) if row['AluminiumPrice'] is not None else 1000.0
             
             if vendor not in rates:
                 rates[vendor] = {
                     'ms': [],
-                    'ss304': []
+                    'ss304': [],
+                    'ss316': [],
+                    'aluminium': []
                 }
             
             # MS Entry
@@ -139,6 +144,20 @@ def get_all_vendor_rates():
                 'min': weight_start,
                 'max': weight_end,
                 'rate': ss304_price
+            })
+            
+            # SS316 Entry
+            rates[vendor]['ss316'].append({
+                'min': weight_start,
+                'max': weight_end,
+                'rate': ss316_price
+            })
+            
+            # Aluminium Entry
+            rates[vendor]['aluminium'].append({
+                'min': weight_start,
+                'max': weight_end,
+                'rate': aluminium_price
             })
             
         # Sort ranges by min weight
@@ -254,11 +273,45 @@ def migrate_to_unified_schema():
         conn = get_db_connection()
         cursor = conn.cursor()
         
+        # Create Customers table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                primary_name TEXT NOT NULL UNIQUE,
+                last_visit_date DATE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create CustomerYearBindings table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS CustomerYearBindings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                year TEXT NOT NULL,
+                region TEXT,
+                sales_engineer TEXT,
+                UNIQUE(customer_id, year),
+                FOREIGN KEY (customer_id) REFERENCES Customers(id)
+            )
+        ''')
+        
+        # Create CustomerAliases table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS CustomerAliases (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                alias_name TEXT NOT NULL UNIQUE,
+                FOREIGN KEY (customer_id) REFERENCES Customers(id)
+            )
+        ''')
+
         # Create Projects table if it doesn't exist
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS Projects (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 enquiry_number TEXT NOT NULL UNIQUE,
+                customer_id INTEGER,
                 customer_name TEXT NOT NULL,
                 total_fans INTEGER NOT NULL,
                 sales_engineer TEXT NOT NULL,
@@ -266,8 +319,11 @@ def migrate_to_unified_schema():
                 probability INTEGER DEFAULT 50,
                 remarks TEXT DEFAULT '',
                 month TEXT,
-                created_at TIMESTAMP,
-                updated_at TIMESTAMP
+                source TEXT DEFAULT 'manual',
+                lost_reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (customer_id) REFERENCES Customers(id)
             )
         ''')
 
@@ -286,6 +342,12 @@ def migrate_to_unified_schema():
             cursor.execute("ALTER TABLE Projects ADD COLUMN created_at TIMESTAMP")
         if 'updated_at' not in project_columns:
             cursor.execute("ALTER TABLE Projects ADD COLUMN updated_at TIMESTAMP")
+        if 'source' not in project_columns:
+            cursor.execute("ALTER TABLE Projects ADD COLUMN source TEXT DEFAULT 'manual'")
+        if 'lost_reason' not in project_columns:
+            cursor.execute("ALTER TABLE Projects ADD COLUMN lost_reason TEXT")
+        if 'customer_id' not in project_columns:
+            cursor.execute("ALTER TABLE Projects ADD COLUMN customer_id INTEGER")
         
         # Create Fans table if it doesn't exist
         cursor.execute('''
@@ -298,8 +360,8 @@ def migrate_to_unified_schema():
                 weights TEXT,
                 costs TEXT,
                 motor TEXT,
-                created_at TIMESTAMP,
-                updated_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (project_id) REFERENCES Projects(id),
                 UNIQUE(project_id, fan_number)
             )
@@ -335,6 +397,7 @@ def migrate_to_unified_schema():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 job_ref TEXT,
                 year TEXT,
+                customer_id INTEGER,
                 customer_name TEXT,
                 sales_engineer TEXT,
                 region TEXT,
@@ -350,9 +413,18 @@ def migrate_to_unified_schema():
                 sector TEXT,
                 po_number TEXT,
                 end_user TEXT,
-                remarks TEXT
+                remarks TEXT,
+                source TEXT DEFAULT 'excel',
+                FOREIGN KEY (customer_id) REFERENCES Customers(id)
             )
         ''')
+        
+        cursor.execute("PRAGMA table_info(Orders)")
+        order_columns = {row[1] for row in cursor.fetchall()}
+        if 'customer_id' not in order_columns:
+            cursor.execute("ALTER TABLE Orders ADD COLUMN customer_id INTEGER")
+        if 'source' not in order_columns:
+            cursor.execute("ALTER TABLE Orders ADD COLUMN source TEXT DEFAULT 'excel'")
         
         # Create EnquiryRegister table for the Enquiry Tracking Dashboard
         cursor.execute('''
@@ -362,11 +434,21 @@ def migrate_to_unified_schema():
                 year TEXT,
                 month TEXT,
                 sales_engineer TEXT,
+                customer_id INTEGER,
                 customer_name TEXT,
                 region TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                source TEXT DEFAULT 'excel',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (customer_id) REFERENCES Customers(id)
             )
         ''')
+        
+        cursor.execute("PRAGMA table_info(EnquiryRegister)")
+        enquiry_reg_columns = {row[1] for row in cursor.fetchall()}
+        if 'customer_id' not in enquiry_reg_columns:
+            cursor.execute("ALTER TABLE EnquiryRegister ADD COLUMN customer_id INTEGER")
+        if 'source' not in enquiry_reg_columns:
+            cursor.execute("ALTER TABLE EnquiryRegister ADD COLUMN source TEXT DEFAULT 'excel'")
         
         # Skip ProjectFans migration for now to avoid errors
         # TODO: Fix ProjectFans migration later
@@ -808,19 +890,23 @@ def get_dashboard_stats(sales_engineer=None, status=None, month=None, search=Non
         logger.error(f"Error getting dashboard stats: {str(e)}")
         raise
 
-def update_project_status(enquiry_number, status, probability, remarks=None):
-    """Update just the status, probability, and optionally remarks of a project."""
+def update_project_status(enquiry_number, status, probability, remarks=None, lost_reason=None):
+    """Update just the status, probability, optionally remarks, and lost_reason of a project."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Safely determine updated_at and remarks columns
+        # Safely determine updated_at, remarks and lost_reason columns
         update_clause = "status = ?, probability = ?"
         params = [status, probability]
         
         if remarks is not None and _table_has_column(cursor, 'Projects', 'remarks'):
             update_clause += ", remarks = ?"
             params.append(remarks)
+            
+        if status == 'Lost' and lost_reason is not None and _table_has_column(cursor, 'Projects', 'lost_reason'):
+            update_clause += ", lost_reason = ?"
+            params.append(lost_reason)
             
         if _table_has_column(cursor, 'Projects', 'updated_at'):
             update_clause += ", updated_at = CURRENT_TIMESTAMP"
@@ -895,22 +981,37 @@ def import_orders_from_excel(file) -> bool:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Clear existing orders to rely entirely on the Excel sheet as truth
-        cursor.execute("DELETE FROM Orders")
-        
-        # Insert new records
+        # Use UPSERT (INSERT ON CONFLICT DO UPDATE)
+        # This preserves manual entries/edits (since the primary unique key is job_ref)
         cursor.executemany('''
             INSERT INTO Orders (
                 job_ref, year, customer_name, sales_engineer, region, 
                 order_value, our_cost, warranty, contribution_value, 
                 contribution_percentage, qty, month, rep, type_of_customer, 
-                sector, po_number, end_user, remarks
+                sector, po_number, end_user, remarks, source
             ) VALUES (
                 :job_ref, :year, :customer_name, :sales_engineer, :region,
                 :order_value, :our_cost, :warranty, :contribution_value,
                 :contribution_percentage, :qty, :month, :rep, :type_of_customer,
-                :sector, :po_number, :end_user, :remarks
-            )
+                :sector, :po_number, :end_user, :remarks, 'excel'
+            ) ON CONFLICT(job_ref) DO UPDATE SET
+                year=excluded.year,
+                customer_name=excluded.customer_name,
+                sales_engineer=excluded.sales_engineer,
+                region=excluded.region,
+                order_value=excluded.order_value,
+                our_cost=excluded.our_cost,
+                warranty=excluded.warranty,
+                contribution_value=excluded.contribution_value,
+                contribution_percentage=excluded.contribution_percentage,
+                qty=excluded.qty,
+                month=excluded.month,
+                rep=excluded.rep,
+                type_of_customer=excluded.type_of_customer,
+                sector=excluded.sector,
+                po_number=excluded.po_number,
+                end_user=excluded.end_user,
+                remarks=excluded.remarks
         ''', records)
         
         conn.commit()
@@ -964,8 +1065,18 @@ def import_enquiries_from_excel(file) -> bool:
         df = df.replace({np.nan: None})
         recs = df.to_dict('records')
         conn = get_db_connection(); cursor = conn.cursor()
-        cursor.execute("DELETE FROM EnquiryRegister")
-        cursor.executemany('INSERT OR REPLACE INTO EnquiryRegister (enquiry_number, year, month, sales_engineer, customer_name, region) VALUES (:enquiry_number, :year, :month, :sales_engineer, :customer_name, :region)', recs)
+        cursor.executemany('''
+            INSERT INTO EnquiryRegister (
+                enquiry_number, year, month, sales_engineer, customer_name, region, source
+            ) VALUES (
+                :enquiry_number, :year, :month, :sales_engineer, :customer_name, :region, "excel"
+            ) ON CONFLICT(enquiry_number) DO UPDATE SET
+                year=excluded.year,
+                month=excluded.month,
+                sales_engineer=excluded.sales_engineer,
+                customer_name=excluded.customer_name,
+                region=excluded.region
+        ''', recs)
         conn.commit(); conn.close()
         return True
     except Exception as e:
@@ -974,7 +1085,7 @@ def import_enquiries_from_excel(file) -> bool:
 
 def bulk_import_from_excel(file) -> dict:
     """Import both Orders and Enquiries from a single Excel file."""
-    results = {"orders": False, "enquiries": False, "messages": []}
+    results: dict = {"orders": False, "enquiries": False, "messages": []}
     try:
         import pandas as pd
         # Load the Excel file once
@@ -984,8 +1095,7 @@ def bulk_import_from_excel(file) -> dict:
         # Import Orders if sheet exists
         if "Order Register - From 2019" in sheet_names:
             try:
-                # We need to pass the file-like object or the xlsx object? 
-                # pandas read_excel can take the xlsx object.
+                if hasattr(file, 'seek'): file.seek(0)
                 success = import_orders_from_excel(file)
                 results["orders"] = success
                 if success: results["messages"].append("Successfully imported Orders.")
@@ -996,12 +1106,9 @@ def bulk_import_from_excel(file) -> dict:
             results["messages"].append("'Order Register - From 2019' sheet not found.")
 
         # Import Enquiries if sheet exists
-        # Reset file pointer for the second read if we passed the file
-        if hasattr(file, 'seek'):
-            file.seek(0)
-            
         if "Enquiry Register - From 2019" in sheet_names:
             try:
+                if hasattr(file, 'seek'): file.seek(0)
                 success = import_enquiries_from_excel(file)
                 results["enquiries"] = success
                 if success: results["messages"].append("Successfully imported Enquiry Register.")
@@ -1011,6 +1118,15 @@ def bulk_import_from_excel(file) -> dict:
         else:
             results["messages"].append("'Enquiry Register - From 2019' sheet not found.")
             
+        # Run ML engine to link customers and remove duplicates
+        try:
+            from scripts.run_customer_matcher import deduplicate_and_link_customers
+            deduplicate_and_link_customers()
+            results["messages"].append("Successfully linked and deduplicated customers using ML engine.")
+        except Exception as e:
+            logger.error(f"Error running ML Customer matching: {str(e)}")
+            results["messages"].append(f"Customer deduplication error: {str(e)}")
+
         return results
     except Exception as e:
         logger.error(f"Bulk import failed: {str(e)}")
@@ -1020,7 +1136,7 @@ def bulk_import_from_excel(file) -> dict:
 def get_combined_enquiry_data(sales_engineer=None, month=None, region=None, customer=None, search=None, year=None):
     try:
         conn = get_db_connection(); cursor = conn.cursor()
-        query = 'SELECT r.*, p.status as pricing_status, p.probability, p.remarks, (SELECT SUM(CAST(json_extract(f.costs, "$.total_selling_price") AS REAL)) FROM Fans f WHERE f.project_id = p.id) as total_value, (SELECT COUNT(*) FROM Fans f WHERE f.project_id = p.id) as fan_count FROM EnquiryRegister r LEFT JOIN Projects p ON r.enquiry_number = p.enquiry_number WHERE 1=1'
+        query = 'SELECT r.*, p.status as pricing_status, p.probability, p.remarks, p.lost_reason, (SELECT SUM(CAST(json_extract(f.costs, "$.total_selling_price") AS REAL)) FROM Fans f WHERE f.project_id = p.id) as total_value, (SELECT COUNT(*) FROM Fans f WHERE f.project_id = p.id) as fan_count FROM EnquiryRegister r LEFT JOIN Projects p ON r.enquiry_number = p.enquiry_number WHERE 1=1'
         params = []
         if sales_engineer: query += " AND r.sales_engineer = ?"; params.append(sales_engineer)
         if month: query += " AND r.month = ?"; params.append(month)
@@ -1064,8 +1180,7 @@ def get_ai_insights():
                 'color': '#10b981'
             })
 
-        # 2. Stale Alerts
-        # Assuming updated_at exists, if not, use a fallback or skip
+        # 2. Stale Alerts (Enquiries)
         has_updated_at = _table_has_column(cursor, 'Projects', 'updated_at')
         if has_updated_at:
             cursor.execute('''
@@ -1078,11 +1193,57 @@ def get_ai_insights():
             for lead in stale_leads:
                 insights.append({
                     'type': 'stale',
-                    'title': 'Stale Alert',
+                    'title': 'Stale Enquiry Alert',
                     'text': f"Enquiry {lead['enquiry_number']} hasn't been updated in 15 days. Don't let it go cold!",
                     'icon': 'timer',
                     'color': '#f59e0b'
                 })
+
+        # 2.b. Predictive Churn (Customer Stale Alerts)
+        try:
+            from datetime import datetime
+            cursor.execute("SELECT customer_name, month FROM Orders WHERE customer_name IS NOT NULL AND month IS NOT NULL")
+            all_orders = cursor.fetchall()
+            
+            customer_dates = {}
+            for row in all_orders:
+                c_name = row['customer_name'].strip().upper()
+                month_str = row['month'].strip() # format: "Jan-26"
+                try:
+                    dt = datetime.strptime(month_str, '%b-%y')
+                    if c_name not in customer_dates:
+                        customer_dates[c_name] = []
+                    customer_dates[c_name].append(dt)
+                except ValueError:
+                    pass
+
+            churn_risks = []
+            now = datetime.now()
+            for c_name, dates in customer_dates.items():
+                if len(dates) >= 3:
+                    dates.sort()
+                    # Calculate average days between orders
+                    intervals = [(dates[i] - dates[i-1]).days for i in range(1, len(dates))]
+                    avg_interval = sum(intervals) / len(intervals) if intervals else 0
+                    
+                    if avg_interval > 0:
+                        days_since_last = (now - dates[-1]).days
+                        # If it's been 1.5x longer than their usual order interval
+                        if days_since_last > (avg_interval * 1.5) and days_since_last > 45:
+                            churn_risks.append((c_name, days_since_last))
+
+            # Pick top 2 churn risks 
+            churn_risks.sort(key=lambda x: x[1], reverse=True)
+            for c_name, days in churn_risks[:2]:
+                insights.append({
+                    'type': 'churn_risk',
+                    'title': 'Predictive Churn Alert',
+                    'text': f"Customer {c_name.title()} usually orders more frequently but hasn't placed an order in {days} days.",
+                    'icon': 'warning',
+                    'color': '#ef4444'
+                })
+        except Exception as e:
+            logger.error(f"Error calculating predictive churn: {str(e)}")
 
         # 3. Revenue Forecasting
         cursor.execute('''
@@ -1136,4 +1297,505 @@ def get_ai_insights():
         
     except Exception as e:
         logger.error(f"Error generating AI insights: {str(e)}")
+        return []
+
+def derive_enquiry_date(enq_num):
+    if not enq_num or not isinstance(enq_num, str):
+        return None
+    import re
+    # Match EQYYMM format
+    match = re.search(r'EQ(\d{2})(\d{2})', enq_num)
+    if match:
+        year = "20" + match.group(1)
+        month = match.group(2)
+        return f"{year}-{month}-01"
+    # Match TCF-YYYY format
+    match_tcf = re.search(r'TCF-(\d{4})', enq_num)
+    if match_tcf:
+        return f"{match_tcf.group(1)}-01-01"
+    return None
+
+def derive_order_date(year, month):
+    if not year: return None
+    month_map = {
+        'January':'01','February':'02','March':'03','April':'04','May':'05','June':'06',
+        'July':'07','August':'08','September':'09','October':'10','November':'11','December':'12'
+    }
+    m = month_map.get(str(month).strip(), '01')
+    # Use the year value directly, handle potential strings like '2024-25'
+    y = str(year).split('-')[0][:4]
+    return f"{y}-{m}-01"
+
+def get_all_customers_with_metrics():
+    """Get all customers with aggregate metrics for the directory listing."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT 
+                c.id, c.primary_name, c.last_visit_date, c.created_at,
+                (SELECT region FROM CustomerYearBindings WHERE customer_id = c.id ORDER BY year DESC LIMIT 1) as region,
+                (SELECT sales_engineer FROM CustomerYearBindings WHERE customer_id = c.id ORDER BY year DESC LIMIT 1) as latest_sales_engineer,
+                (SELECT COUNT(*) FROM Orders o WHERE o.customer_id = c.id) as total_orders,
+                (SELECT SUM(order_value) FROM Orders o WHERE o.customer_id = c.id) as total_order_value,
+                (SELECT COUNT(*) FROM EnquiryRegister e WHERE e.customer_id = c.id) as total_enquiries,
+                (SELECT enquiry_number FROM EnquiryRegister e WHERE e.customer_id = c.id ORDER BY year DESC, month DESC LIMIT 1) as latest_enquiry_num,
+                (SELECT year FROM Orders o WHERE o.customer_id = c.id ORDER BY year DESC, 
+                    CASE month 
+                        WHEN 'December' THEN 12 WHEN 'November' THEN 11 WHEN 'October' THEN 10 
+                        WHEN 'September' THEN 9 WHEN 'August' THEN 8 WHEN 'July' THEN 7 
+                        WHEN 'June' THEN 6 WHEN 'May' THEN 5 WHEN 'April' THEN 4 
+                        WHEN 'March' THEN 3 WHEN 'February' THEN 2 WHEN 'January' THEN 1 
+                        ELSE 0 END DESC LIMIT 1) as latest_order_year,
+                (SELECT month FROM Orders o WHERE o.customer_id = c.id ORDER BY year DESC, 
+                    CASE month 
+                        WHEN 'December' THEN 12 WHEN 'November' THEN 11 WHEN 'October' THEN 10 
+                        WHEN 'September' THEN 9 WHEN 'August' THEN 8 WHEN 'July' THEN 7 
+                        WHEN 'June' THEN 6 WHEN 'May' THEN 5 WHEN 'April' THEN 4 
+                        WHEN 'March' THEN 3 WHEN 'February' THEN 2 WHEN 'January' THEN 1 
+                        ELSE 0 END DESC LIMIT 1) as latest_order_month
+            FROM Customers c
+            ORDER BY c.primary_name ASC
+        ''')
+        rows = cursor.fetchall()
+        customers = []
+        for row in rows:
+            c = dict(row)
+            # Derive real dates
+            enq_date = derive_enquiry_date(c.get('latest_enquiry_num'))
+            ord_date = derive_order_date(c.get('latest_order_year'), c.get('latest_order_month'))
+            
+            c['last_enquiry_date'] = enq_date
+            c['last_order_date'] = ord_date
+            
+            # Find max for last activity
+            dates = [d for d in [c.get('last_visit_date'), enq_date, ord_date] if d]
+            c['last_activity'] = max(dates) if dates else None
+            
+            customers.append(c)
+        
+        conn.close()
+        return customers
+    except Exception as e:
+        logger.error(f"Error fetching all customers: {str(e)}")
+        return []
+
+def get_customer_summary_stats():
+    """Get high-level summary stats for the customer dashboard."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        stats = {}
+        
+        # Total Customers
+        cursor.execute("SELECT COUNT(*) FROM Customers")
+        stats['total_customers'] = cursor.fetchone()[0]
+        
+        # Active This Year (Enquiries or Orders in current year)
+        current_year = datetime.datetime.now().strftime('%Y')
+        cursor.execute('''
+            SELECT COUNT(DISTINCT customer_id) FROM (
+                SELECT customer_id FROM Orders WHERE year = ?
+                UNION
+                SELECT customer_id FROM EnquiryRegister WHERE year = ?
+            )
+        ''', (current_year, current_year))
+        stats['active_this_year'] = cursor.fetchone()[0]
+        
+        # New This Month: Customers whose FIRST activity (Enquiry or Order) is in the current month.
+        # This is more accurate than relying on the created_at timestamp which often reflects bulk imports.
+        current_year_str = datetime.datetime.now().strftime('%Y')
+        current_month_name = datetime.datetime.now().strftime('%B')
+        
+        cursor.execute('''
+            SELECT COUNT(DISTINCT customer_id) FROM (
+                SELECT customer_id, year, month FROM EnquiryRegister
+                UNION ALL
+                SELECT customer_id, year, month FROM Orders
+            ) t1
+            WHERE year = ? AND month = ?
+            AND customer_id NOT IN (
+                SELECT customer_id FROM (
+                    SELECT customer_id, year, month FROM EnquiryRegister
+                    UNION ALL
+                    SELECT customer_id, year, month FROM Orders
+                ) t2
+                WHERE CAST(year AS INTEGER) < ? OR (CAST(year AS INTEGER) = ? AND 
+                    CASE month 
+                        WHEN 'January' THEN 1 WHEN 'February' THEN 2 WHEN 'March' THEN 3 
+                        WHEN 'April' THEN 4 WHEN 'May' THEN 5 WHEN 'June' THEN 6 
+                        WHEN 'July' THEN 7 WHEN 'August' THEN 8 WHEN 'September' THEN 9 
+                        WHEN 'October' THEN 10 WHEN 'November' THEN 11 WHEN 'December' THEN 12 
+                        ELSE 0 END < (CASE ? WHEN 'January' THEN 1 WHEN 'February' THEN 2 WHEN 'March' THEN 3 
+                                            WHEN 'April' THEN 4 WHEN 'May' THEN 5 WHEN 'June' THEN 6 
+                                            WHEN 'July' THEN 7 WHEN 'August' THEN 8 WHEN 'September' THEN 9 
+                                            WHEN 'October' THEN 10 WHEN 'November' THEN 11 WHEN 'December' THEN 12 ELSE 0 END)
+                )
+            )
+        ''', (current_year_str, current_month_name, int(current_year_str), int(current_year_str), current_month_name))
+        stats['new_this_month'] = cursor.fetchone()[0]
+        
+        # Regions
+        cursor.execute("SELECT COUNT(DISTINCT region) FROM CustomerYearBindings WHERE region IS NOT NULL AND region != ''")
+        stats['total_regions'] = cursor.fetchone()[0]
+        
+        conn.close()
+        return stats
+    except Exception as e:
+        logger.error(f"Error fetching customer summary stats: {str(e)}")
+        return {
+            'total_customers': 0,
+            'active_this_year': 0,
+            'new_this_month': 0,
+            'total_regions': 0
+        }
+
+def get_customer_360(customer_id):
+    """Get comprehensive 360 degree profile data for a specific customer."""
+    try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # 1. Basic Info
+        cursor.execute("SELECT * FROM Customers WHERE id = ?", (customer_id,))
+        row = cursor.fetchone()
+        if not row: return None
+        customer = dict(row)
+        
+        # 1.5 Year Bindings (Region & Sales Engineer context)
+        cursor.execute("SELECT year, region, sales_engineer FROM CustomerYearBindings WHERE customer_id = ? ORDER BY year DESC", (customer_id,))
+        bindings = [dict(row) for row in cursor.fetchall()]
+        customer['year_bindings'] = bindings
+        if bindings:
+            customer['region'] = bindings[0].get('region')
+            customer['sales_engineer'] = bindings[0].get('sales_engineer')
+        
+        # 2. Aliases
+        cursor.execute("SELECT alias_name FROM CustomerAliases WHERE customer_id = ?", (customer_id,))
+        aliases = [row['alias_name'] for row in cursor.fetchall()]
+        customer['aliases'] = aliases
+        
+        # 3. YOY Orders & Enquiries
+        # Group by year
+        cursor.execute('''
+            SELECT year, COUNT(*) as count, SUM(order_value) as total_value
+            FROM Orders 
+            WHERE customer_id = ? 
+            GROUP BY year
+            ORDER BY year DESC
+        ''', (customer_id,))
+        customer['orders_by_year'] = [dict(row) for row in cursor.fetchall()]
+        
+        cursor.execute('''
+            SELECT year, COUNT(*) as count
+            FROM EnquiryRegister
+            WHERE customer_id = ?
+            GROUP BY year
+            ORDER BY year DESC
+        ''', (customer_id,))
+        customer['enquiries_by_year'] = [dict(row) for row in cursor.fetchall()]
+        
+        # 4. Activity Timeline
+        timeline = []
+        
+        cursor.execute('''
+            SELECT enquiry_number as ref, 'Enquiry' as type, created_at as original_date, sales_engineer, region, year, month
+            FROM EnquiryRegister WHERE customer_id = ?
+        ''', (customer_id,))
+        for row in cursor.fetchall():
+            item = dict(row)
+            # Try to derive date from enquiry number
+            derived = derive_enquiry_date(item.get('ref'))
+            item['date'] = derived if derived else item.get('original_date')
+            timeline.append(item)
+            
+        cursor.execute('''
+            SELECT job_ref as ref, 'Order' as type, year, month, sales_engineer, order_value
+            FROM Orders WHERE customer_id = ?
+        ''', (customer_id,))
+        for row in cursor.fetchall():
+            item = dict(row)
+            item['date'] = derive_order_date(item.get('year'), item.get('month'))
+            timeline.append(item)
+            
+        timeline.sort(key=lambda x: str(x.get('date', '')), reverse=True)
+        customer['timeline'] = timeline[:50] # Last 50 activities
+        
+        # 5. Conversion Metrics
+        total_enq = sum(y['count'] for y in customer['enquiries_by_year'])
+        total_ord = sum(y['count'] for y in customer['orders_by_year'])
+        customer['total_enquiries'] = total_enq
+        customer['total_orders'] = total_ord
+        customer['conversion_rate'] = round((total_ord / total_enq * 100), 1) if total_enq > 0 else 0
+        customer['total_order_value'] = sum(y['total_value'] for y in customer['orders_by_year'] if y['total_value'])
+        
+        conn.close()
+        return customer
+    except Exception as e:
+        logger.error(f"Error fetching customer 360 profile: {str(e)}")
+        return None
+
+def update_customer_visit(customer_id, visit_date):
+    """Update the last in-person visit date for a customer."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE Customers SET last_visit_date = ? WHERE id = ?", (visit_date, customer_id))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        logger.error(f"Error updating customer visit date: {str(e)}")
+        return False
+
+def get_suggested_merges():
+    """Find pairs of customers with highly similar names to suggest merges."""
+    try:
+        from services.customer_matcher import similarity_score, clean_company_name
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT id, primary_name FROM Customers ORDER BY id DESC")
+        customers = cursor.fetchall()
+        
+        # Pre-clean names to save time in the O(N^2) loop
+        cleaned_customers = []
+        for c in customers:
+            cleaned_customers.append({
+                'id': c['id'],
+                'primary_name': c['primary_name'],
+                'cleaned_name': clean_company_name(c['primary_name'])
+            })
+        
+        suggestions = []
+        # O(N^2) but fine for a small dataset.
+        for i in range(len(cleaned_customers)):
+            name1 = cleaned_customers[i]['cleaned_name']
+            if len(name1) < 3: continue
+            
+            for j in range(i + 1, len(cleaned_customers)):
+                name2 = cleaned_customers[j]['cleaned_name']
+                if len(name2) < 3: continue
+                
+                score = similarity_score(name1, name2)
+                if 0.85 <= score < 0.99: # Highly similar but not identical
+                    suggestions.append({
+                        'primary_customer': {
+                            'id': cleaned_customers[i]['id'],
+                            'primary_name': cleaned_customers[i]['primary_name']
+                        },
+                        'secondary_customer': {
+                            'id': cleaned_customers[j]['id'],
+                            'primary_name': cleaned_customers[j]['primary_name']
+                        },
+                        'score': score
+                    })
+                    
+        conn.close()
+        # Sort by highest score first
+        suggestions.sort(key=lambda x: x['score'], reverse=True)
+        return suggestions[:20] # Return top 20 suggestions
+    except Exception as e:
+        logger.error(f"Error getting suggested merges: {str(e)}")
+        return []
+
+def merge_customers(primary_id, secondary_id):
+    """Merge secondary customer into primary, reassigning all related records."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 1. Get secondary name to add as an alias
+        cursor.execute("SELECT primary_name FROM Customers WHERE id = ?", (secondary_id,))
+        sec_row = cursor.fetchone()
+        if not sec_row:
+            return False
+        sec_name = sec_row['primary_name']
+        
+        # 2. Add alias to primary
+        cursor.execute('''
+            INSERT OR IGNORE INTO CustomerAliases (customer_id, alias_name) 
+            VALUES (?, ?)
+        ''', (primary_id, sec_name))
+        
+        # 3. Update all foreign keys
+        cursor.execute("UPDATE Projects SET customer_id = ? WHERE customer_id = ?", (primary_id, secondary_id))
+        cursor.execute("UPDATE Orders SET customer_id = ? WHERE customer_id = ?", (primary_id, secondary_id))
+        cursor.execute("UPDATE EnquiryRegister SET customer_id = ? WHERE customer_id = ?", (primary_id, secondary_id))
+        
+        # 3.5 Reassign CustomerYearBindings, ignore if primary already has a binding for that year
+        cursor.execute("UPDATE OR IGNORE CustomerYearBindings SET customer_id = ? WHERE customer_id = ?", (primary_id, secondary_id))
+        
+        # 4. Delete old aliases and left-over bindings
+        cursor.execute("UPDATE CustomerAliases SET customer_id = ? WHERE customer_id = ?", (primary_id, secondary_id))
+        cursor.execute("DELETE FROM CustomerYearBindings WHERE customer_id = ?", (secondary_id,))
+        
+        # 5. Delete secondary customer
+        cursor.execute("DELETE FROM Customers WHERE id = ?", (secondary_id,))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        logger.error(f"Error merging customers: {str(e)}")
+        return False
+
+def add_manual_enquiry(data):
+    """Add a manually entered enquiry to the database."""
+    try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        customer_id = data.get('customer_id')
+        if not customer_id and data.get('customer_name'):
+            cursor.execute("SELECT id FROM Customers WHERE primary_name = ?", (data['customer_name'],))
+            row = cursor.fetchone()
+            if row:
+                customer_id = row['id']
+            else:
+                cursor.execute("INSERT INTO Customers (primary_name) VALUES (?)", 
+                               (data['customer_name'],))
+                customer_id = cursor.lastrowid
+                
+        # Update Year Bindings        
+        if data.get('year'):
+            cursor.execute('''
+                INSERT OR REPLACE INTO CustomerYearBindings (id, customer_id, year, region, sales_engineer)
+                VALUES (
+                    (SELECT id FROM CustomerYearBindings WHERE customer_id = ? AND year = ?),
+                    ?, ?, ?, ?
+                )
+            ''', (customer_id, data.get('year'), customer_id, data.get('year'), data.get('region'), data.get('sales_engineer')))
+                
+        cursor.execute('''
+            INSERT INTO EnquiryRegister (enquiry_number, year, month, sales_engineer, customer_id, customer_name, region, source)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'manual')
+        ''', (
+            data.get('enquiry_number'),
+            data.get('year'),
+            data.get('month'),
+            data.get('sales_engineer'),
+            customer_id,
+            data.get('customer_name'),
+            data.get('region')
+        ))
+        
+        # Ensure project exists
+        cursor.execute('''
+            INSERT INTO Projects (enquiry_number, customer_name, sales_engineer, total_fans, status, year, month, source, customer_id)
+            VALUES (?, ?, ?, 1, 'Live', ?, ?, 'manual', ?)
+        ''', (
+            data.get('enquiry_number'),
+            data.get('customer_name'),
+            data.get('sales_engineer'),
+            data.get('year'),
+            data.get('month'),
+            customer_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        return True, "Enquiry saved successfully"
+    except Exception as e:
+        logger.error(f"Error saving manual enquiry: {str(e)}")
+        return False, str(e)
+
+def add_manual_order(data):
+    """Add a manually entered order to the database."""
+    try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        customer_id = data.get('customer_id')
+        if not customer_id and data.get('customer_name'):
+            cursor.execute("SELECT id FROM Customers WHERE primary_name = ?", (data['customer_name'],))
+            row = cursor.fetchone()
+            if row:
+                customer_id = row['id']
+            else:
+                cursor.execute("INSERT INTO Customers (primary_name) VALUES (?)", 
+                               (data['customer_name'],))
+                customer_id = cursor.lastrowid
+                
+        # Update Year Bindings        
+        if data.get('year'):
+            cursor.execute('''
+                INSERT OR REPLACE INTO CustomerYearBindings (id, customer_id, year, region, sales_engineer)
+                VALUES (
+                    (SELECT id FROM CustomerYearBindings WHERE customer_id = ? AND year = ?),
+                    ?, ?, ?, ?
+                )
+            ''', (customer_id, data.get('year'), customer_id, data.get('year'), data.get('region'), data.get('sales_engineer')))
+                
+        cursor.execute('''
+            INSERT INTO Orders (job_ref, year, month, customer_id, customer_name, sales_engineer, region, order_value, qty, source)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual')
+        ''', (
+            data.get('job_ref'),
+            data.get('year'),
+            data.get('month'),
+            customer_id,
+            data.get('customer_name'),
+            data.get('sales_engineer'),
+            data.get('region'),
+            data.get('order_value', 0),
+            data.get('qty', 1)
+        ))
+        
+        conn.commit()
+        conn.close()
+        return True, "Order saved successfully"
+    except Exception as e:
+        logger.error(f"Error saving manual order: {str(e)}")
+        return False, str(e)
+
+def create_users_table():
+    """Create the users table and insert default users if not present."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                full_name TEXT NOT NULL,
+                is_admin BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('''
+            INSERT OR IGNORE INTO users (username, password, full_name, is_admin) VALUES
+                ('abdul', 'tcfsales', 'Abdul Basidh', 1),
+                ('pradeep', 'tcfsales', 'Pradeep', 0),
+                ('satish', 'tcfsales', 'Satish', 0),
+                ('franklin', 'tcfsales', 'Franklin', 0),
+                ('muthu', 'tcfsales', 'Muthu', 0),
+                ('raghul', 'tcfsales', 'Raghul', 0)
+        ''')
+        conn.commit()
+        conn.close()
+        logger.info("Users table created or already exists in unified database.")
+        return True
+    except Exception as e:
+        logger.error(f"Error creating users table: {e}")
+        return False
+
+def search_customers(query):
+    """Search customers by name for autocomplete."""
+    try:
+        conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, primary_name, (SELECT region FROM CustomerYearBindings WHERE customer_id = c.id ORDER BY year DESC LIMIT 1) as region FROM Customers c WHERE primary_name LIKE ? LIMIT 10", (f'%{query}%',))
+        customers = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return customers
+    except Exception as e:
+        logger.error(f"Error searching customers: {str(e)}")
         return []

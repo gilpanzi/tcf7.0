@@ -325,6 +325,51 @@ function renderCharts(data) {
             }
         }
     });
+
+    // Lost Reason Chart
+    const lostReasonMap = {};
+    data.forEach(e => {
+        if (e.pricing_status === 'Lost') {
+            const reason = e.lost_reason || 'Not Specified';
+            lostReasonMap[reason] = (lostReasonMap[reason] || 0) + 1;
+        }
+    });
+
+    const lrCtx = document.getElementById('lostReasonChart')?.getContext('2d');
+    if (window.lostReasonChart) window.lostReasonChart.destroy();
+
+    if (lrCtx) {
+        const lrKeys = Object.keys(lostReasonMap);
+        window.lostReasonChart = new Chart(lrCtx, {
+            type: 'doughnut',
+            data: {
+                labels: lrKeys,
+                datasets: [{
+                    data: lrKeys.map(k => lostReasonMap[k]),
+                    backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#06b6d4', '#8b5cf6', '#d946ef', '#64748b'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            padding: 15,
+                            font: { family: "'Inter', sans-serif", size: 11 }
+                        }
+                    },
+                    datalabels: { display: false }
+                }
+            }
+        });
+    }
 }
 
 function renderSEPerformance(data) {
@@ -514,6 +559,7 @@ function openDrilldownModal(entityName, entityType) {
             <th style="padding: 1rem; text-align: left;">Customer</th>
             <th style="padding: 1rem; text-align: left;">Status</th>
             <th style="padding: 1rem; text-align: right;">Value</th>
+            <th style="padding: 1rem; text-align: center;">Action</th>
         `;
         history.forEach(e => {
             const tr = document.createElement('tr');
@@ -523,6 +569,9 @@ function openDrilldownModal(entityName, entityType) {
                 <td style="padding: 1rem;">${e.customer_name || '-'}</td>
                 <td style="padding: 1rem;"><span style="color: ${e.pricing_status === 'Not Started' ? '#64748b' : '#10b981'}; font-weight: 500;">${e.pricing_status}</span></td>
                 <td style="padding: 1rem; text-align: right; font-weight: 500;">${currencyFormatter.format(Number(e.total_value) || 0)}</td>
+                <td style="padding: 1rem; text-align: center;">
+                    <button onclick="convertToOrder('${e.enquiry_number}', \`${e.customer_name || ''}\`, \`${e.sales_engineer || ''}\`, \`${e.region || ''}\`, ${Number(e.total_value) || 0})" style="background:#10b981; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;" title="1-Click Convert to Order"><span class="material-icons-round" style="font-size:1rem; vertical-align:middle;">shopping_cart_checkout</span> Convert</button>
+                </td>
             `;
             tbody.appendChild(tr);
         });
@@ -661,4 +710,35 @@ function renderHistChart(canvasId, chartRef, labels, data, color, formatter) {
             }
         }
     });
+}
+
+function convertToOrder(eqNumber, custName, se, region, value) {
+    if (confirm(`Are you sure you want to convert Enquiry ${eqNumber} to an Order?`)) {
+        const dt = new Date();
+        const yearStr = dt.getFullYear() + "-" + (dt.getFullYear() + 1).toString().substring(2);
+        const payload = {
+            job_ref: `J${dt.getFullYear().toString().substring(2)}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, // Auto-generate simple ref
+            enquiry_number: eqNumber,
+            customer_name: custName,
+            sales_engineer: se,
+            region: region,
+            order_value: value,
+            qty: 1,
+            year: yearStr,
+            month: dt.toLocaleString('default', { month: 'short' }) + "-" + dt.getFullYear().toString().substring(2)
+        };
+
+        fetch('/api/manual/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                alert(`Order successfully created: ${payload.job_ref}`);
+                closeDrilldownModal();
+            } else {
+                alert('Error creating order: ' + data.message);
+            }
+        }).catch(err => alert('Network error: ' + err.message));
+    }
 }

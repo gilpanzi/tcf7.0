@@ -348,6 +348,12 @@ function attachTableListeners() {
             const probability = row.querySelector('.probability-input').value;
             const remarks = row.querySelector('.remarks-input').value;
 
+            let lostReason = null;
+            if (status === 'Lost') {
+                lostReason = prompt("Please provide a reason for losing this enquiry:");
+                if (lostReason === null) return; // User cancelled
+            }
+
             try {
                 const response = await fetch(`/api/project/${encodeURIComponent(enq)}/status`, {
                     method: 'POST',
@@ -355,7 +361,8 @@ function attachTableListeners() {
                     body: JSON.stringify({
                         status: status,
                         probability: parseInt(probability),
-                        remarks: remarks
+                        remarks: remarks,
+                        lost_reason: lostReason
                     })
                 });
                 if (response.ok) {

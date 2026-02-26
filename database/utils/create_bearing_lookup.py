@@ -8,8 +8,13 @@ logger = logging.getLogger(__name__)
 def create_bearing_lookup_table():
     """Create and populate the BearingLookup table with data."""
     try:
+        # Standardize to data/ directory
+        import os
+        db_path = os.path.join('data', 'fan_pricing.db')
+        os.makedirs('data', exist_ok=True)
+        
         # Connect to the database
-        conn = sqlite3.connect('fan_pricing.db')
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
         logger.info("Connected to database")

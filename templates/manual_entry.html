@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Data Entry - TCF Pricing Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+
+<body class="dashboard-body">
+    <div class="dashboard-layout">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="material-icons-round">wind_power</span>
+                </div>
+                <div>
+                    <h2>TCF Tool</h2>
+                    <div class="version-badge">v7.0</div>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}" class="nav-item"><span
+                            class="material-icons-round">home</span>Home</a></li>
+                <li><a href="{{ url_for('dashboard') }}" class="nav-item"><span
+                            class="material-icons-round">analytics</span>Dashboard</a></li>
+                <li><a href="{{ url_for('enquiry_register') }}" class="nav-item"><span
+                            class="material-icons-round">assignment</span>Enquiry Register</a></li>
+                <li><a href="{{ url_for('orders_dashboard') }}" class="nav-item"><span
+                            class="material-icons-round">insights</span>Order Details</a></li>
+                <li><a href="/customers" class="nav-item"><span class="material-icons-round">groups</span>Customer
+                        360</a></li>
+                <li><a href="/manual_entry" class="nav-item active"><span
+                            class="material-icons-round">add_circle</span>Manual Entry</a></li>
+                {% if session.get('is_admin') %}
+                <li><a href="{{ url_for('db_admin.index') }}" class="nav-item"><span
+                            class="material-icons-round">settings</span>DB Admin</a></li>
+                {% endif %}
+                <li class="nav-spacer"></li>
+                <li><a href="{{ url_for('logout') }}" class="nav-item text-error"><span
+                            class="material-icons-round">logout</span>Logout</a></li>
+            </ul>
+        </nav>
+
+        <main class="dashboard-main">
+            <header class="dashboard-topbar" style="margin-bottom: 2rem;">
+                <div class="title-area">
+                    <h1>Hybrid Data Entry</h1>
+                    <p class="subtitle">Quickly log new Enquiries or Orders directly.</p>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+
+                <!-- Enquiry Form -->
+                <div class="card panel"
+                    style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 2rem;">
+                    <h2
+                        style="font-size: 1.2rem; color: #1e293b; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px;">
+                        <span class="material-icons-round" style="color: #6366f1;">assignment</span> Log New Enquiry
+                    </h2>
+                    <form id="enquiryForm" onsubmit="submitEnquiry(event)">
+                        <div class="mb-3">
+                            <label
+                                style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Enquiry
+                                Number (e.g. EQ2603001)</label>
+                            <input type="text" id="eqNumber" required
+                                style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+                        <div class="mb-3 position-relative" style="position: relative;">
+                            <label
+                                style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Customer
+                                Name</label>
+                            <input type="text" id="eqCustomer" autocomplete="off"
+                                onkeyup="searchCustomer(this.value, 'eqCustomerList', 'eq')" required
+                                style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            <input type="hidden" id="eqCustomerId">
+                            <div id="eqCustomerList" class="autocomplete-list"
+                                style="display:none; position:absolute; width:100%; background:white; border:1px solid #e2e8f0; border-radius:6px; max-height:150px; overflow-y:auto; z-index:100; top: 100%; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="mb-3">
+                                <label
+                                    style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Sales
+                                    Engineer</label>
+                                <input type="text" id="eqSales" required
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            </div>
+                            <div class="mb-3">
+                                <label
+                                    style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Region</label>
+                                <input type="text" id="eqRegion"
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            </div>
+                        </div>
+                        <button type="submit"
+                            style="width: 100%; padding: 0.75rem; background: #6366f1; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; margin-top: 1rem; transition: background 0.2s;">Save
+                            Enquiry</button>
+                    </form>
+                </div>
+
+                <!-- Order Form -->
+                <div class="card panel"
+                    style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 2rem;">
+                    <h2
+                        style="font-size: 1.2rem; color: #1e293b; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px;">
+                        <span class="material-icons-round" style="color: #10b981;">insights</span> Log New Order
+                    </h2>
+                    <form id="orderForm" onsubmit="submitOrder(event)">
+                        <div class="mb-3">
+                            <label
+                                style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Job
+                                Ref / Order Number</label>
+                            <input type="text" id="ordNumber" required
+                                style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+                        <div class="mb-3 position-relative" style="position: relative;">
+                            <label
+                                style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Customer
+                                Name</label>
+                            <input type="text" id="ordCustomer" autocomplete="off"
+                                onkeyup="searchCustomer(this.value, 'ordCustomerList', 'ord')" required
+                                style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            <input type="hidden" id="ordCustomerId">
+                            <div id="ordCustomerList" class="autocomplete-list"
+                                style="display:none; position:absolute; width:100%; background:white; border:1px solid #e2e8f0; border-radius:6px; max-height:150px; overflow-y:auto; z-index:100; top: 100%; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="mb-3">
+                                <label
+                                    style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Sales
+                                    Engineer</label>
+                                <input type="text" id="ordSales" required
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            </div>
+                            <div class="mb-3">
+                                <label
+                                    style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Region</label>
+                                <input type="text" id="ordRegion"
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="mb-3">
+                                <label
+                                    style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Order
+                                    Value (₹)</label>
+                                <input type="number" id="ordValue" required
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            </div>
+                            <div class="mb-3">
+                                <label
+                                    style="display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 4px;">Quantity</label>
+                                <input type="number" id="ordQty" value="1" required
+                                    style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            </div>
+                        </div>
+                        <button type="submit"
+                            style="width: 100%; padding: 0.75rem; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; margin-top: 1rem; transition: background 0.2s;">Save
+                            Order</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let searchTimeout;
+        function searchCustomer(query, listId, prefix) {
+            clearTimeout(searchTimeout);
+            const listEl = document.getElementById(listId);
+            if (query.length < 2) {
+                listEl.style.display = 'none';
+                document.getElementById(prefix + 'CustomerId').value = '';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetch(`/api/customers/search?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        listEl.innerHTML = '';
+                        if (data.success && data.customers.length > 0) {
+                            data.customers.forEach(c => {
+                                const div = document.createElement('div');
+                                div.style.padding = '8px 12px';
+                                div.style.cursor = 'pointer';
+                                div.style.borderBottom = '1px solid #f1f5f9';
+                                div.innerHTML = `<strong>${c.primary_name}</strong> <small style="color:#64748b;">${c.region || ''}</small>`;
+                                div.onclick = function () {
+                                    document.getElementById(prefix + 'Customer').value = c.primary_name;
+                                    document.getElementById(prefix + 'CustomerId').value = c.id;
+                                    if (c.region) document.getElementById(prefix + 'Region').value = c.region;
+                                    listEl.style.display = 'none';
+                                };
+                                div.onmouseover = () => div.style.background = '#f8fafc';
+                                div.onmouseout = () => div.style.background = 'white';
+                                listEl.appendChild(div);
+                            });
+                            listEl.style.display = 'block';
+                        } else {
+                            listEl.style.display = 'none';
+                        }
+                    });
+            }, 300);
+        }
+
+        // Click outside to close autocomplete
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.position-relative')) {
+                document.getElementById('eqCustomerList').style.display = 'none';
+                document.getElementById('ordCustomerList').style.display = 'none';
+            }
+        });
+
+        function submitEnquiry(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.textContent = 'Saving...';
+
+            const dt = new Date();
+            const yearStr = dt.getFullYear() + "-" + (dt.getFullYear() + 1).toString().substring(2);
+
+            const payload = {
+                enquiry_number: document.getElementById('eqNumber').value,
+                customer_name: document.getElementById('eqCustomer').value,
+                customer_id: document.getElementById('eqCustomerId').value || null,
+                sales_engineer: document.getElementById('eqSales').value,
+                region: document.getElementById('eqRegion').value,
+                year: yearStr,
+                month: dt.toLocaleString('default', { month: 'short' }) + "-" + dt.getFullYear().toString().substring(2)
+            };
+
+            fetch('/api/manual/enquiry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    alert('Enquiry saved successfully! It will now appear in the Enquiry Register.');
+                    e.target.reset();
+                    document.getElementById('eqCustomerId').value = '';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            }).finally(() => { btn.disabled = false; btn.textContent = 'Save Enquiry'; });
+        }
+
+        function submitOrder(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.textContent = 'Saving...';
+
+            const dt = new Date();
+            const yearStr = dt.getFullYear() + "-" + (dt.getFullYear() + 1).toString().substring(2);
+
+            const payload = {
+                job_ref: document.getElementById('ordNumber').value,
+                customer_name: document.getElementById('ordCustomer').value,
+                customer_id: document.getElementById('ordCustomerId').value || null,
+                sales_engineer: document.getElementById('ordSales').value,
+                region: document.getElementById('ordRegion').value,
+                order_value: parseFloat(document.getElementById('ordValue').value),
+                qty: parseInt(document.getElementById('ordQty').value),
+                year: yearStr,
+                month: dt.toLocaleString('default', { month: 'short' }) + "-" + dt.getFullYear().toString().substring(2)
+            };
+
+            fetch('/api/manual/order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    alert('Order saved successfully! It will now appear in the Orders Dashboard.');
+                    e.target.reset();
+                    document.getElementById('ordCustomerId').value = '';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            }).finally(() => { btn.disabled = false; btn.textContent = 'Save Order'; });
+        }
+    </script>
+</body>
+
+</html>
