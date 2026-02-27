@@ -535,6 +535,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     showMessage('Fan saved successfully!', 'success');
                     displayCalculationResults(result);
                 }
+            } else if (response.status === 400 && result.error_type === 'missing_weights') {
+                showMissingWeightsModal(result.missing_accessories);
+                if (isAutosave) {
+                    showAutosaveIndicator('error');
+                }
             } else {
                 if (isAutosave) {
                     showAutosaveIndicator('error');

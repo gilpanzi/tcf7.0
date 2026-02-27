@@ -793,8 +793,7 @@
         window.vendorRates = {{ vendor_rates_json | safe }};
         window.projectData = {{ project | tojson | safe }};
     </script>
-    <!-- Include main JS -->
-    <script src="{{ url_for('static', filename='js/fan_calculator.js') }}"></script>
+    </script>
 </body>
 
 </html>

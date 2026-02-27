@@ -911,12 +911,17 @@ def register_routes(app):
             logger.error(f"Error getting arrangements: {str(e)}")
             return jsonify({'error': str(e)}), 500
 
-    @app.route('/api/vendor-rate/<vendor>/<material>/<float:weight>')
+    @app.route('/api/vendor-rate/<vendor>/<material>/<weight>')
     @login_required
     def api_vendor_rate(vendor, material, weight):
         """Get vendor rate for specific material and weight."""
         logger.info(f"Vendor rate endpoint called: vendor={vendor}, material={material}, weight={weight}")
         try:
+            try:
+                weight = float(weight)
+            except ValueError:
+                weight = 100.0  # fallback or could just raise error
+
             ms_percentage = request.args.get('ms_percentage')
             
             fan_data = {
