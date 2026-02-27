@@ -1001,6 +1001,29 @@ def import_orders_from_excel(file) -> bool:
         conn = get_db_connection()
         cursor = conn.cursor()
         
+        # Keep track of job refs in Excel
+        excel_job_refs = df['job_ref'].tolist()
+        
+        # Delete orders that are no longer in the Excel file
+        if excel_job_refs:
+            # We delete any order originating from excel that is not in the current excel file
+            # SQLite IN clause limits at 999 parameters typically, so we delete in batches
+            batch_size = 900
+            
+            # First get all excel source orders
+            cursor.execute("SELECT job_ref FROM Orders WHERE source = 'excel'")
+            existing_excel_orders = {row[0] for row in cursor.fetchall()}
+            
+            # Find which ones to delete
+            excel_job_refs_set = set(excel_job_refs)
+            refs_to_delete = list(existing_excel_orders - excel_job_refs_set)
+            
+            for i in range(0, len(refs_to_delete), batch_size):
+                batch = refs_to_delete[i:i + batch_size]
+                placeholders = ','.join(['?'] * len(batch))
+                cursor.execute(f"DELETE FROM Orders WHERE job_ref IN ({placeholders}) AND source = 'excel'", batch)
+                logger.info(f"Deleted {len(batch)} old orders not in current Excel.")
+        
         # Use UPSERT (INSERT ON CONFLICT DO UPDATE)
         # This preserves manual entries/edits (since the primary unique key is job_ref)
         cursor.executemany('''
@@ -1093,6 +1116,23 @@ def import_enquiries_from_excel(file) -> bool:
         df = df.replace({np.nan: None})
         recs = df.to_dict('records')
         conn = get_db_connection(); cursor = conn.cursor()
+        
+        # Clear out enquiries that are no longer in Excel
+        excel_enq_numbers = df['enquiry_number'].tolist()
+        if excel_enq_numbers:
+            batch_size = 900
+            cursor.execute("SELECT enquiry_number FROM EnquiryRegister WHERE source = 'excel'")
+            existing_excel_enqs = {row[0] for row in cursor.fetchall()}
+            
+            excel_enq_set = set(excel_enq_numbers)
+            enqs_to_delete = list(existing_excel_enqs - excel_enq_set)
+            
+            for i in range(0, len(enqs_to_delete), batch_size):
+                batch = enqs_to_delete[i:i + batch_size]
+                placeholders = ','.join(['?'] * len(batch))
+                cursor.execute(f"DELETE FROM EnquiryRegister WHERE enquiry_number IN ({placeholders}) AND source = 'excel'", batch)
+                logger.info(f"Deleted {len(batch)} old enquiries not in current Excel.")
+        
         cursor.executemany('''
             INSERT INTO EnquiryRegister (
                 enquiry_number, year, month, sales_engineer, customer_name, region, source

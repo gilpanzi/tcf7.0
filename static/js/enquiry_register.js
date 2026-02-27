@@ -331,51 +331,6 @@ function renderCharts(data) {
             }
         });
     }
-
-    // Lost Reason Chart
-    const lostReasonMap = {};
-    data.forEach(e => {
-        if (e.pricing_status === 'Lost') {
-            const reason = e.lost_reason || 'Not Specified';
-            lostReasonMap[reason] = (lostReasonMap[reason] || 0) + 1;
-        }
-    });
-
-    const lrCtx = document.getElementById('lostReasonChart')?.getContext('2d');
-    if (window.lostReasonChart) window.lostReasonChart.destroy();
-
-    if (lrCtx) {
-        const lrKeys = Object.keys(lostReasonMap);
-        window.lostReasonChart = new Chart(lrCtx, {
-            type: 'doughnut',
-            data: {
-                labels: lrKeys,
-                datasets: [{
-                    data: lrKeys.map(k => lostReasonMap[k]),
-                    backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#06b6d4', '#8b5cf6', '#d946ef', '#64748b'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            usePointStyle: true,
-                            boxWidth: 8,
-                            padding: 15,
-                            font: { family: "'Inter', sans-serif", size: 11 }
-                        }
-                    },
-                    datalabels: { display: false }
-                }
-            }
-        });
-    }
 }
 
 function renderSEPerformance(data) {
