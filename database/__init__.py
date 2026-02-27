@@ -426,6 +426,16 @@ def migrate_to_unified_schema():
         if 'source' not in order_columns:
             cursor.execute("ALTER TABLE Orders ADD COLUMN source TEXT DEFAULT 'excel'")
             
+        # Deduplicate Orders table just to be safe before creating unique index
+        cursor.execute('''
+            DELETE FROM Orders
+            WHERE id NOT IN (
+                SELECT MAX(id)
+                FROM Orders
+                GROUP BY job_ref
+            )
+        ''')
+            
         # Ensure job_ref is UNIQUE to allow UPSERT operations
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_job_ref ON Orders(job_ref)')
         
