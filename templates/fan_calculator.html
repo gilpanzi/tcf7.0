@@ -642,7 +642,8 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/fan_calculator.js') }}?v={{ range(1000, 9999) | random }}"></script>
+    <script
+        src="{{ url_for('static', filename='js/fan_calculator.js') }}?v={{ range(100000, 999999) | random }}"></script>
     <script>
         // Initialize data
         window.projectData = {{ project | tojson }};
@@ -792,7 +793,6 @@
         window.fanData = {{ fan | tojson | safe }};
         window.vendorRates = {{ vendor_rates_json | safe }};
         window.projectData = {{ project | tojson | safe }};
-    </script>
     </script>
 </body>
 
