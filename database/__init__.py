@@ -425,6 +425,9 @@ def migrate_to_unified_schema():
             cursor.execute("ALTER TABLE Orders ADD COLUMN customer_id INTEGER")
         if 'source' not in order_columns:
             cursor.execute("ALTER TABLE Orders ADD COLUMN source TEXT DEFAULT 'excel'")
+            
+        # Ensure job_ref is UNIQUE to allow UPSERT operations
+        cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_job_ref ON Orders(job_ref)')
         
         # Create EnquiryRegister table for the Enquiry Tracking Dashboard
         cursor.execute('''

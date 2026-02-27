@@ -245,86 +245,92 @@ function renderCharts(data) {
     });
 
     // Trend Chart
-    const tCtx = document.getElementById('trendChart').getContext('2d');
-    if (trendChart) trendChart.destroy();
+    const tEl = document.getElementById('trendChart');
+    if (tEl) {
+        const tCtx = tEl.getContext('2d');
+        if (trendChart) trendChart.destroy();
 
-    const sortedKeys = Object.keys(trendMap).sort((a, b) => {
-        const partsA = a.split(' '), partsB = b.split(' ');
-        if (partsA.length === 1 || partsB.length === 1) return parseInt(a) - parseInt(b);
-        if (partsA[1] !== partsB[1]) return parseInt(partsA[1]) - parseInt(partsB[1]);
-        return (monthMap[partsA[0]] || 0) - (monthMap[partsB[0]] || 0);
-    });
+        const sortedKeys = Object.keys(trendMap).sort((a, b) => {
+            const partsA = a.split(' '), partsB = b.split(' ');
+            if (partsA.length === 1 || partsB.length === 1) return parseInt(a) - parseInt(b);
+            if (partsA[1] !== partsB[1]) return parseInt(partsA[1]) - parseInt(partsB[1]);
+            return (monthMap[partsA[0]] || 0) - (monthMap[partsB[0]] || 0);
+        });
 
-    trendChart = new Chart(tCtx, {
-        type: 'line',
-        data: {
-            labels: sortedKeys,
-            datasets: [{
-                label: 'Enquiry Count',
-                data: sortedKeys.map(k => trendMap[k]),
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    display: true,
-                    align: 'top',
-                    anchor: 'end',
-                    color: '#475569',
-                    font: { size: 10, weight: 600 },
-                    formatter: (value) => value > 0 ? value : ''
-                }
+        trendChart = new Chart(tCtx, {
+            type: 'line',
+            data: {
+                labels: sortedKeys,
+                datasets: [{
+                    label: 'Enquiry Count',
+                    data: sortedKeys.map(k => trendMap[k]),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1, precision: 0 }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        align: 'top',
+                        anchor: 'end',
+                        color: '#475569',
+                        font: { size: 10, weight: 600 },
+                        formatter: (value) => value > 0 ? value : ''
+                    }
                 },
-                x: { grid: { display: false } }
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0 }
+                    },
+                    x: { grid: { display: false } }
+                }
             }
-        }
-    });
+        });
+    }
 
     // Region Chart
-    const rCtx = document.getElementById('regionChart').getContext('2d');
-    if (regionChart) regionChart.destroy();
-    const sortedRegions = Object.entries(regionMap).sort((a, b) => b[1] - a[1]);
+    const rEl = document.getElementById('regionChart');
+    if (rEl) {
+        const rCtx = rEl.getContext('2d');
+        if (regionChart) regionChart.destroy();
+        const sortedRegions = Object.entries(regionMap).sort((a, b) => b[1] - a[1]);
 
-    regionChart = new Chart(rCtx, {
-        type: 'bar',
-        data: {
-            labels: sortedRegions.map(x => x[0]),
-            datasets: [{
-                label: 'Enquiry Count',
-                data: sortedRegions.map(x => x[1]),
-                backgroundColor: '#10b981',
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            onClick: (e, elements) => {
-                if (elements.length > 0) {
-                    const idx = elements[0].index;
-                    openDrilldownModal(regionChart.data.labels[idx], 'Region');
+        regionChart = new Chart(rCtx, {
+            type: 'bar',
+            data: {
+                labels: sortedRegions.map(x => x[0]),
+                datasets: [{
+                    label: 'Enquiry Count',
+                    data: sortedRegions.map(x => x[1]),
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const idx = elements[0].index;
+                        openDrilldownModal(regionChart.data.labels[idx], 'Region');
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
                 }
-            },
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } }
             }
-        }
-    });
+        });
+    }
 
     // Lost Reason Chart
     const lostReasonMap = {};
@@ -676,7 +682,9 @@ function renderHistoricalCharts(data) {
 }
 
 function renderHistChart(canvasId, chartRef, labels, data, color, formatter) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    const ctx = el.getContext('2d');
     if (window[canvasId] && typeof window[canvasId].destroy === 'function') window[canvasId].destroy();
 
     window[canvasId] = new Chart(ctx, {
