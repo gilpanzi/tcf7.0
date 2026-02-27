@@ -940,6 +940,9 @@ def import_orders_from_excel(file) -> bool:
         # Read the "Order Register - From 2019" sheet
         df = pd.read_excel(file, sheet_name="Order Register - From 2019")
         
+        # Clean column names first
+        df.columns = [str(c).strip() for c in df.columns]
+        
         # Mapping Excel columns to DB columns
         col_map = {
             'JOB REF': 'job_ref',
@@ -962,19 +965,33 @@ def import_orders_from_excel(file) -> bool:
             'REMARKS': 'remarks'
         }
         
+        # Case insensitive mapping fallback
+        actual_cols = df.columns.tolist()
+        final_map = {}
+        for expected_col, db_col in col_map.items():
+            # Find the closest match (ignoring case and extra spaces)
+            match = next((c for c in actual_cols if str(c).lower().strip() == expected_col.lower().strip()), None)
+            if match:
+                final_map[match] = db_col
+        
         # Select and rename columns
-        df = df[list(col_map.keys())].rename(columns=col_map)
+        df = df[list(final_map.keys())].rename(columns=final_map)
         
         # Clean data: drop rows without JOB REF
+        if 'job_ref' not in df.columns: return False
         df = df.dropna(subset=['job_ref'])
         df['job_ref'] = df['job_ref'].astype(str).str.strip()
         df = df[df['job_ref'] != '']
         df = df[df['job_ref'] != 'nan']
         
+        # Drop duplicates, keeping the LAST occurrence (which usually represents the most recent update)
+        df = df.drop_duplicates(subset=['job_ref'], keep='last')
+        
         # Convert numerical columns
         num_cols = ['order_value', 'our_cost', 'contribution_value', 'contribution_percentage', 'qty']
         for col in num_cols:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
             
         # Replace NaN with None for SQLite
         df = df.replace({np.nan: None})
@@ -1053,12 +1070,20 @@ def import_enquiries_from_excel(file) -> bool:
         df = pd.read_excel(file, sheet_name='Enquiry Register - From 2019')
         df.columns = [str(c).strip() for c in df.columns]
         mapping = {'ENQ NO': 'enquiry_number', 'YEAR': 'year', 'SALES ENGINEER': 'sales_engineer', 'CUSTOMER NAME': 'customer_name', 'Region': 'region'}
-        cols = [c for c in mapping.keys() if c in df.columns]
-        df = df[cols].rename(columns=mapping)
+        
+        # Case insensitive mapping fallback
+        actual_cols = df.columns.tolist()
+        final_map = {}
+        for expected_col, db_col in mapping.items():
+            match = next((c for c in actual_cols if str(c).lower().strip() == expected_col.lower().strip()), None)
+            if match:
+                final_map[match] = db_col
+                
+        df = df[list(final_map.keys())].rename(columns=final_map)
         if 'enquiry_number' not in df.columns: return False
         df = df.dropna(subset=['enquiry_number'])
         df['enquiry_number'] = df['enquiry_number'].astype(str).str.strip()
-        df = df.drop_duplicates(subset=['enquiry_number'], keep='first')
+        df = df.drop_duplicates(subset=['enquiry_number'], keep='last')
         def get_m(enq):
             if len(enq) >= 6 and enq.startswith('EQ'):
                 m = {'01':'January','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December'}
