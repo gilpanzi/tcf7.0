@@ -63,10 +63,17 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Get current weight for rate calculation (use 100 as default for first-time estimate if 0)
+        // Get current weight for rate calculation
         const weightInput = document.getElementById('total_weight');
         let weight = parseFloat(weightInput?.value || 0);
-        if (weight <= 0) weight = 100;
+
+        // If weight is 0 and not forced, don't fetch (restores initial empty state)
+        if (weight <= 0 && !options.force) {
+            return;
+        }
+
+        // If still 0 but forced (unlikely case), use 100 as placeholder or just return
+        if (weight <= 0) weight = 0;
 
         let url = `/api/vendor-rate/${encodeURIComponent(vendor)}/${encodeURIComponent(material)}/${weight}`;
         if (material === 'mixed' && msPercentageInput) {
@@ -81,7 +88,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const calculatedRate = data.rate;
 
                 // Update if forced or if field is currently 0/empty
-                if (options.force || !rateInput.value || parseFloat(rateInput.value) === 0) {
+                const weightInput = document.getElementById('total_weight');
+                const weight = parseFloat(weightInput?.value || 0);
+
+                if (weight > 0 && (options.force || !rateInput.value || parseFloat(rateInput.value) === 0)) {
                     if (calculatedRate > 0) {
                         rateInput.value = calculatedRate.toFixed(2);
 
